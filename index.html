@@ -20,7 +20,8 @@
     #editors { width: 40%; background: var(--2); display: flex; flex-direction: column; border-right: 1px solid var(--4); position: relative; }
     .editor-panel { flex: none; display: flex; flex-direction: column; overflow: hidden; }
     .panel-header { background: var(--3); color: var(--6); padding: var(--pad); font-size: 0.9em; display: flex; justify-content: space-between; align-items: center; }
-    .panel-header input { display:hidden; }
+    .panel-header input[type=file] { display: none; }
+    .file-name { margin-left: 8px; color: var(--6); font-size: 0.9em; }
     .panel-header button {background: var(--4);border: none;padding: 2px 6px;cursor: pointer;}
     .panel-header button:hover, #divider:hover,#fsBtn:hover {background: var(--5);}
     #rowDivider { height: 6px; background: var(--4); cursor: row-resize; flex: none;}
@@ -38,8 +39,9 @@
     <div id="editors">
       <div id="vertPanel" class="editor-panel">
         <div class="panel-header">
-          Vertex Shader
-          <input type="file" id="vertFile" accept=".vert,.vs,.txt" />
+            <span>Vertex Shader</span>
+            <button type="button" id="vertFileBtn">Choose File<span class="file-name" id="vertFileName"></span></button>
+            <input type="file" id="vertFile" accept=".vert,.vs,.txt" />
         </div>
         <textarea id="vertCode">
 attribute vec2 a_position;
@@ -50,8 +52,9 @@ void main() {
       <div id="rowDivider"></div>
       <div id="fragPanel" class="editor-panel">
         <div class="panel-header">
-          Fragment Shader
-          <input type="file" id="fragFile" accept=".frag,.fs,.txt" />
+            <span>Fragment Shader</span>
+            <button type="button" id="fragFileBtn">Choose File<span class="file-name" id="fragFileName"></span></button>
+            <input type="file" id="fragFile" accept=".frag,.fs,.txt" />
         </div>
         <textarea id="fragCode">precision highp float;
 uniform float u_time;
@@ -85,6 +88,12 @@ void main() {
           fragTA = $('fragCode'),
           vertFile = $('vertFile'),
           fragFile = $('fragFile'),
+          vertFileBtn = $('vertFileBtn'),
+          fragFileBtn = $('fragFileBtn'),
+          vertFileName = $('vertFileName'),
+          fragFileName = $('fragFileName'),
+          vertExportBtn = $('vertExportBtn'),
+          fragExportBtn = $('fragExportBtn'),
           fsBtn = $('fsBtn'),
           lintDiv = $('lint');
     const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
@@ -170,6 +179,45 @@ void main() {
       a.click();
       URL.revokeObjectURL(url);
     }
+    function handleFile(input, ta) {
+      if (!input.files.length) return;
+      const r = new FileReader();
+      r.onload = e => { ta.value = e.target.result; rebuildProgram(); };
+      r.readAsText(input.files[0]);
+    }
+    function handleFileDrop(file, ta, nameSpan) {
+      const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+      const allowed = ['.txt','.vert','.vs','.frag','.fs'];
+      if (!allowed.includes(ext)) return;
+      const r = new FileReader();
+      r.onload = e => { ta.value = e.target.result; rebuildProgram(); };
+      r.readAsText(file);
+      nameSpan.textContent = file.name;
+    }
+    vertFileBtn.onclick = () => vertFile.click();
+    fragFileBtn.onclick = () => fragFile.click();
+    vertFile.addEventListener('change', () => {
+      vertFileName.textContent = vertFile.files.length ? vertFile.files[0].name : '';
+      handleFile(vertFile, vertTA);
+    });
+    fragFile.addEventListener('change', () => {
+      fragFileName.textContent = fragFile.files.length ? fragFile.files[0].name : '';
+      handleFile(fragFile, fragTA);
+    });
+    ['dragover', 'dragenter'].forEach(evt => {
+      vertTA.addEventListener(evt, e => e.preventDefault());
+      fragTA.addEventListener(evt, e => e.preventDefault());
+    });
+    vertTA.addEventListener('drop', e => {
+      e.preventDefault();
+      if (e.dataTransfer.files.length) 
+        handleFileDrop(e.dataTransfer.files[0], vertTA, vertFileName);
+    });
+    fragTA.addEventListener('drop', e => {
+      e.preventDefault();
+      if (e.dataTransfer.files.length)
+        handleFileDrop(e.dataTransfer.files[0], fragTA, fragFileName);
+    });
     function exportFullHTML() {
       const template = `<!DOCTYPE html>
 <html lang="en">
