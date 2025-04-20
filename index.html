@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>GLSL editor - MW</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; font-family: Consolas, Menlo, monospace; }
+    #app { display: flex; height: 100%; }
+    #editors {width: 40%; background: #1e1e1e; display: flex; flex-direction: column;border-right: 1px solid #333;}
+    .editor-panel {flex: 1; display: flex; flex-direction: column;border-bottom: 1px solid #333;}
+    .panel-header {background: #252526; color: #bbb; padding: 6px 10px; font-size: 0.9em;display: flex; justify-content: space-between; align-items: center;}
+    .panel-header input { font-size: 0.8em; }textarea {flex: 1; background: #1e1e1e; color: #d4d4d4; border: none;padding: 10px; font-size: 0.95em; line-height: 1.4; resize: none;outline: none;}
+    #preview-panel {flex: 1; position: relative; background: #000;display: flex; justify-content: center; align-items: center;}
+    #glcanvas { width: 100%; height: 100%; display: block; }
+    #fsBtn {position: absolute; top: 12px; right: 12px; z-index: 10;background: #252526; color: #bbb; border: none; padding: 6px 10px;font-size: 1em; cursor: pointer;}
+    #fsBtn:hover { background: #333; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="editors">
+      <div class="editor-panel">
+        <div class="panel-header">
+          Vertex Shader
+          <input type="file" id="vertFile" accept=".vert,.vs,.txt" />
+        </div>
+        <textarea id="vertCode">
+attribute vec2 a_position;
+void main() {
+  gl_Position = vec4(a_position, 0., 1.);
+}</textarea>
+      </div>
+      <div class="editor-panel">
+        <div class="panel-header">
+          Fragment Shader
+          <input type="file" id="fragFile" accept=".frag,.fs,.txt" />
+        </div>
+        <textarea id="fragCode">
+precision highp float;
+uniform float u_time;
+uniform vec2 u_resolution;
+void main() {
+  vec2 uv = gl_FragCoord.xy / u_resolution;
+  vec3 col = 0.5 + 0.5 * cos(u_time + uv.xyx + vec3(0,2,4));
+  gl_FragColor = vec4(col,1.0);
+}</textarea>
+      </div>
+    </div>
+    <div id="preview-panel">
+      <canvas id="glcanvas"></canvas>
+      <button id="fsBtn">⛶</button>
+    </div>
+  </div>
+  <script>
+  (function(){
+    const canvas = document.getElementById('glcanvas');
+    const gl = canvas.getContext('webgl');
+    if (!gl) { alert('WebGL not supported'); return; }
+    const vertTA = document.getElementById('vertCode');
+    const fragTA = document.getElementById('fragCode');
+    const vertFile = document.getElementById('vertFile');
+    const fragFile = document.getElementById('fragFile');
+    const fsBtn = document.getElementById('fsBtn');
+    const previewPanel = document.getElementById('preview-panel');
+    const quadVerts = new Float32Array([
+      -1,-1,  1,-1,  -1,1,
+      -1,1,   1,-1,   1,1
+    ]);
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
+    let program = null;
+    let attribLoc = null, uTimeLoc = null, uResLoc = null;
+    let startTime = performance.now();
+    function resizeCanvas(){
+      const w = previewPanel.clientWidth;
+      const h = previewPanel.clientHeight;
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w; canvas.height = h;
+        gl.viewport(0,0,w,h);
+      }
+    }
+    function compileShader(src, type){
+      const s = gl.createShader(type);
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+        console.error(
+          (type===gl.VERTEX_SHADER?'VERTEX':'FRAGMENT'),
+          gl.getShaderInfoLog(s)
+        );
+        gl.deleteShader(s);
+        return null;
+      }
+      return s;
+    }
+    function rebuildProgram(){
+      resizeCanvas();
+      if (program) gl.deleteProgram(program);
+      const v = compileShader(vertTA.value, gl.VERTEX_SHADER);
+      const f = compileShader(fragTA.value, gl.FRAGMENT_SHADER);
+      if (!v || !f) return;
+      const p = gl.createProgram();
+      gl.attachShader(p, v);
+      gl.attachShader(p, f);
+      gl.linkProgram(p);
+      if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+        console.error('LINK:', gl.getProgramInfoLog(p));
+        gl.deleteProgram(p);
+        return;
+      }
+      program = p;
+      gl.useProgram(program);
+      attribLoc = gl.getAttribLocation(program, 'a_position');
+      uTimeLoc  = gl.getUniformLocation(program, 'u_time');
+      uResLoc   = gl.getUniformLocation(program, 'u_resolution');
+      gl.enableVertexAttribArray(attribLoc);
+      gl.vertexAttribPointer(attribLoc, 2, gl.FLOAT, false, 0, 0);
+    }
+    function render(){
+      if (!program) return;
+      resizeCanvas();
+      const t = (performance.now() - startTime) * 0.001;
+      gl.useProgram(program);
+      gl.uniform1f(uTimeLoc, t);
+      gl.uniform2f(uResLoc, canvas.width, canvas.height);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
+    function animate(){
+      render();
+      requestAnimationFrame(animate);
+    }
+    [vertTA, fragTA].forEach(ta =>
+      ta.addEventListener('input', rebuildProgram)
+    );
+    function handleFile(input, ta){
+      if (!input.files.length) return;
+      const r = new FileReader();
+      r.onload = e => {
+        ta.value = e.target.result;
+        rebuildProgram();
+      };
+      r.readAsText(input.files[0]);
+    }
+    vertFile.addEventListener('change',()=>handleFile(vertFile, vertTA));
+    fragFile.addEventListener('change',()=>handleFile(fragFile, fragTA));
+    fsBtn.addEventListener('click', ()=>{
+      if (previewPanel.requestFullscreen) previewPanel.requestFullscreen();
+    });
+    document.addEventListener('fullscreenchange', resizeCanvas);
+    rebuildProgram();
+    animate();
+  })();
+  </script>
+</body>
+</html>
