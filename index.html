@@ -13,23 +13,24 @@
     --5:#444;
     --6:#bbb;
     --r:#9e0000c8;
+    --pad: 6px 10px;
     }
     html, body { width: 100%; height: 100%; overflow: hidden; font-family: Consolas, Menlo, monospace; }
     #app { display: flex; height: 100%; }
     #editors { width: 40%; background: var(--2); display: flex; flex-direction: column; border-right: 1px solid var(--4); position: relative; }
     .editor-panel { flex: none; display: flex; flex-direction: column; overflow: hidden; }
-    .panel-header { background: var(--3); color: var(--6); padding: 6px 10px; font-size: 0.9em; display: flex; justify-content: space-between; align-items: center; }
-    .panel-header input { font-size: 0.8em; }
+    .panel-header { background: var(--3); color: var(--6); padding: var(--pad); font-size: 0.9em; display: flex; justify-content: space-between; align-items: center; }
+    .panel-header input { display:hidden; }
     .panel-header button {background: var(--4);border: none;padding: 2px 6px;cursor: pointer;}
     .panel-header button:hover, #divider:hover,#fsBtn:hover {background: var(--5);}
     #rowDivider { height: 6px; background: var(--4); cursor: row-resize; flex: none;}
-    textarea { flex: 1; background: var(--2); color: var(--6); border: none; padding: 10px; font-size: 0.95em; line-height: 1.4; resize: none; overflow: auto; outline: none; }
+    textarea { flex: 1; background: var(--2); color: var(--6); border: none; padding: var(--pad); font-size: 0.95em; line-height: 1.4; resize: none; overflow: auto; outline: none; }
     #divider { width: 6px; background: var(--4); cursor: col-resize; }
     #preview-panel { flex: 1; position: relative; background: var(--1); display: flex; justify-content: center; align-items: center; }
     #lint { position: absolute; bottom: 0; left: 0; width: 100%; max-height: 20%; background: var(--0); color: var(--r); font-size: 0.9em; overflow: auto; white-space: pre-wrap; }
     #glcanvas { width: 100%; height: 100%; display: block; }
-    #fsBtn { position: absolute; top: 12px; right: 12px; z-index: 10; background: var(--4); color: var(--6); border: none; padding: 6px 10px; font-size: 1em; cursor: pointer; }
-    .expbtn {position: absolute;bottom: 12px;right: 12px;background: var(--4);color: var(--6);padding: 6px 10px;border: none;cursor: pointer;}.expbtn:hover {background:var(--5);}
+    #fsBtn { position: absolute; top: 12px; right: 12px; z-index: 10; background: var(--4); color: var(--6); border: none; padding: var(--pad); font-size: 1em; cursor: pointer; }
+    .expbtn {position: absolute;bottom: 12px;right: 12px;background: var(--4);color: var(--6);padding: var(--pad);border: none;cursor: pointer;}.expbtn:hover {background:var(--5);}
   </style>
 </head>
 <body>
@@ -219,7 +220,16 @@ void main() {
       const uTimeLoc = gl.getUniformLocation(program, 'u_time');
       const uResLoc = gl.getUniformLocation(program, 'u_resolution');
       const startTime = performance.now();
+      function resize() {
+        const w = canvas.clientWidth, h = canvas.clientHeight;
+        if (canvas.width !== w || canvas.height !== h) {
+          canvas.width = w;
+          canvas.height = h;
+          gl.viewport(0, 0, w, h);
+        }
+      }
       function render() {
+        resize();
         gl.useProgram(program);
         gl.uniform1f(uTimeLoc, (performance.now() - startTime) * 0.001);
         gl.uniform2f(uResLoc, canvas.width, canvas.height);
