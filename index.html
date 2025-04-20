@@ -11,9 +11,9 @@
     .editor-panel { flex: none; display: flex; flex-direction: column; overflow: hidden; }
     .panel-header { background: #252526; color: #bbb; padding: 6px 10px; font-size: 0.9em; display: flex; justify-content: space-between; align-items: center; }
     .panel-header input { font-size: 0.8em; }
-    #rowDivider { height: 5px; background: #333; cursor: row-resize; }
+    #rowDivider { height: 6px; background: #333; cursor: row-resize; flex: none;}
     textarea { flex: 1; background: #1e1e1e; color: #d4d4d4; border: none; padding: 10px; font-size: 0.95em; line-height: 1.4; resize: none; overflow: auto; outline: none; }
-    #divider { width: 5px; background: #333; cursor: col-resize; }
+    #divider { width: 6px; background: #333; cursor: col-resize; }
     #divider:hover { background: #555; }
     #preview-panel { flex: 1; position: relative; background: #000; display: flex; justify-content: center; align-items: center; }
     #lint { position: absolute; bottom: 0; left: 0; width: 100%; max-height: 20%; background: rgba(17,17,17,0.9); color: #f88; padding: 8px; font-size: 0.9em; overflow: auto; white-space: pre-wrap; }
@@ -30,7 +30,8 @@
           Vertex Shader
           <input type="file" id="vertFile" accept=".vert,.vs,.txt" />
         </div>
-        <textarea id="vertCode">attribute vec2 a_position;
+        <textarea id="vertCode">
+attribute vec2 a_position;
 void main() {
   gl_Position = vec4(a_position, 0., 1.);
 }</textarea>
@@ -60,88 +61,45 @@ void main() {
   </div>
   <script>
   (function(){
-    const app          = document.getElementById('app');
-    const editors      = document.getElementById('editors');
-    const vertPanel    = document.getElementById('vertPanel');
-    const fragPanel    = document.getElementById('fragPanel');
-    const rowDivider   = document.getElementById('rowDivider');
-    const divider      = document.getElementById('divider');
-    const previewPanel = document.getElementById('preview-panel');
-    const canvas       = document.getElementById('glcanvas');
-    const gl           = canvas.getContext('webgl2') || canvas.getContext('webgl');
+    const $ = id => document.getElementById(id);
+    const app = $('app'), 
+          editors = $('editors'),
+          vertPanel = $('vertPanel'),
+          fragPanel = $('fragPanel'),
+          rowDivider = $('rowDivider'),
+          divider = $('divider'),
+          previewPanel = $('preview-panel'),
+          canvas = $('glcanvas'),
+          vertTA = $('vertCode'),
+          fragTA = $('fragCode'),
+          vertFile = $('vertFile'),
+          fragFile = $('fragFile'),
+          fsBtn = $('fsBtn'),
+          lintDiv = $('lint');
+    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
     if (!gl) { alert('WebGL not supported'); return; }
-    const vertTA    = document.getElementById('vertCode');
-    const fragTA    = document.getElementById('fragCode');
-    const vertFile  = document.getElementById('vertFile');
-    const fragFile  = document.getElementById('fragFile');
-    const fsBtn     = document.getElementById('fsBtn');
-    const lintDiv   = document.getElementById('lint');
-    function initSplit() {
-      const totalH = editors.clientHeight - rowDivider.offsetHeight;
-      const half   = totalH / 2;
-      vertPanel.style.height = half + 'px';
-      fragPanel.style.height = half + 'px';
-    }
-    window.addEventListener('load', initSplit);
-    window.addEventListener('resize', () => { initSplit(); resizeCanvas(); });
-    let drag = {
-      type:      null,
-      startPos:  0,
-      startSize: 0
-    };
-    rowDivider.addEventListener('mousedown', e => {
-      drag.type      = 'row';
-      drag.startPos  = e.clientY;
-      drag.startSize = vertPanel.getBoundingClientRect().height;
-    });
-    divider.addEventListener('mousedown', e => {
-      drag.type      = 'col';
-      drag.startPos  = e.clientX;
-      drag.startSize = editors.getBoundingClientRect().width;
-    });
-    document.addEventListener('mousemove', e => {
-      if (!drag.type) return;
-      if (drag.type === 'row') {
-        const dy     = e.clientY - drag.startPos;
-        const totalH = editors.clientHeight - rowDivider.offsetHeight;
-        let   topH   = drag.startSize + dy;
-        topH         = Math.max(50, Math.min(totalH - 50, topH));
-        vertPanel.style.height = topH + 'px';
-        fragPanel.style.height = (totalH - topH) + 'px';
-      } else if (drag.type === 'col') {
-        const dx   = e.clientX - drag.startPos;
-        let   newW = drag.startSize + dx;
-        const minW = 100;
-        const maxW = app.clientWidth - 100;
-        newW       = Math.max(minW, Math.min(maxW, newW));
-        editors.style.width = newW + 'px';
-      }
-      resizeCanvas();
-    });
-    document.addEventListener('mouseup', () => {
-      drag.type = null;
-    });
-    function resizeCanvas() {
-      const w = previewPanel.clientWidth;
-      const h = previewPanel.clientHeight;
-      if (canvas.width !== w || canvas.height !== h) {
-        canvas.width  = w;
-        canvas.height = h;
-        gl.viewport(0, 0, w, h);
-      }
-    }
-    const quadVerts = new Float32Array([
-      -1,-1,  1,-1,  -1,1,
-      -1,1,   1,-1,   1,1
-    ]);
-    const buf = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
     let program = null,
         attribLoc = null,
         uTimeLoc = null,
         uResLoc = null,
-        startTime = performance.now();
+        startTime = performance.now(),
+        drag = { type: null, startPos: 0, startSize: 0 };
+    const quadVerts = new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]);
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
+    function initSplit() {
+      const totalH = editors.clientHeight - rowDivider.offsetHeight;
+      vertPanel.style.height = fragPanel.style.height = (totalH / 2) + 'px';
+      resizeCanvas();
+    }
+    function resizeCanvas() {
+      const w = previewPanel.clientWidth, h = previewPanel.clientHeight;
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w; canvas.height = h;
+        gl.viewport(0, 0, w, h);
+      }
+    }
     function compileShader(src, type) {
       const s = gl.createShader(type);
       gl.shaderSource(s, src);
@@ -159,8 +117,8 @@ void main() {
       if (program) gl.deleteProgram(program);
       const errors = [];
       const vs = compileShader(vertTA.value, gl.VERTEX_SHADER);
-      if (vs.error) errors.push('Vertex: ' + vs.error);
       const fs = compileShader(fragTA.value, gl.FRAGMENT_SHADER);
+      if (vs.error) errors.push('Vertex: ' + vs.error);
       if (fs.error) errors.push('Fragment: ' + fs.error);
       if (errors.length) {
         lintDiv.textContent = errors.join('\n');
@@ -178,53 +136,86 @@ void main() {
       program = p;
       gl.useProgram(program);
       attribLoc = gl.getAttribLocation(program, 'a_position');
-      uTimeLoc  = gl.getUniformLocation(program, 'u_time');
-      uResLoc   = gl.getUniformLocation(program, 'u_resolution');
+      uTimeLoc = gl.getUniformLocation(program, 'u_time');
+      uResLoc = gl.getUniformLocation(program, 'u_resolution');
       gl.enableVertexAttribArray(attribLoc);
       gl.vertexAttribPointer(attribLoc, 2, gl.FLOAT, false, 0, 0);
     }
     function render() {
       if (!program) return;
       resizeCanvas();
-      const t = (performance.now() - startTime) * 0.001;
       gl.useProgram(program);
-      gl.uniform1f(uTimeLoc, t);
+      gl.uniform1f(uTimeLoc, (performance.now() - startTime) * 0.001);
       gl.uniform2f(uResLoc, canvas.width, canvas.height);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
+      requestAnimationFrame(render);
     }
-    function animate() {
-      render();
-      requestAnimationFrame(animate);
-    }
-    [vertTA, fragTA].forEach(ta =>
-      ta.addEventListener('input', rebuildProgram)
-    );
+    window.addEventListener('load', initSplit);
+    window.addEventListener('resize', initSplit);
+    ['mousedown', 'touchstart'].forEach(evt => {
+      rowDivider.addEventListener(evt, e => {
+        drag.type = 'row';
+        drag.startPos = e.clientY || e.touches[0].clientY;
+        drag.startSize = vertPanel.getBoundingClientRect().height;
+        e.preventDefault();
+      }, { passive: false });
+      divider.addEventListener(evt, e => {
+        drag.type = 'col';
+        drag.startPos = e.clientX || e.touches[0].clientX;
+        drag.startSize = editors.getBoundingClientRect().width;
+        e.preventDefault();
+      }, { passive: false });
+    });
+    ['mousemove', 'touchmove'].forEach(evt => {
+      document.addEventListener(evt, e => {
+        if (!drag.type) return;
+        const pos = evt.includes('touch') ? 
+          (e.touches[0][drag.type === 'row' ? 'clientY' : 'clientX']) : 
+          (e[drag.type === 'row' ? 'clientY' : 'clientX']);
+        if (drag.type === 'row') {
+          const dy = pos - drag.startPos;
+          const totalH = editors.clientHeight - rowDivider.offsetHeight;
+          let topH = Math.max(50, Math.min(totalH - 50, drag.startSize + dy));
+          vertPanel.style.height = topH + 'px';
+          fragPanel.style.height = (totalH - topH) + 'px';
+        } else {
+          const newW = Math.max(100, Math.min(app.clientWidth - 100, drag.startSize + pos - drag.startPos));
+          editors.style.width = newW + 'px';
+        }
+        resizeCanvas();
+        e.preventDefault();
+      });
+    });
+    ['mouseup', 'touchend', 'touchcancel'].forEach(evt => {
+      document.addEventListener(evt, () => drag.type = null);
+    });
     function handleFile(input, ta) {
       if (!input.files.length) return;
       const r = new FileReader();
-      r.onload = e => {
-        ta.value = e.target.result;
-        rebuildProgram();
-      };
+      r.onload = e => { ta.value = e.target.result; rebuildProgram(); };
       r.readAsText(input.files[0]);
     }
+    [vertTA, fragTA].forEach(ta => ta.addEventListener('input', rebuildProgram));
     vertFile.addEventListener('change', () => handleFile(vertFile, vertTA));
     fragFile.addEventListener('change', () => handleFile(fragFile, fragTA));
     fsBtn.addEventListener('click', () => {
-      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        (previewPanel.requestFullscreen || previewPanel.webkitRequestFullscreen).call(previewPanel);
+      const fsElement = document.fullscreenElement || document.webkitFullscreenElement;
+      if (!fsElement) {
+        const request = previewPanel.requestFullscreen || previewPanel.webkitRequestFullscreen;
+        request.call(previewPanel);
       } else {
-        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        const exit = document.exitFullscreen || document.webkitExitFullscreen;
+        exit.call(document);
       }
     });
-    document.addEventListener('fullscreenchange', onFSChange);
-    document.addEventListener('webkitfullscreenchange', onFSChange);
-    function onFSChange() {
-      resizeCanvas();
-      fsBtn.textContent = document.fullscreenElement || document.webkitFullscreenElement ? '✕' : '⛶';
-    }
+    ['fullscreenchange', 'webkitfullscreenchange'].forEach(evt => {
+      document.addEventListener(evt, () => {
+        resizeCanvas();
+        fsBtn.textContent = (document.fullscreenElement || document.webkitFullscreenElement) ? '✕' : '⛶';
+      });
+    });
     rebuildProgram();
-    animate();
+    render();
   })();
   </script>
 </body>
