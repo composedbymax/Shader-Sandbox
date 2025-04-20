@@ -7,13 +7,17 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; height: 100%; overflow: hidden; font-family: Consolas, Menlo, monospace; }
     #app { display: flex; height: 100%; }
-    #editors {width: 40%; background: #1e1e1e; display: flex; flex-direction: column;border-right: 1px solid #333;}
-    .editor-panel {flex: 1; display: flex; flex-direction: column;border-bottom: 1px solid #333;}
-    .panel-header {background: #252526; color: #bbb; padding: 6px 10px; font-size: 0.9em;display: flex; justify-content: space-between; align-items: center;}
-    .panel-header input { font-size: 0.8em; }textarea {flex: 1; background: #1e1e1e; color: #d4d4d4; border: none;padding: 10px; font-size: 0.95em; line-height: 1.4; resize: none;outline: none;}
-    #preview-panel {flex: 1; position: relative; background: #000;display: flex; justify-content: center; align-items: center;}
+    #editors { width: 40%; background: #1e1e1e; display: flex; flex-direction: column; border-right: 1px solid #333; position: relative; }
+    .editor-panel { flex: 1; display: flex; flex-direction: column; border-bottom: 1px solid #333; }
+    .panel-header { background: #252526; color: #bbb; padding: 6px 10px; font-size: 0.9em; display: flex; justify-content: space-between; align-items: center; }
+    .panel-header input { font-size: 0.8em; }
+    textarea { flex: 1; background: #1e1e1e; color: #d4d4d4; border: none; padding: 10px; font-size: 0.95em; line-height: 1.4; resize: none; outline: none; }
+    #divider { width: 5px; background: #333; cursor: col-resize; }
+    #divider:hover { background: #555; }
+    #preview-panel { flex: 1; position: relative; background: #000; display: flex; justify-content: center; align-items: center; }
+    #lint { position: absolute; bottom: 0; left: 0; width: 100%; max-height: 20%; background: rgba(17,17,17,0.9); color: #f88; padding: 8px; font-size: 0.9em; overflow: auto; white-space: pre-wrap; }
     #glcanvas { width: 100%; height: 100%; display: block; }
-    #fsBtn {position: absolute; top: 12px; right: 12px; z-index: 10;background: #252526; color: #bbb; border: none; padding: 6px 10px;font-size: 1em; cursor: pointer;}
+    #fsBtn { position: absolute; top: 12px; right: 12px; z-index: 10; background: #252526; color: #bbb; border: none; padding: 6px 10px; font-size: 1em; cursor: pointer; }
     #fsBtn:hover { background: #333; }
   </style>
 </head>
@@ -25,8 +29,7 @@
           Vertex Shader
           <input type="file" id="vertFile" accept=".vert,.vs,.txt" />
         </div>
-        <textarea id="vertCode">
-attribute vec2 a_position;
+        <textarea id="vertCode">attribute vec2 a_position;
 void main() {
   gl_Position = vec4(a_position, 0., 1.);
 }</textarea>
@@ -36,8 +39,7 @@ void main() {
           Fragment Shader
           <input type="file" id="fragFile" accept=".frag,.fs,.txt" />
         </div>
-        <textarea id="fragCode">
-precision highp float;
+        <textarea id="fragCode">precision highp float;
 uniform float u_time;
 uniform vec2 u_resolution;
 void main() {
@@ -47,15 +49,20 @@ void main() {
 }</textarea>
       </div>
     </div>
+    <div id="divider"></div>
     <div id="preview-panel">
       <canvas id="glcanvas"></canvas>
       <button id="fsBtn">⛶</button>
+      <div id="lint"></div>
     </div>
   </div>
   <script>
   (function(){
+    const app = document.getElementById('app');
+    const editors = document.getElementById('editors');
+    const divider = document.getElementById('divider');
     const canvas = document.getElementById('glcanvas');
-    const gl = canvas.getContext('webgl');
+    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
     if (!gl) { alert('WebGL not supported'); return; }
     const vertTA = document.getElementById('vertCode');
     const fragTA = document.getElementById('fragCode');
@@ -63,6 +70,7 @@ void main() {
     const fragFile = document.getElementById('fragFile');
     const fsBtn = document.getElementById('fsBtn');
     const previewPanel = document.getElementById('preview-panel');
+    const lintDiv = document.getElementById('lint');
     const quadVerts = new Float32Array([
       -1,-1,  1,-1,  -1,1,
       -1,1,   1,-1,   1,1
@@ -82,31 +90,36 @@ void main() {
       }
     }
     function compileShader(src, type){
-      const s = gl.createShader(type);
-      gl.shaderSource(s, src);
-      gl.compileShader(s);
-      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
-        console.error(
-          (type===gl.VERTEX_SHADER?'VERTEX':'FRAGMENT'),
-          gl.getShaderInfoLog(s)
-        );
-        gl.deleteShader(s);
-        return null;
+      const shader = gl.createShader(type);
+      gl.shaderSource(shader, src);
+      gl.compileShader(shader);
+      const status = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+      if (!status) {
+        const info = gl.getShaderInfoLog(shader);
+        gl.deleteShader(shader);
+        return { shader: null, error: info };
       }
-      return s;
+      return { shader, error: null };
     }
     function rebuildProgram(){
       resizeCanvas();
+      lintDiv.textContent = '';
       if (program) gl.deleteProgram(program);
-      const v = compileShader(vertTA.value, gl.VERTEX_SHADER);
-      const f = compileShader(fragTA.value, gl.FRAGMENT_SHADER);
-      if (!v || !f) return;
+      const errors = [];
+      const vs = compileShader(vertTA.value, gl.VERTEX_SHADER);
+      if (vs.error) errors.push('Vertex: ' + vs.error);
+      const fs = compileShader(fragTA.value, gl.FRAGMENT_SHADER);
+      if (fs.error) errors.push('Fragment: ' + fs.error);
+      if (errors.length) {
+        lintDiv.textContent = errors.join('\n');
+        return;
+      }
       const p = gl.createProgram();
-      gl.attachShader(p, v);
-      gl.attachShader(p, f);
+      gl.attachShader(p, vs.shader);
+      gl.attachShader(p, fs.shader);
       gl.linkProgram(p);
       if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
-        console.error('LINK:', gl.getProgramInfoLog(p));
+        lintDiv.textContent = 'Link: ' + gl.getProgramInfoLog(p);
         gl.deleteProgram(p);
         return;
       }
@@ -127,28 +140,54 @@ void main() {
       gl.uniform2f(uResLoc, canvas.width, canvas.height);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
-    function animate(){
-      render();
-      requestAnimationFrame(animate);
-    }
-    [vertTA, fragTA].forEach(ta =>
-      ta.addEventListener('input', rebuildProgram)
-    );
+    function animate(){ render(); requestAnimationFrame(animate); }
+    [vertTA, fragTA].forEach(ta => ta.addEventListener('input', rebuildProgram));
     function handleFile(input, ta){
       if (!input.files.length) return;
       const r = new FileReader();
-      r.onload = e => {
-        ta.value = e.target.result;
-        rebuildProgram();
-      };
+      r.onload = e => { ta.value = e.target.result; rebuildProgram(); };
       r.readAsText(input.files[0]);
     }
-    vertFile.addEventListener('change',()=>handleFile(vertFile, vertTA));
-    fragFile.addEventListener('change',()=>handleFile(fragFile, fragTA));
-    fsBtn.addEventListener('click', ()=>{
-      if (previewPanel.requestFullscreen) previewPanel.requestFullscreen();
+    vertFile.addEventListener('change', ()=> handleFile(vertFile, vertTA));
+    fragFile.addEventListener('change', ()=> handleFile(fragFile, fragTA));
+    let dragging = false;
+    divider.addEventListener('mousedown', ()=> dragging = true);
+    document.addEventListener('mouseup', ()=> dragging = false);
+    document.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      const rect = app.getBoundingClientRect();
+      let newW = e.clientX - rect.left;
+      newW = Math.max(100, Math.min(rect.width - 100, newW));
+      editors.style.width = newW + 'px';
+      resizeCanvas();
     });
-    document.addEventListener('fullscreenchange', resizeCanvas);
+    fsBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement &&
+            !document.webkitFullscreenElement
+        ) {
+        if (previewPanel.requestFullscreen) {
+            previewPanel.requestFullscreen();
+        } else if (previewPanel.webkitRequestFullscreen) {
+            previewPanel.webkitRequestFullscreen();
+        }
+        } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        }
+        }
+    });
+    document.addEventListener('fullscreenchange', onFSChange);
+    document.addEventListener('webkitfullscreenchange', onFSChange);
+    function onFSChange() {
+        resizeCanvas();
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+        fsBtn.textContent = '✕';
+        } else {
+        fsBtn.textContent = '⛶';
+        }
+    }
     rebuildProgram();
     animate();
   })();
