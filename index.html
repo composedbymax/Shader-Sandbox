@@ -60,22 +60,22 @@ void main() {
   </div>
   <script>
   (function(){
-    const app         = document.getElementById('app');
-    const editors     = document.getElementById('editors');
-    const vertPanel   = document.getElementById('vertPanel');
-    const fragPanel   = document.getElementById('fragPanel');
-    const rowDivider  = document.getElementById('rowDivider');
-    const divider     = document.getElementById('divider');
-    const canvas      = document.getElementById('glcanvas');
-    const gl          = canvas.getContext('webgl2') || canvas.getContext('webgl');
+    const app          = document.getElementById('app');
+    const editors      = document.getElementById('editors');
+    const vertPanel    = document.getElementById('vertPanel');
+    const fragPanel    = document.getElementById('fragPanel');
+    const rowDivider   = document.getElementById('rowDivider');
+    const divider      = document.getElementById('divider');
+    const previewPanel = document.getElementById('preview-panel');
+    const canvas       = document.getElementById('glcanvas');
+    const gl           = canvas.getContext('webgl2') || canvas.getContext('webgl');
     if (!gl) { alert('WebGL not supported'); return; }
-    const vertTA      = document.getElementById('vertCode');
-    const fragTA      = document.getElementById('fragCode');
-    const vertFile    = document.getElementById('vertFile');
-    const fragFile    = document.getElementById('fragFile');
-    const fsBtn       = document.getElementById('fsBtn');
-    const previewPanel= document.getElementById('preview-panel');
-    const lintDiv     = document.getElementById('lint');
+    const vertTA    = document.getElementById('vertCode');
+    const fragTA    = document.getElementById('fragCode');
+    const vertFile  = document.getElementById('vertFile');
+    const fragFile  = document.getElementById('fragFile');
+    const fsBtn     = document.getElementById('fsBtn');
+    const lintDiv   = document.getElementById('lint');
     function initSplit() {
       const totalH = editors.clientHeight - rowDivider.offsetHeight;
       const half   = totalH / 2;
@@ -84,40 +84,50 @@ void main() {
     }
     window.addEventListener('load', initSplit);
     window.addEventListener('resize', () => { initSplit(); resizeCanvas(); });
-    let isRowDragging = false, startY, startTopH;
+    let drag = {
+      type:      null,
+      startPos:  0,
+      startSize: 0
+    };
     rowDivider.addEventListener('mousedown', e => {
-      isRowDragging = true;
-      startY        = e.clientY;
-      startTopH     = vertPanel.getBoundingClientRect().height;
+      drag.type      = 'row';
+      drag.startPos  = e.clientY;
+      drag.startSize = vertPanel.getBoundingClientRect().height;
+    });
+    divider.addEventListener('mousedown', e => {
+      drag.type      = 'col';
+      drag.startPos  = e.clientX;
+      drag.startSize = editors.getBoundingClientRect().width;
     });
     document.addEventListener('mousemove', e => {
-      if (!isRowDragging) return;
-      const dy     = e.clientY - startY;
-      const totalH = editors.clientHeight - rowDivider.offsetHeight;
-      let newTop   = startTopH + dy;
-      newTop       = Math.max(50, Math.min(totalH - 50, newTop));
-      vertPanel.style.height = newTop + 'px';
-      fragPanel.style.height = (totalH - newTop) + 'px';
+      if (!drag.type) return;
+      if (drag.type === 'row') {
+        const dy     = e.clientY - drag.startPos;
+        const totalH = editors.clientHeight - rowDivider.offsetHeight;
+        let   topH   = drag.startSize + dy;
+        topH         = Math.max(50, Math.min(totalH - 50, topH));
+        vertPanel.style.height = topH + 'px';
+        fragPanel.style.height = (totalH - topH) + 'px';
+      } else if (drag.type === 'col') {
+        const dx   = e.clientX - drag.startPos;
+        let   newW = drag.startSize + dx;
+        const minW = 100;
+        const maxW = app.clientWidth - 100;
+        newW       = Math.max(minW, Math.min(maxW, newW));
+        editors.style.width = newW + 'px';
+      }
       resizeCanvas();
     });
-    document.addEventListener('mouseup', () => { isRowDragging = false; });
-    let isColDragging = false;
-    divider.addEventListener('mousedown', () => { isColDragging = true; });
-    document.addEventListener('mouseup', () => { isColDragging = false; });
-    document.addEventListener('mousemove', (e) => {
-      if (!isColDragging) return;
-      const rect = app.getBoundingClientRect();
-      let newW   = e.clientX - rect.left;
-      newW       = Math.max(100, Math.min(rect.width - 100, newW));
-      editors.style.width = newW + 'px';
-      resizeCanvas();
+    document.addEventListener('mouseup', () => {
+      drag.type = null;
     });
-    function resizeCanvas(){
+    function resizeCanvas() {
       const w = previewPanel.clientWidth;
       const h = previewPanel.clientHeight;
       if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w; canvas.height = h;
-        gl.viewport(0,0,w,h);
+        canvas.width  = w;
+        canvas.height = h;
+        gl.viewport(0, 0, w, h);
       }
     }
     const quadVerts = new Float32Array([
@@ -127,21 +137,23 @@ void main() {
     const buf = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
-    let program = null;
-    let attribLoc = null, uTimeLoc = null, uResLoc = null;
-    let startTime = performance.now();
-    function compileShader(src, type){
-      const shader = gl.createShader(type);
-      gl.shaderSource(shader, src);
-      gl.compileShader(shader);
-      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        const info = gl.getShaderInfoLog(shader);
-        gl.deleteShader(shader);
-        return { shader: null, error: info };
+    let program = null,
+        attribLoc = null,
+        uTimeLoc = null,
+        uResLoc = null,
+        startTime = performance.now();
+    function compileShader(src, type) {
+      const s = gl.createShader(type);
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+        const err = gl.getShaderInfoLog(s);
+        gl.deleteShader(s);
+        return { shader: null, error: err };
       }
-      return { shader, error: null };
+      return { shader: s, error: null };
     }
-    function rebuildProgram(){
+    function rebuildProgram() {
       resizeCanvas();
       lintDiv.textContent = '';
       if (program) gl.deleteProgram(program);
@@ -171,37 +183,45 @@ void main() {
       gl.enableVertexAttribArray(attribLoc);
       gl.vertexAttribPointer(attribLoc, 2, gl.FLOAT, false, 0, 0);
     }
-    function render(){
+    function render() {
       if (!program) return;
       resizeCanvas();
-      const t = (performance.now() - startTime)*0.001;
+      const t = (performance.now() - startTime) * 0.001;
       gl.useProgram(program);
       gl.uniform1f(uTimeLoc, t);
       gl.uniform2f(uResLoc, canvas.width, canvas.height);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
-    function animate(){ render(); requestAnimationFrame(animate); }
-    [vertTA, fragTA].forEach(ta => ta.addEventListener('input', rebuildProgram));
-    function handleFile(input, ta){
+    function animate() {
+      render();
+      requestAnimationFrame(animate);
+    }
+    [vertTA, fragTA].forEach(ta =>
+      ta.addEventListener('input', rebuildProgram)
+    );
+    function handleFile(input, ta) {
       if (!input.files.length) return;
       const r = new FileReader();
-      r.onload = e => { ta.value = e.target.result; rebuildProgram(); };
+      r.onload = e => {
+        ta.value = e.target.result;
+        rebuildProgram();
+      };
       r.readAsText(input.files[0]);
     }
-    vertFile.addEventListener('change', ()=> handleFile(vertFile, vertTA));
-    fragFile.addEventListener('change', ()=> handleFile(fragFile, fragTA));
+    vertFile.addEventListener('change', () => handleFile(vertFile, vertTA));
+    fragFile.addEventListener('change', () => handleFile(fragFile, fragTA));
     fsBtn.addEventListener('click', () => {
       if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        (previewPanel.requestFullscreen||previewPanel.webkitRequestFullscreen).call(previewPanel);
+        (previewPanel.requestFullscreen || previewPanel.webkitRequestFullscreen).call(previewPanel);
       } else {
-        (document.exitFullscreen||document.webkitExitFullscreen).call(document);
+        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
       }
     });
     document.addEventListener('fullscreenchange', onFSChange);
     document.addEventListener('webkitfullscreenchange', onFSChange);
-    function onFSChange(){
+    function onFSChange() {
       resizeCanvas();
-      fsBtn.textContent = (document.fullscreenElement||document.webkitFullscreenElement)? '✕':'⛶';
+      fsBtn.textContent = document.fullscreenElement || document.webkitFullscreenElement ? '✕' : '⛶';
     }
     rebuildProgram();
     animate();
