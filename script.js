@@ -16,16 +16,25 @@ const app = $('app'),
         fragFileBtn = $('fragFileBtn'),
         vertFileName = $('vertFileName'),
         fragFileName = $('fragFileName'),
-        vertExportBtn = $('vertExportBtn'),
-        fragExportBtn = $('fragExportBtn'),
         fsBtn = $('fsBtn'),
         lintDiv = $('lint');
-const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+        let gl;
+        gl = canvas.getContext('webgl2');
+        if (!gl) {
+            console.warn('WebGL2 not available, falling back to WebGL1.');
+            gl = canvas.getContext('webgl');
+        }
+        if (!gl) {
+            alert('WebGL is not supported in your browser.');
+        } else {
+            console.log(`Using ${gl.getParameter(gl.VERSION)} context.`);
+        }
 if (!gl) { alert('WebGL not supported'); return; }
 let program = null,
     attribLoc = null,
-    uTimeLoc = null,
-    uResLoc = null,
+    uniforms = {},
+    startTime = performance.now(),
+    drag = { type: null, startPos: 0, startSize: 0 };
     startTime = performance.now(),
     drag = { type: null, startPos: 0, startSize: 0 };
 const quadVerts = new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]);
@@ -65,32 +74,49 @@ function rebuildProgram() {
     if (vs.error) errors.push('Vertex: ' + vs.error);
     if (fs.error) errors.push('Fragment: ' + fs.error);
     if (errors.length) {
-    lintDiv.textContent = errors.join('\n');
-    return;
+        lintDiv.textContent = errors.join('\n');
+        return;
     }
     const p = gl.createProgram();
     gl.attachShader(p, vs.shader);
     gl.attachShader(p, fs.shader);
     gl.linkProgram(p);
     if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
-    lintDiv.textContent = 'Link: ' + gl.getProgramInfoLog(p);
-    gl.deleteProgram(p);
-    return;
+        lintDiv.textContent = 'Link: ' + gl.getProgramInfoLog(p);
+        gl.deleteProgram(p);
+        return;
     }
     program = p;
     gl.useProgram(program);
     attribLoc = gl.getAttribLocation(program, 'a_position');
-    uTimeLoc = gl.getUniformLocation(program, 'u_time');
-    uResLoc = gl.getUniformLocation(program, 'u_resolution');
     gl.enableVertexAttribArray(attribLoc);
     gl.vertexAttribPointer(attribLoc, 2, gl.FLOAT, false, 0, 0);
+    uniforms = {};
+    const numUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
+    for (let i = 0; i < numUniforms; i++) {
+        const info = gl.getActiveUniform(program, i);
+        const loc = gl.getUniformLocation(program, info.name);
+        uniforms[info.name] = { loc, type: info.type };
+    }
 }
 function render() {
     if (!program) return;
     resizeCanvas();
     gl.useProgram(program);
-    gl.uniform1f(uTimeLoc, (performance.now() - startTime) * 0.001);
-    gl.uniform2f(uResLoc, canvas.width, canvas.height);
+    const time = (performance.now() - startTime) * 0.001;
+    if (uniforms.u_time) {
+        gl.uniform1f(uniforms.u_time.loc, time);
+    } else if (uniforms.uTime) {
+        gl.uniform1f(uniforms.uTime.loc, time);
+    }
+    if (uniforms.u_resolution) {
+        gl.uniform2f(uniforms.u_resolution.loc, canvas.width, canvas.height);
+    } else if (uniforms.uResolution) {
+        gl.uniform2f(uniforms.uResolution.loc, canvas.width, canvas.height);
+    }
+    if (uniforms.uColor) {
+        gl.uniform3f(uniforms.uColor.loc, 1.0, 1.0, 1.0);
+    }
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     requestAnimationFrame(render);
 }
@@ -186,11 +212,27 @@ canvas { width: 100vw; height: 100vh; display: block; }
     const buf = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
-    const attribLoc = gl.getAttribLocation(program, 'a_position');
-    gl.enableVertexAttribArray(attribLoc);
-    gl.vertexAttribPointer(attribLoc, 2, gl.FLOAT, false, 0, 0);
-    const uTimeLoc = gl.getUniformLocation(program, 'u_time');
-    const uResLoc = gl.getUniformLocation(program, 'u_resolution');
+    const vertexShaderSrc = vertexShader;
+    let attribName = 'a_position';
+    const attribRegex = /attribute\\s+(?:vec\\d+|float)\\s+(\\w+)/g;
+    const matches = [...vertexShaderSrc.matchAll(attribRegex)];
+    if (matches.length > 0) {
+        attribName = matches[0][1];
+    }
+    const attribLoc = gl.getAttribLocation(program, attribName);
+    if (attribLoc !== -1) {
+        gl.enableVertexAttribArray(attribLoc);
+        gl.vertexAttribPointer(attribLoc, 2, gl.FLOAT, false, 0, 0);
+    } else {
+        console.error('Could not find attribute:', attribName);
+        return;
+    }
+    const uniforms = {};
+    const numUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
+    for (let i = 0; i < numUniforms; i++) {
+        const info = gl.getActiveUniform(program, i);
+        uniforms[info.name] = gl.getUniformLocation(program, info.name);
+    }
     const startTime = performance.now();
     function resize() {
     const w = canvas.clientWidth, h = canvas.clientHeight;
@@ -201,12 +243,16 @@ canvas { width: 100vw; height: 100vh; display: block; }
     }
     }
     function render() {
-    resize();
-    gl.useProgram(program);
-    gl.uniform1f(uTimeLoc, (performance.now() - startTime) * 0.001);
-    gl.uniform2f(uResLoc, canvas.width, canvas.height);
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-    requestAnimationFrame(render);
+        resize();
+        gl.useProgram(program);
+        const time = (performance.now() - startTime) * 0.001;
+        if (uniforms.u_time) gl.uniform1f(uniforms.u_time, time);
+        else if (uniforms.uTime) gl.uniform1f(uniforms.uTime, time);
+        if (uniforms.u_resolution) gl.uniform2f(uniforms.u_resolution, canvas.width, canvas.height);
+        else if (uniforms.uResolution) gl.uniform2f(uniforms.uResolution, canvas.width, canvas.height);
+        if (uniforms.uColor) gl.uniform3f(uniforms.uColor, 1.0, 1.0, 1.0);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        requestAnimationFrame(render);
     }
     render();
 })();

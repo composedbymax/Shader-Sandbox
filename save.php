@@ -9,14 +9,15 @@ if (!$json || !isset($json['title'], $json['vert'], $json['frag'], $json['previe
 }
 $entry = [
   'title' => htmlspecialchars($json['title']),
-  'vert' => $json['vert'],
-  'frag' => $json['frag'],
+  'vert' => json_decode($json['vert']), // decode from string
+  'frag' => json_decode($json['frag']), // decode from string
   'preview' => $json['preview'],
   'user' => htmlspecialchars($_SESSION['user'])
 ];
+
 $file = 'public.json';
 $shaders = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
 $shaders[] = $entry;
-file_put_contents($file, json_encode($shaders, JSON_PRETTY_PRINT));
+file_put_contents($file, json_encode($shaders, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
 echo "Shader saved!";
 ?>

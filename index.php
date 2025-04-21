@@ -7,11 +7,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="A web app to share/store/preview GLSL shaders">
   <meta name="theme-color" content="#252525">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="author" content="MAX WARREN">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <script>window.userLoggedIn = <?php echo isset($_SESSION['user']) ? 'true' : 'false'; ?>;window.userRole = <?php echo isset($_SESSION['user_role']) ? json_encode($_SESSION['user_role']) : 'null'; ?>;</script>
   <link rel="preload" href="style.css" as="style">
   <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
 </head>
 <body>
   <div id="app">
@@ -50,7 +52,7 @@
       <div id="vertPanel" class="editor-panel">
         <div class="panel-header">
           <span>Vertex Shader</span>
-          <button type="button" id="vertFileBtn">Choose File<span class="file-name" id="vertFileName"></span></button>
+          <button type="button" id="vertFileBtn">Upload<span class="file-name" id="vertFileName"></span></button>
           <input type="file" id="vertFile" accept=".vert,.vs,.txt" />
         </div>
         <textarea id="vertCode">
@@ -63,7 +65,7 @@ void main() {
       <div id="fragPanel" class="editor-panel">
         <div class="panel-header">
           <span>Fragment Shader</span>
-          <button type="button" id="fragFileBtn">Choose File<span class="file-name" id="fragFileName"></span></button>
+          <button type="button" id="fragFileBtn">Upload<span class="file-name" id="fragFileName"></span></button>
           <input type="file" id="fragFile" accept=".frag,.fs,.txt" />
         </div>
         <textarea id="fragCode">precision highp float;
