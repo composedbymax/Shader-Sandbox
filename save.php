@@ -9,12 +9,11 @@ if (!$json || !isset($json['title'], $json['vert'], $json['frag'], $json['previe
 }
 $entry = [
   'title' => htmlspecialchars($json['title']),
-  'vert' => json_decode($json['vert']), // decode from string
-  'frag' => json_decode($json['frag']), // decode from string
+  'vert' => json_decode($json['vert']),
+  'frag' => json_decode($json['frag']),
   'preview' => $json['preview'],
   'user' => htmlspecialchars($_SESSION['user'])
 ];
-
 $file = 'public.json';
 $shaders = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
 $shaders[] = $entry;

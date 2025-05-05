@@ -1,19 +1,28 @@
-<?php require '../session.php' ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <title>GLSL</title>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="A web app to share/store/preview GLSL shaders">
+  <meta name="author" content="github.com/composedbymax">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#252525">
-  <meta name="referrer" content="strict-origin-when-cross-origin">
-  <meta name="author" content="MAX WARREN">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="/assets/img/icon-192.png">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(self), camera=(self)">
+  <meta http-equiv="X-XSS-Protection" content="1; mode=block">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <script>window.userLoggedIn = <?php echo isset($_SESSION['user']) ? 'true' : 'false'; ?>;window.userRole = <?php echo isset($_SESSION['user_role']) ? json_encode($_SESSION['user_role']) : 'null'; ?>;</script>
   <link rel="preload" href="style.css" as="style">
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="/assets/css/slider.css">
+  <link rel="stylesheet" href="/assets/css/root.css">
 </head>
 <body>
   <div id="app">
@@ -86,6 +95,8 @@ void main() {
     </div>
   </div>
   <script src="script.js" async></script>
-  <script src="save.js"></script>
+  <script src="recorder.js" async></script>
+  <script src="save.js" defer></script>
+  <script src="performance.js"></script>
 </body>
 </html>

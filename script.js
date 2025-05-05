@@ -39,8 +39,20 @@ let program = null,
     drag = { type: null, startPos: 0, startSize: 0 };
 const quadVerts = new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]);
 const buf = gl.createBuffer();
+const performanceMonitor = new GLSLPerformanceMonitor(canvas, {
+    sampleSize: 120,
+    showFPS: true,
+    showMemory: true,
+    showGPUInfo: true,
+    showDrawCalls: true,
+    overlayPosition: 'top-left'
+  });
 gl.bindBuffer(gl.ARRAY_BUFFER, buf);
 gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
+gl.enable(gl.BLEND);
+gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+gl.clearColor(0.0, 0.0, 0.0, 1.0);
+gl.clear(gl.COLOR_BUFFER_BIT);
 function initSplit() {
     const totalH = editors.clientHeight - rowDivider.offsetHeight;
     vertPanel.style.height = fragPanel.style.height = (totalH / 2) + 'px';

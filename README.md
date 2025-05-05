@@ -12,7 +12,7 @@
 
 # GLSL Editor - Max Warren
 
-A browser-based GLSL (OpenGL Shading Language) editor for writing, testing, and exporting vertex and fragment shaders. This tool allows users to interactively build shaders and preview them in real-time using WebGL.
+A browser-based GLSL (OpenGL Shading Language) editor for writing, testing, recording and exporting vertex and fragment shaders or standalone .html animations. Users can interactively build shaders and preview them in real-time using WebGL.
 
 ---
 
@@ -23,6 +23,8 @@ A browser-based GLSL (OpenGL Shading Language) editor for writing, testing, and 
 - **File Support**: Load and edit `.vert`, `.frag`, `.vs`, `.fs`, and `.txt` files.
 - **Fullscreen Preview**: Toggle fullscreen mode for a larger preview area.
 - **Export Options**: Export your shaders as `.vert` or `.frag` files, or generate a full HTML file to run your shaders externally.
+- **Record Webm/MP4**: Record your animaiton as a video file for easy sharing.
+- **Runtime Metrics**: Monitors WebGL canvas performance by tracking FPS, memory usage, GPU details, and draw calls.
 - **Syntax Linting**: View error messages for syntax issues in your shaders.
 - **Responsive Layout**: Adjustable editor layout with drag-and-drop resizing for the panels.
 
@@ -30,7 +32,7 @@ A browser-based GLSL (OpenGL Shading Language) editor for writing, testing, and 
 
 ## Usage
 
-1. **Open the HTML file in your browser.**
+1. **Run With MAMP or Similar PHP Local Server Equivalent**
 2. **Edit Shaders:**
    - Write your vertex and fragment shaders directly in the provided text areas.
    - Alternatively, load shader files by clicking on the "Choose File" buttons or dragging files into the text areas.
@@ -46,7 +48,7 @@ A browser-based GLSL (OpenGL Shading Language) editor for writing, testing, and 
 
 ## Development
 
-This application is built using HTML5, CSS, and JavaScript, relying on the WebGL API for rendering and shader compilation. It is designed to be a simple, client-side tool with no server-side dependencies.
+This application is built using PHP, HTML5, CSS, and JavaScript, relying on the WebGL API for rendering and shader compilation. It is designed to be a simple, client-side tool with no server-side dependencies, external frameworks or libraries.
 
 ---
 
@@ -55,15 +57,7 @@ This application is built using HTML5, CSS, and JavaScript, relying on the WebGL
 - **WebGL**: Used for rendering the shader preview on the canvas.
 - **HTML5 & CSS3**: Structuring the user interface and ensuring responsiveness.
 - **JavaScript**: Handling shader compilation, rendering logic, and file handling.
-
----
-
-## How It Works
-
-- **Shader Compilation**: The vertex and fragment shader code is compiled using WebGL. Errors are displayed in the "lint" panel.
-- **Real-Time Preview**: The shaders are rendered on a quad (2D plane) in real-time using WebGL's draw calls.
-- **Export Functionality**: Shaders can be saved to `.txt`, `.vert`, `.frag` files, or exported as a complete HTML page for external use.
-
+- **PHP**: File Saving/Auth for Public Posting.
 ---
 
 ## Browser Support
