@@ -28,6 +28,7 @@
     .replace-buttons button{padding:6px 12px;border-radius:4px;border:none;cursor:pointer;font-size:14px;}
     #cancelReplace{background:var(--D);color:#fff;}
     #confirmReplace{background:#2a6cb1;color:#fff;}
+    .line-info{padding:8px 12px;color:#aaa;font-size:12px;border-bottom:1px solid #444;text-align:center;}
   `;
   const styleEl = create('style');
   styleEl.textContent = styleCSS;
@@ -56,6 +57,41 @@
     item.addEventListener('click', (e) => { e.stopPropagation(); hide(menu); handler(); });
     menu.append(item);
   };
+  const getLineInfo = (element, position) => {
+    if (!element) return null;
+    let text, cursorPos;
+    if (['INPUT', 'TEXTAREA'].includes(element.tagName)) {
+      text = element.value;
+      cursorPos = element.selectionStart;
+    } else if (element.isContentEditable) {
+      text = element.textContent;
+      const selection = window.getSelection();
+      if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const preCaretRange = range.cloneRange();
+        preCaretRange.selectNodeContents(element);
+        preCaretRange.setEnd(range.endContainer, range.endOffset);
+        cursorPos = preCaretRange.toString().length;
+      } else {
+        cursorPos = 0;
+      }
+    } else {
+      return null;
+    }
+    if (position !== undefined) cursorPos = position;
+    if (cursorPos === undefined) return null;
+    const textBeforeCursor = text.substring(0, cursorPos);
+    const lines = textBeforeCursor.split('\n');
+    const currentLine = lines.length;
+    const totalLines = text.split('\n').length;
+    const column = lines[lines.length - 1].length + 1;
+    return {
+      currentLine,
+      column,
+      totalLines,
+      cursorPos
+    };
+  };
   const replaceAll = (findText, replaceText) => {
     if (!isEditable || !targetEl) return;
     if (['INPUT', 'TEXTAREA'].includes(targetEl.tagName)) {
@@ -82,6 +118,23 @@
     selectedText = window.getSelection().toString();
     hasSelection = !!selectedText;
     menu.innerHTML = '';
+    if (isEditable) {
+      let cursorPos;
+      if (['INPUT', 'TEXTAREA'].includes(targetEl.tagName)) {
+        const clickPos = getClickPositionInTextArea(e, targetEl);
+        if (clickPos !== null) {
+          cursorPos = clickPos;
+        } else {
+          cursorPos = targetEl.selectionStart;
+        }
+      }
+      const lineInfo = getLineInfo(targetEl, cursorPos);
+      if (lineInfo) {
+        const lineInfoEl = create('div', { class: 'line-info' });
+        lineInfoEl.textContent = `Line ${lineInfo.currentLine} of ${lineInfo.totalLines} (Col: ${lineInfo.column})`;
+        menu.append(lineInfoEl);
+      }
+    }
     if (hasSelection) {
       addItem('Copy', () => document.execCommand('copy'));
       if (isEditable) {
@@ -150,6 +203,29 @@
     menu.style.top = `${y}px`;
     show(menu);
   });
+  function getClickPositionInTextArea(mouseEvent, textArea) {
+    if (!['INPUT', 'TEXTAREA'].includes(textArea.tagName)) return null;
+    try {
+      if (textArea.tagName === 'TEXTAREA') {
+        textArea.focus();
+        if (document.caretPositionFromPoint) {
+          const range = document.caretPositionFromPoint(mouseEvent.clientX, mouseEvent.clientY);
+          if (range && range.offsetNode === textArea.firstChild) {
+            return range.offset;
+          }
+        }
+        if (document.caretRangeFromPoint) {
+          const range = document.caretRangeFromPoint(mouseEvent.clientX, mouseEvent.clientY);
+          if (range && range.startContainer === textArea.firstChild) {
+            return range.startOffset;
+          }
+        }
+      }
+      return textArea.selectionStart;
+    } catch (e) {
+      return textArea.selectionStart;
+    }
+  }
   document.addEventListener('click', (e) => {
     if (!replaceDialog.contains(e.target)) hide(menu);
   });
