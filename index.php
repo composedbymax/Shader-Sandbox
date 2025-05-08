@@ -1,7 +1,8 @@
+<?php require '../session.php' ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>GLSL</title>
+  <title>CODEVANILLA</title>
   <meta charset="UTF-8">
   <meta name="description" content="A web app to share/store/preview GLSL shaders">
   <meta name="author" content="github.com/composedbymax">
@@ -19,6 +20,7 @@
   <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(self), camera=(self)">
   <meta http-equiv="X-XSS-Protection" content="1; mode=block">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <script>window.userLoggedIn = <?php echo isset($_SESSION['user']) ? 'true' : 'false'; ?>;window.userRole = <?php echo isset($_SESSION['user_role']) ? json_encode($_SESSION['user_role']) : 'null'; ?>;</script>
   <link rel="preload" href="style.css" as="style">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="/assets/css/slider.css">
@@ -94,9 +96,7 @@ void main() {
       <div id="lint"></div>
     </div>
   </div>
-  <script src="script.js" async></script>
-  <script src="recorder.js" async></script>
-  <script src="save.js" defer></script>
-  <script src="performance.js"></script>
+  <script src="right.js"></script>
+  <script src="main.js"></script>
 </body>
 </html>

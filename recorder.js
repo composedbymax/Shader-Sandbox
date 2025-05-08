@@ -33,6 +33,16 @@
       background: var(--d); color: var(--l); border: none;
       padding: 8px; cursor: pointer;
       z-index: 100; font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #recBtn svg {
+      width: 14px;
+      height: 14px;
+    }
+    #recBtn svg circle {
+      fill: #ff0000;
     }
     #recordingIndicator {
       display: none; position: absolute; top: 10px; right: 10px;
@@ -51,11 +61,14 @@
   recIndicator.id = 'recordingIndicator';
   recIndicator.textContent = '● RECORDING';
   container.appendChild(recIndicator);
+  
+  // Create button with SVG circle icon instead of emoji
   const recBtn = document.createElement('button');
   recBtn.id = 'recBtn';
-  recBtn.textContent = '⏺';
   recBtn.title = 'Record Settings';
+  recBtn.innerHTML = `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40"/></svg>`;
   container.appendChild(recBtn);
+  
   const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   const settingsPanel = document.createElement('div');
@@ -76,14 +89,13 @@
     </label>
     <label>Codec: 
       <select id="recCodec">
+        <option value="h264" selected>H.264 (MP4)</option>
         ${isSafari || isIOS ? 
-          `<option value="h264" selected>H.264 (Safari Compatible)</option>
-           <option value="vp9" disabled>VP9 (Not supported in Safari)</option>
+          `<option value="vp9" disabled>VP9 (Not supported in Safari)</option>
            <option value="vp8" disabled>VP8 (Not supported in Safari)</option>` 
         : 
-          `<option value="vp9" selected>VP9 (Higher Quality)</option>
-           <option value="vp8">VP8 (Better Compatibility)</option>
-           <option value="h264">H.264 (Safari Compatible)</option>`
+          `<option value="vp9">VP9 (WebM)</option>
+           <option value="vp8">VP8 (WebM)</option>`
         }
       </select>
     </label>

@@ -84,11 +84,14 @@
   }
   function shaderCard(shader, key) {
     const d = document.createElement('div');
-    d.style = 'border:1px solid var(--4);padding:6px;margin-bottom:8px;';
+    d.style = 'border:1px solid var(--4);padding:4px;margin-bottom:8px;';
     const index = window._shaderList.length;
     window._shaderList.push(shader);
     d.innerHTML = `
-      <strong>${shader.title}</strong> ${shader.user ? 'by ' + shader.user : ''}<br>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <strong style="display:inline-block;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${shader.title}">${shader.title}</strong>
+        ${shader.user ? `<span style="font-size:0.85em;color:var(--5);">by ${shader.user}</span>` : ''}
+      </div>
       <img src="${shader.preview}" class="img"><br>
       <button class="ldbtn" data-index="${index}">Load</button>
       ${key ? `<button class="xbtn" onclick='deleteLocal("${key}")'>X</button>` : ''}

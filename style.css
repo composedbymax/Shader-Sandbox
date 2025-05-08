@@ -18,13 +18,13 @@ textarea { flex: 1; background: var(--2); color: var(--6); border: none; padding
 .expbtn {position: absolute;bottom: 10px;right: 10px;background: var(--d);color: var(--l);padding: 12px 10px;border: none;cursor: pointer;}.expbtn:hover {background:var(--5);}
 .savew {display:none; position:absolute; width:100%; height:100%; background:var(--2); color:var(--6); padding:10px; z-index:100;}
 .toggles {display:flex; margin-bottom:10px;}
-.togbtn {flex:1;border:none;padding:16px 0px;cursor:pointer;}
+.togbtn {flex: 1;border: none;padding: 16px 0px;cursor: pointer;white-space: normal;word-break: break-word;overflow-wrap: break-word;text-align: center;}
 .savesct {display:none; overflow:auto; height:90%;padding:10px;} 
 .closebtn {width:94%; position:absolute; bottom: 12px;background:var(--5);color:var(--7);border:none;cursor:pointer;padding:var(--pad);}
-.savebtn {background:var(--5);color:var(--7);border:none;cursor:pointer;padding:var(--pad);}
+.savebtn {background:var(--5);color:var(--7);border:none;cursor:pointer;padding:var(--pad);word-break: break-word;overflow-wrap: break-word;text-align: center;}
 .upldzone {border:2px dashed var(--4);padding:20px;text-align:center;margin-bottom:10px;cursor:pointer;background:var(--3);color:var(--7);overflow-wrap: break-word;}
 .saveinput {width:100%;padding:5px;margin-bottom:10px;background:var(--3);color:var(--7);border:none;}
 .img {margin:6px 0;max-width:100%}
-.ldbtn {padding:6px;background:var(--5);color:var(--7);border:none;cursor:pointer;width:100%;}
+.ldbtn {padding:6px;background:var(--5);color:var(--7);border:none;cursor:pointer;width:80%}
 .xbtn {float:right;padding:4px;background:var(--5);color:var(--7);border:none;cursor:pointer;}
 @media (max-width: 767px) {#divider { width: 12px;transition:0.5s all;}#rowDivider { height: 12px;transition:0.5s all;}}
