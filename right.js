@@ -5,6 +5,111 @@
   let isEditable = false;
   let hasSelection = false;
   let selectedText = '';
+  const history = {
+    stack: [],
+    index: -1,
+    maxSize: 50,
+    push(state) {
+      this.stack = this.stack.slice(0, this.index + 1);
+      this.stack.push(state);
+      if (this.stack.length > this.maxSize) {
+        this.stack.shift();
+      } else {
+        this.index++;
+      }
+    },
+    canUndo() {
+      return this.index >= 0;
+    },
+    canRedo() {
+      return this.index < this.stack.length - 1;
+    },
+    undo() {
+      if (!this.canUndo()) return null;
+      const state = this.stack[this.index];
+      this.index--;
+      return state;
+    },
+    redo() {
+      if (!this.canRedo()) return null;
+      this.index++;
+      const state = this.stack[this.index];
+      return state;
+    }
+  };
+  const saveState = (element, operation = 'unknown') => {
+    if (!element) return;
+    let value, selectionStart, selectionEnd;
+    if (['INPUT', 'TEXTAREA'].includes(element.tagName)) {
+      value = element.value;
+      selectionStart = element.selectionStart;
+      selectionEnd = element.selectionEnd;
+    } else if (element.isContentEditable) {
+      value = element.innerHTML;
+      const sel = window.getSelection();
+      if (sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        selectionStart = range.startOffset;
+        selectionEnd = range.endOffset;
+      }
+    } else {
+      return;
+    }
+    history.push({
+      element,
+      value,
+      selectionStart,
+      selectionEnd,
+      operation,
+      timestamp: Date.now()
+    });
+  };
+  const restoreState = (state) => {
+    if (!state || !state.element) return;
+    const { element, value, selectionStart, selectionEnd } = state;
+    if (['INPUT', 'TEXTAREA'].includes(element.tagName)) {
+      element.value = value;
+      if (selectionStart !== undefined && selectionEnd !== undefined) {
+        element.setSelectionRange(selectionStart, selectionEnd);
+      }
+    } else if (element.isContentEditable) {
+      element.innerHTML = value;
+      if (selectionStart !== undefined && selectionEnd !== undefined) {
+        try {
+          const range = document.createRange();
+          const textNode = element.firstChild;
+          if (textNode) {
+            range.setStart(textNode, Math.min(selectionStart, textNode.textContent.length));
+            range.setEnd(textNode, Math.min(selectionEnd, textNode.textContent.length));
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+        } catch (e) {
+          element.focus();
+        }
+      }
+    }
+    element.focus();
+    window.rebuildProgram?.();
+    window.render?.();
+  };
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key === 'z') {
+      e.preventDefault();
+      const state = history.undo();
+      if (state) {
+        restoreState(state);
+      }
+    } else if (((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'z') || 
+               ((e.metaKey || e.ctrlKey) && e.key === 'y')) {
+      e.preventDefault();
+      const state = history.redo();
+      if (state) {
+        restoreState(state);
+      }
+    }
+  });
   const qs = (selector, ctx = document) => ctx.querySelector(selector);
   const qsa = (selector, ctx = document) => Array.from(ctx.querySelectorAll(selector));
   const create = (tag, attrs = {}, html = '') => {
@@ -17,6 +122,8 @@
     .custom-context-menu{background:var(--d);border:0.3px solid var(--l);border-radius:4px;user-select:none;position:absolute;z-index:99999;min-width:150px;display:none;}
     .custom-context-menu-item{padding:8px 12px;color:#fff;cursor:pointer;font-size:12px;}
     .custom-context-menu-item:hover{background:var(--D);}
+    .custom-context-menu-item.disabled{color:#666;cursor:not-allowed;}
+    .custom-context-menu-item.disabled:hover{background:transparent;}
     .custom-context-menu-separator{height:2px;background:#444;margin:5px 0;}
     .line-info{padding:8px 12px;color:#aaa;font-size:12px;border-bottom:1px solid #444;text-align:center;}
     .inline-control{padding:8px 12px;background:var(--D);}
@@ -38,14 +145,16 @@
   const show = el => el.style.display = 'block';
   hide(menu);
   const clearPress = () => clearTimeout(pressTimer);
-  const addItem = (label, handler) => {
-    const item = create('div', { class: 'custom-context-menu-item' });
+  const addItem = (label, handler, disabled = false) => {
+    const item = create('div', { class: `custom-context-menu-item${disabled ? ' disabled' : ''}` });
     item.textContent = label;
-    item.addEventListener('click', e => {
-      e.stopPropagation();
-      hide(menu);
-      handler();
-    });
+    if (!disabled) {
+      item.addEventListener('click', e => {
+        e.stopPropagation();
+        hide(menu);
+        handler();
+      });
+    }
     menu.append(item);
   };
   const addInlineControl = (content) => {
@@ -83,12 +192,15 @@
   };
   const replaceAll = (findText, replaceText) => {
     if (!isEditable || !targetEl) return;
+    saveState(targetEl, 'replace-all');
     if (['INPUT','TEXTAREA'].includes(targetEl.tagName)) {
       targetEl.value = targetEl.value.split(findText).join(replaceText);
     } else {
       const root = targetEl.closest('[contenteditable]');
       if (root) root.innerHTML = root.innerHTML.split(findText).join(replaceText);
     }
+    window.rebuildProgram?.();
+    window.render?.();
   };
   document.addEventListener('touchstart', e => {
     pressTimer = setTimeout(() => {
@@ -154,7 +266,12 @@
         start = info.cursorPos - selectedText.length;
         end   = info.cursorPos;
       }
+      let stateSaved = false;
       const update = () => {
+        if (!stateSaved) {
+          saveState(targetEl, 'number-adjust');
+          stateSaved = true;
+        }
         const raw = slider.value;
         const v = parseFloat(raw).toFixed(3);
         display.textContent = v;
@@ -217,7 +334,10 @@
             <button class="btn-confirm replace-confirm">Replace</button>
           </div>
         `);
-        addItem('Cut', () => document.execCommand('cut'));
+        addItem('Cut', () => {
+          saveState(targetEl, 'cut');
+          document.execCommand('cut');
+        });
         addItem('Copy', () => document.execCommand('copy'));
         const replaceInput = control.querySelector('.replace-input');
         replaceInput.focus();
@@ -225,8 +345,6 @@
           evt.stopPropagation();
           replaceAll(selectedText, replaceInput.value);
           hide(menu);
-          window.rebuildProgram?.();
-          window.render?.();
         };
         control.querySelector('.replace-cancel').onclick = (evt) => {
           evt.stopPropagation();
@@ -237,6 +355,7 @@
     }
     if (isEditable) {
       addItem('Paste', async () => {
+        saveState(targetEl, 'paste');
         let text = '';
         try { text = await navigator.clipboard.readText(); } catch {}
         if (['INPUT','TEXTAREA'].includes(targetEl.tagName)) {
@@ -259,6 +378,8 @@
           }
           targetEl.focus();
         }
+        window.rebuildProgram?.();
+        window.render?.();
       });
       addItem('Copy Text Field', () => {
         targetEl.focus();
@@ -267,9 +388,12 @@
         document.execCommand('copy');
       });
       addItem('Delete All (Text Field)', () => {
+        saveState(targetEl, 'delete-all');
         targetEl.focus();
         if (['INPUT','TEXTAREA'].includes(targetEl.tagName)) targetEl.value = '';
         else targetEl.textContent = '';
+        window.rebuildProgram?.();
+        window.render?.();
       });
     }
     addItem('Copy All', () => {
@@ -282,21 +406,30 @@
       sel.removeAllRanges();
     });
     menu.append(create('div', { class: 'custom-context-menu-separator' }));
-      addItem('Back', () => history.back());
-      addItem('Reload', () => location.reload());
-      menu.style.visibility = 'hidden';
-      menu.style.display = 'block';
-      const { width, height } = menu.getBoundingClientRect();
-      menu.style.display = 'none';
-      menu.style.visibility = '';
-      let x = e.clientX, y = e.clientY;
-      if (x + width > window.innerWidth) x = window.innerWidth - width - 5;
-      if (y + height > window.innerHeight) {
-        y = e.clientY - height;
-        if (y < 5) y = 5;
-      }
-      menu.style.left = `${x}px`;
-      menu.style.top  = `${y}px`;
+    addItem('Undo', () => {
+      const state = history.undo();
+      if (state) restoreState(state);
+    }, !history.canUndo());
+    addItem('Redo', () => {
+      const state = history.redo();
+      if (state) restoreState(state);
+    }, !history.canRedo());
+    menu.append(create('div', { class: 'custom-context-menu-separator' }));
+    addItem('Back', () => history.back());
+    addItem('Reload', () => location.reload());
+    menu.style.visibility = 'hidden';
+    menu.style.display = 'block';
+    const { width, height } = menu.getBoundingClientRect();
+    menu.style.display = 'none';
+    menu.style.visibility = '';
+    let x = e.clientX, y = e.clientY;
+    if (x + width > window.innerWidth) x = window.innerWidth - width - 5;
+    if (y + height > window.innerHeight) {
+      y = e.clientY - height;
+      if (y < 5) y = 5;
+    }
+    menu.style.left = `${x}px`;
+    menu.style.top  = `${y}px`;
     show(menu);
   });
   function getClickPositionInTextArea(mouseEvent, textArea) {
