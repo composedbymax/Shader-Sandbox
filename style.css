@@ -10,12 +10,13 @@ html, body { width: 100%; height: 100%; overflow: hidden; font-family: Consolas,
 .panel-header button:hover, #divider:hover,#fsBtn:hover {background: var(--5);}
 #rowDivider { height: 8px; background: var(--4); cursor: row-resize; flex: none;}
 textarea { flex: 1; background: var(--2); color: var(--6); border: none; padding: var(--pad); font-size: 0.95em; line-height: 1.4; resize: none; overflow: auto; outline: none; }
-#divider { width: 10px; background: var(--3); cursor: col-resize; }
+#divider { width: 10px; background: var(--3); cursor: col-resize;}
 #preview-panel { flex: 1; position: relative; background: var(--1); display: flex; justify-content: center; align-items: center; }
 #lint { position: absolute; bottom: 0; left: 0; width: 100%; max-height: 20%; background: var(--0); color: var(--r); font-size: 0.9em; overflow: auto; white-space: pre-wrap; }
 #glcanvas { width: 100%; height: 100%; display: block; }
 #fsBtn { position: absolute; top: 10px; right: 10px; z-index: 10; background: var(--d); color: var(--6); border: none; padding: var(--pad); font-size: 1em; cursor: pointer; }
-.expbtn {position: absolute;bottom: 10px;right: 10px;background: var(--d);color: var(--l);padding: 12px 10px;border: none;cursor: pointer;}.expbtn:hover {background:var(--5);}
+.lbtn {position: absolute;bottom: 10px;right: 10px;background: var(--d);color: var(--l);padding: 12px 10px;border: none;cursor: pointer;}.expbtn:hover {background:var(--5);}
+.expbtn {position: absolute;bottom: 10px;right: 60px;background: var(--d);color: var(--l);padding: 12px 10px;border: none;cursor: pointer;z-index:4;}.lbtn:hover {background:var(--5);}
 .savew {display:none; position:absolute; width:100%; height:100%; background:var(--2); color:var(--6); padding:10px; z-index:100;}
 .toggles {display:flex; margin-bottom:10px;}
 .togbtn {flex: 1;border: none;padding: 16px 0px;cursor: pointer;white-space: normal;word-break: break-word;overflow-wrap: break-word;text-align: center;}
@@ -25,6 +26,6 @@ textarea { flex: 1; background: var(--2); color: var(--6); border: none; padding
 .upldzone {border:2px dashed var(--4);padding:20px;text-align:center;margin-bottom:10px;cursor:pointer;background:var(--3);color:var(--7);overflow-wrap: break-word;}
 .saveinput {width:100%;padding:5px;margin-bottom:10px;background:var(--3);color:var(--7);border:none;}
 .img {margin:6px 0;max-width:100%}
-.ldbtn {padding:6px;background:var(--5);color:var(--7);border:none;cursor:pointer;width:80%}
+.ldbtn {padding:6px;background:var(--5);color:var(--7);border:none;cursor:pointer;width:80%;max-width:12.5rem;}
 .xbtn {float:right;padding:4px;background:var(--5);color:var(--7);border:none;cursor:pointer;}
 @media (max-width: 767px) {#divider { width: 12px;transition:0.5s all;}#rowDivider { height: 12px;transition:0.5s all;}}

@@ -27,7 +27,7 @@ const app = $('app'),
         if (!gl) {
             alert('WebGL is not supported in your browser.');
         } else {
-            console.log(`Using ${gl.getParameter(gl.VERSION)} context.`);
+            console.log(`${gl.getParameter(gl.VERSION)} context`);
         }
 if (!gl) { alert('WebGL not supported'); return; }
 let program = null,
@@ -289,7 +289,7 @@ function addExportButtons() {
     fragExportBtn.onclick = () => exportShader('frag', fragTA.value);
     fragPanel.querySelector('.panel-header').appendChild(fragExportBtn);
     const fullExportBtn = document.createElement('button');
-    fullExportBtn.textContent = 'Export Full';
+    fullExportBtn.textContent = 'Export';
     fullExportBtn.style.position = 'absolute';
     fullExportBtn.classList.add('expbtn');
     fullExportBtn.onclick = exportFullHTML;

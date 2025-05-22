@@ -11,6 +11,8 @@
       background: var(--d); color: var(--l); padding: 10px;
       z-index: 100; font-size: 0.9rem;
       min-width: 240px;
+      max-height:80%;
+      overflow-y: auto;
     }
     #recSettings label { display: block; margin-bottom: 6px; }
     #recSettings input { margin-left: 4px; }
@@ -36,6 +38,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      z-index:1;
     }
     #recBtn svg {
       width: 14px;
@@ -61,14 +64,11 @@
   recIndicator.id = 'recordingIndicator';
   recIndicator.textContent = '● RECORDING';
   container.appendChild(recIndicator);
-  
-  // Create button with SVG circle icon instead of emoji
   const recBtn = document.createElement('button');
   recBtn.id = 'recBtn';
   recBtn.title = 'Record Settings';
   recBtn.innerHTML = `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40"/></svg>`;
   container.appendChild(recBtn);
-  
   const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   const settingsPanel = document.createElement('div');
@@ -177,7 +177,6 @@
         'video/webm;codecs=h264'
       ]
     };
-    
     const types = codecOptions[codec] || [];
     for (const type of types) {
       if (MediaRecorder.isTypeSupported(type)) {

@@ -1,3 +1,10 @@
+<!-- 
+  ____   _       ____    _      
+ / ___| | |     / ___|  | |     
+| |  _  | |___  \___ \  | |___  
+ \____| |_____| |____/  |_____|
+created by Max Warren
+ -->
 <?php require '../session.php' ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -29,7 +36,7 @@
 <body>
   <div id="app">
     <div id="editors">
-      <button class="expbtn" onclick="openShaderWindow()">Save / Browse</button>
+      <button class="lbtn" onclick="openShaderWindow()">Save / Browse</button>
       <div id="shaderWindow" class="savew">
         <div class="toggles">
           <button id="tabSaveBtn" onclick="showTab('save')" class="togbtn">Save</button>
@@ -79,14 +86,70 @@ void main() {
           <button type="button" id="fragFileBtn">Upload<span class="file-name" id="fragFileName"></span></button>
           <input type="file" id="fragFile" accept=".frag,.fs,.txt" />
         </div>
-        <textarea id="fragCode">precision highp float;
-uniform float u_time;
+        <textarea id="fragCode">
+//WebGL editor - Created By: Max Warren
+precision mediump float;
 uniform vec2 u_resolution;
+uniform float u_time;
+float hash(vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 78.23);
+    return fract(p.x * p.y);
+}
+float boxSDF(vec3 p, vec3 b) {
+    vec3 d = abs(p) - b;
+    return length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0);
+}
+float sceneSDF(vec3 p) {
+    vec2 gridPos = floor(p.xz / 4.0);
+    vec2 localPos = mod(p.xz, 4.0) - 2.0;
+    float h = hash(gridPos) * 10.0 + 2.0;
+    float d = boxSDF(vec3(localPos.x, p.y, localPos.y), vec3(1.0, h, 1.0));
+    return d;
+}
+float raymarch(vec3 ro, vec3 rd, float maxDist) {
+    float t = 0.0;
+    for(int i = 0; i < 100; i++) {
+        vec3 p = ro + rd * t;
+        float d = sceneSDF(p);
+        if(d < 0.001 || t > maxDist) break;
+        t += d * 0.1; // Step more aggressively for speed
+    }
+    return t;
+}
+vec3 getNormal(vec3 p) {
+    float e = 0.001;
+    return normalize(vec3(
+        sceneSDF(p + vec3(e, 0, 0)) - sceneSDF(p - vec3(e, 0, 0)),
+        sceneSDF(p + vec3(0, e, 0)) - sceneSDF(p - vec3(0, e, 0)),
+        sceneSDF(p + vec3(0, 0, e)) - sceneSDF(p - vec3(0, 0, e))
+    ));
+}
 void main() {
-  vec2 uv = gl_FragCoord.xy / u_resolution;
-  vec3 col = 0.5 + 0.5 * cos(u_time + uv.xyx + vec3(0,2,4));
-  gl_FragColor = vec4(col,1.0);
-}</textarea>
+    vec2 uv = (gl_FragCoord.xy / u_resolution) * 2.0 - 1.0;
+    uv.x *= u_resolution.x / u_resolution.y;
+    vec3 ro = vec3(0.0, 2.0, u_time * 5.0); // Moving forward over time
+    vec3 lookAt = vec3(0.0, 2.0, ro.z + 5.0);
+    vec3 forward = normalize(lookAt - ro);
+    vec3 right = normalize(cross(vec3(0.0,1.0,0.0), forward));
+    vec3 up = cross(forward, right);
+    vec3 rd = normalize(uv.x * right + uv.y * up + 1.5 * forward);
+    float t = raymarch(ro, rd, 100.0);
+    vec3 col = vec3(0.0);
+    if(t < 100.0) {
+        vec3 p = ro + rd * t;
+        vec3 n = getNormal(p);
+        float diff = clamp(dot(n, vec3(0.5, 1.0, 0.5)), 0.0, 1.0);
+        float glow = 0.0;
+        if(abs(mod(p.y, 2.0) - 1.0) < 0.1) { // Lights at certain Y levels
+            glow = 1.0;
+        }
+        col = mix(vec3(0.0, 0.5, 1.0) * diff, vec3(0.8, 0.2, 1.0), glow);
+        col = mix(col, vec3(0.0), 1.0 - exp(-0.02 * t * t));
+    }
+    gl_FragColor = vec4(col, 1.0);
+}
+</textarea>
       </div>
     </div>
     <div id="divider"></div>
@@ -96,7 +159,10 @@ void main() {
       <div id="lint"></div>
     </div>
   </div>
-  <script src="right.js"></script>
+  <script src="stay.js"></script>
   <script src="main.js"></script>
+  <script src="right.js"></script>
+  <script src="/assets/js/hidev.js"></script>
+  <script src="parse.js"></script>
 </body>
 </html>
