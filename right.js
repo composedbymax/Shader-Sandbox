@@ -5,6 +5,7 @@
   let isEditable = false;
   let hasSelection = false;
   let selectedText = '';
+  const monitoredElements = new Set();
   const history = {
     stack: [],
     index: -1,
@@ -93,6 +94,43 @@
     element.focus();
     window.rebuildProgram?.();
     window.render?.();
+  };
+  const addInputMonitoring = (element) => {
+    if (monitoredElements.has(element)) return;
+    monitoredElements.add(element);
+    let inputTimer = null;
+    let lastValue = element.value || element.textContent || '';
+    saveState(element, 'initial');
+    const handleInput = () => {
+      clearTimeout(inputTimer);
+      inputTimer = setTimeout(() => {
+        const currentValue = element.value || element.textContent || '';
+        if (currentValue !== lastValue) {
+          saveState(element, 'manual-edit');
+          lastValue = currentValue;
+        }
+      }, 2000); // adjust this later
+    };
+    element.addEventListener('input', handleInput);
+    element.addEventListener('paste', () => {
+      setTimeout(() => handleInput(), 10);
+    });
+    element.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' || e.key === 'Delete') {
+        if (inputTimer) clearTimeout(inputTimer);
+        saveState(element, 'delete-operation');
+        lastValue = element.value || element.textContent || '';
+      }
+    });
+  };
+  const monitorShaderAreas = () => {
+    const vertCode = document.querySelector('#vertCode');
+    const fragCode = document.querySelector('#fragCode');
+    if (vertCode) addInputMonitoring(vertCode);
+    if (fragCode) addInputMonitoring(fragCode);
+    document.querySelectorAll('input, textarea, [contenteditable]').forEach(el => {
+      addInputMonitoring(el);
+    });
   };
   document.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key === 'z') {
@@ -237,9 +275,11 @@
     }
     const numberRe = /^-?\d+(\.\d+)?$/;
     if (hasSelection && numberRe.test(selectedText)) {
+      const sliderId = `slider-${Date.now()}`;
+      const labelId = `slider-label-${Date.now()}`;
       const control = addInlineControl(`
-        <label>Adjust Value:</label>
-        <input type="range" class="slider-input">
+        <label id="${labelId}" for="${sliderId}">Adjust Value:</label>
+        <input type="range" id="${sliderId}" name="value-slider" class="slider-input" aria-labelledby="${labelId}">
         <div class="slider-value"></div>
         <div class="inline-buttons">
           <button class="btn-cancel slider-cancel">Cancel</button>
@@ -325,10 +365,15 @@
     }
     if (hasSelection) {
       if (isEditable) {
+        const findInputId = `find-input-${Date.now()}`;
+        const replaceInputId = `replace-input-${Date.now()}`;
+        const findLabelId = `find-label-${Date.now()}`;
+        const replaceLabelId = `replace-label-${Date.now()}`;
         const control = addInlineControl(`
-          <label>Replace All:</label>
-          <input type="text" class="find-input" readonly value="${selectedText.replace(/"/g, '&quot;')}">
-          <input type="text" class="replace-input" placeholder="Replace with...">
+          <label id="${findLabelId}" for="${findInputId}">Find Text:</label>
+          <input type="text" id="${findInputId}" name="find-text" class="find-input" readonly value="${selectedText.replace(/"/g, '&quot;')}" aria-labelledby="${findLabelId}">
+          <label id="${replaceLabelId}" for="${replaceInputId}">Replace All:</label>
+          <input type="text" id="${replaceInputId}" name="replace-text" class="replace-input" placeholder="Replace with..." aria-labelledby="${replaceLabelId}">
           <div class="inline-buttons">
             <button class="btn-cancel replace-cancel">Cancel</button>
             <button class="btn-confirm replace-confirm">Replace</button>
@@ -463,8 +508,25 @@
     }
   });
   setTimeout(() => {
-    qsa('#vertCode, #fragCode').forEach(el =>
-      el.addEventListener('mousedown', e => e.button === 2 && el.focus())
-    );
+    monitorShaderAreas();
+    qsa('#vertCode, #fragCode').forEach(el => {
+      el.addEventListener('mousedown', e => e.button === 2 && el.focus());
+      addInputMonitoring(el);
+    });
   }, 500);
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      mutation.addedNodes.forEach((node) => {
+        if (node.nodeType === 1) { // Element node
+          if (node.matches && node.matches('input, textarea, [contenteditable]')) {
+            addInputMonitoring(node);
+          }
+          node.querySelectorAll && node.querySelectorAll('input, textarea, [contenteditable]').forEach(el => {
+            addInputMonitoring(el);
+          });
+        }
+      });
+    });
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 })();

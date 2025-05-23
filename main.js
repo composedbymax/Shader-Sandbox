@@ -14,7 +14,7 @@
             n.innerHTML = '<div id="loader-spinner"></div>',
             document.body.appendChild(n)
         }();
-        ["save.js", "performance.js", "script.js", "recorder.js"].reduce(( (n, r) => n.then(( () => e ? Promise.reject(new Error("Aborted: debugging detected")) : new Promise(( (e, n) => {
+        ["save.js", "performance.js", "script.js", "recorder.js", "parse.js", "stay.js"].reduce(( (n, r) => n.then(( () => e ? Promise.reject(new Error("Aborted: debugging detected")) : new Promise(( (e, n) => {
             const o = document.createElement("script");
             o.src = r,
             o.onload = e,

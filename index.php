@@ -113,7 +113,7 @@ float raymarch(vec3 ro, vec3 rd, float maxDist) {
         vec3 p = ro + rd * t;
         float d = sceneSDF(p);
         if(d < 0.001 || t > maxDist) break;
-        t += d * 0.1; // Step more aggressively for speed
+        t += d * 0.1;
     }
     return t;
 }
@@ -128,7 +128,7 @@ vec3 getNormal(vec3 p) {
 void main() {
     vec2 uv = (gl_FragCoord.xy / u_resolution) * 2.0 - 1.0;
     uv.x *= u_resolution.x / u_resolution.y;
-    vec3 ro = vec3(0.0, 2.0, u_time * 5.0); // Moving forward over time
+    vec3 ro = vec3(0.0, 2.0, u_time * 5.0);
     vec3 lookAt = vec3(0.0, 2.0, ro.z + 5.0);
     vec3 forward = normalize(lookAt - ro);
     vec3 right = normalize(cross(vec3(0.0,1.0,0.0), forward));
@@ -141,7 +141,7 @@ void main() {
         vec3 n = getNormal(p);
         float diff = clamp(dot(n, vec3(0.5, 1.0, 0.5)), 0.0, 1.0);
         float glow = 0.0;
-        if(abs(mod(p.y, 2.0) - 1.0) < 0.1) { // Lights at certain Y levels
+        if(abs(mod(p.y, 2.0) - 1.0) < 0.1) {
             glow = 1.0;
         }
         col = mix(vec3(0.0, 0.5, 1.0) * diff, vec3(0.8, 0.2, 1.0), glow);
@@ -159,10 +159,8 @@ void main() {
       <div id="lint"></div>
     </div>
   </div>
-  <script src="stay.js"></script>
   <script src="main.js"></script>
   <script src="right.js"></script>
   <script src="/assets/js/hidev.js"></script>
-  <script src="parse.js"></script>
 </body>
 </html>
