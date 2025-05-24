@@ -10,6 +10,63 @@
     chooseFileBtn = $('chooseFileBtn'),
     capitalize = s => s[0].toUpperCase() + s.slice(1);
   window._localShaderList = [];
+  function createToastContainer() {
+    if (document.getElementById('toastContainer')) return;
+    const container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10000;
+      pointer-events: none;
+    `;
+    document.body.appendChild(container);
+  }
+  function showToast(message, type = 'info') {
+    createToastContainer();
+    const toast = document.createElement('div');
+    const colors = {
+      success: { bg: 'var(--2)', border: '#059669' },
+      error: { bg: '#ef4444', border: '#dc2626' },
+      info: { bg: '#3b82f6', border: '#2563eb' },
+      warning: { bg: '#993300', border: '#fff' }
+    };
+    const color = colors[type] || colors.info;
+    toast.style.cssText = `
+      background: ${color.bg};
+      color: white;
+      padding: 10px 16px;
+      border-radius: 0;
+      border: 2px solid ${color.border};
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      margin-bottom: 10px;
+      font-weight: 500;
+      font-size: 14px;
+      max-width: 400px;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+      pointer-events: auto;
+    `;
+    toast.textContent = message;
+    document.getElementById('toastContainer').appendChild(toast);
+    requestAnimationFrame(() => {
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateY(0)';
+    });
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(-20px)';
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 300);
+    }, 5000);
+  }
   class ShaderCache {
     constructor() {
       this.dbName = 'ShaderCache';
@@ -132,17 +189,21 @@
   }
   function saveLocally() {
     const title = shaderTitle.value.trim(), img = shaderImageInput.files[0];
-    if (!title || !img) return alert(!title ? "Give your shader a title!" : "Please upload a preview image for local save.");
+    if (!title) return showToast("Please provide a title", 'warning');
+    if (!img) return showToast("Please upload a preview image", 'warning');
+    
     compressImage(img, (compressedDataUrl) => {
       localStorage.setItem(`shader_${title}`, JSON.stringify({
         title, vert: vertCode.value, frag: fragCode.value, preview: compressedDataUrl
       }));
-      alert(`Saved "${title}" locally.`);
+      showToast(`Saved "${title}" locally`, 'success');
     });
   }
   function savePublic() {
     const title = shaderTitle.value.trim(), img = shaderImageInput.files[0];
-    if (!title || !img) return alert(!title ? "Give your shader a title!" : "Please upload a preview image.");
+    if (!title) return showToast("Please provide a title", 'warning');
+    if (!img) return showToast("Please upload a preview image", 'warning');
+    
     compressImage(img, (compressedDataUrl) => {
       fetch('../glsl/api/save.php', {
         method: 'POST',
@@ -157,9 +218,12 @@
       })
       .then(r => r.text())
       .then(msg => {
-        alert(msg);
+        showToast(msg, msg.toLowerCase().includes('error') ? 'error' : 'success');
         userJustSavedPublic = true;
         showTab('public');
+      })
+      .catch(err => {
+        showToast(`Error saving shader: ${err.message}`, 'error');
       });
     });
   }
@@ -170,7 +234,7 @@
     if (!shouldFetchFresh) {
       const cached = await shaderCache.getCache();
       if (cached && cached.length > 0) {
-        console.log('Using cached shader list');
+        console.log('Loaded');
         displayPublicShaders(cached);
         return;
       }
@@ -242,19 +306,21 @@
       .then(r => r.json())
       .then(shader => {
         if (shader.error) {
-          alert(`Error loading shader: ${shader.error}`);
+          showToast(`Error loading shader: ${shader.error}`, 'error');
           return;
         }
         loadShaderData(shader);
+        showToast(`Loaded "${shader.title}"`, 'success');
       })
       .catch(err => {
-        alert(`Error loading shader: ${err.message}`);
+        showToast(`Error loading shader: ${err.message}`, 'error');
       });
   }
   function loadLocalShader(index) {
     const shader = window._localShaderList[index];
     if (shader) {
       loadShaderData(shader);
+      showToast(`Loaded "${shader.title}"`, 'success');
     }
   }
   function loadShaderData(shader) {
@@ -266,11 +332,17 @@
     closeShaderWindow();
   }
   function deleteLocal(key) {
-    confirm(`Delete "${key.replace('shader_', '')}"?`) && (localStorage.removeItem(key), fetchLocalShaders());
+    const shaderName = key.replace('shader_', '');
+    if (confirm(`Delete "${shaderName}"?`)) {
+      localStorage.removeItem(key);
+      fetchLocalShaders();
+      showToast(`Deleted "${shaderName}"`, 'info');
+    }
   }
   async function clearPublicCache() {
     await shaderCache.clearCache();
-    console.log('Public shader cache cleared');
+    console.log('cache cleared');
+    showToast('Reloaded', 'info');
   }
   chooseFileBtn.addEventListener('click', () => shaderImageInput.click());
   shaderImageInput.addEventListener('change', () => {
