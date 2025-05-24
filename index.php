@@ -28,8 +28,8 @@ created by Max Warren
   <meta http-equiv="X-XSS-Protection" content="1; mode=block">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <script>window.userLoggedIn = <?php echo isset($_SESSION['user']) ? 'true' : 'false'; ?>;window.userRole = <?php echo isset($_SESSION['user_role']) ? json_encode($_SESSION['user_role']) : 'null'; ?>;</script>
-  <link rel="preload" href="style.css" as="style">
-  <link rel="stylesheet" href="style.css">
+  <link rel="preload" href="css/style.css" as="style">
+  <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="/assets/css/slider.css">
   <link rel="stylesheet" href="/assets/css/root.css">
 </head>
@@ -159,8 +159,7 @@ void main() {
       <div id="lint"></div>
     </div>
   </div>
-  <script src="main.js"></script>
-  <script src="right.js"></script>
+  <script src="scripts/main.js"></script>
   <script src="/assets/js/hidev.js"></script>
 </body>
 </html>

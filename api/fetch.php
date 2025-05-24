@@ -3,7 +3,7 @@ header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST');
 header('Access-Control-Allow-Headers: Content-Type');
-$jsonFile = 'public.json';
+$jsonFile = 'list.json';
 if (!file_exists($jsonFile)) {
     echo json_encode(['error' => 'No shaders found']);
     exit;

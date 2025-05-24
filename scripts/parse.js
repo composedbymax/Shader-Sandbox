@@ -18,6 +18,7 @@
       display: none;
     }
   `;
+  
   document.head.appendChild(styleEl);
   function createEl(tag, attrs = {}, parent = document.body) {
     const el = document.createElement(tag);

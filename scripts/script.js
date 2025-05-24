@@ -18,25 +18,24 @@ const app = $('app'),
         fragFileName = $('fragFileName'),
         fsBtn = $('fsBtn'),
         lintDiv = $('lint');
-        let gl;
-        gl = canvas.getContext('webgl2');
-        if (!gl) {
-            console.warn('WebGL2 not available, falling back to WebGL1.');
-            gl = canvas.getContext('webgl');
-        }
-        if (!gl) {
-            alert('WebGL is not supported in your browser.');
-        } else {
-            console.log(`${gl.getParameter(gl.VERSION)} context`);
-        }
+let gl;
+gl = canvas.getContext('webgl2');
+if (!gl) {
+    console.warn('WebGL2 not available, falling back to WebGL1.');
+    gl = canvas.getContext('webgl');
+}
+if (!gl) {
+    alert('WebGL is not supported in your browser.');
+} else {
+    console.log(`${gl.getParameter(gl.VERSION)} context`);
+}
 if (!gl) { alert('WebGL not supported'); return; }
 let program = null,
     attribLoc = null,
     uniforms = {},
     startTime = performance.now(),
-    drag = { type: null, startPos: 0, startSize: 0 };
-    startTime = performance.now(),
-    drag = { type: null, startPos: 0, startSize: 0 };
+    drag = { type: null, startPos: 0, startSize: 0 },
+    editorsVisible = true;
 const quadVerts = new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]);
 const buf = gl.createBuffer();
 const performanceMonitor = new GLSLPerformanceMonitor(canvas, {
@@ -46,7 +45,7 @@ const performanceMonitor = new GLSLPerformanceMonitor(canvas, {
     showGPUInfo: true,
     showDrawCalls: true,
     overlayPosition: 'top-left'
-  });
+});
 gl.bindBuffer(gl.ARRAY_BUFFER, buf);
 gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
 gl.enable(gl.BLEND);
@@ -54,25 +53,45 @@ gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 gl.clearColor(0.0, 0.0, 0.0, 1.0);
 gl.clear(gl.COLOR_BUFFER_BIT);
 function initSplit() {
-    const totalH = editors.clientHeight - rowDivider.offsetHeight;
-    vertPanel.style.height = fragPanel.style.height = (totalH / 2) + 'px';
+    if (editorsVisible) {
+        const totalH = editors.clientHeight - rowDivider.offsetHeight;
+        vertPanel.style.height = fragPanel.style.height = (totalH / 2) + 'px';
+    }
     resizeCanvas();
 }
 function resizeCanvas() {
     const w = previewPanel.clientWidth, h = previewPanel.clientHeight;
     if (canvas.width !== w || canvas.height !== h) {
-    canvas.width = w; canvas.height = h;
-    gl.viewport(0, 0, w, h);
+        canvas.width = w; 
+        canvas.height = h;
+        gl.viewport(0, 0, w, h);
     }
+}
+function toggleEditors() {
+    editorsVisible = !editorsVisible;
+    if (editorsVisible) {
+        editors.style.display = 'block';
+        divider.style.display = 'block';
+        fsBtn.textContent = '⛶';
+        fsBtn.title = 'Hide Editors';
+        app.style.gridTemplateColumns = '1fr auto 1fr';
+    } else {
+        editors.style.display = 'none';
+        divider.style.display = 'none';
+        fsBtn.textContent = '⊞';
+        fsBtn.title = 'Show Editors';
+        app.style.gridTemplateColumns = '1fr auto 1fr';
+    }
+    setTimeout(resizeCanvas, 10);
 }
 function compileShader(src, type) {
     const s = gl.createShader(type);
     gl.shaderSource(s, src);
     gl.compileShader(s);
     if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
-    const err = gl.getShaderInfoLog(s);
-    gl.deleteShader(s);
-    return { shader: null, error: err };
+        const err = gl.getShaderInfoLog(s);
+        gl.deleteShader(s);
+        return { shader: null, error: err };
     }
     return { shader: s, error: null };
 }
@@ -110,6 +129,13 @@ function rebuildProgram() {
         const loc = gl.getUniformLocation(program, info.name);
         uniforms[info.name] = { loc, type: info.type };
     }
+    Object.keys(uniforms).forEach(name => {
+        if (name.startsWith('u_') || name.startsWith('u') && name[1] == name[1].toUpperCase()) return;
+        const snake = 'u_' + name;
+        if (!(snake in uniforms)) uniforms[snake] = uniforms[name];
+        const camel = 'u' + name[0].toUpperCase() + name.slice(1);
+        if (!(camel in uniforms)) uniforms[camel] = uniforms[name];
+    });
 }
 function render() {
     if (!program) return;
@@ -173,12 +199,12 @@ fragFile.addEventListener('change', () => {
 vertTA.addEventListener('drop', e => {
     e.preventDefault();
     if (e.dataTransfer.files.length) 
-    handleFileDrop(e.dataTransfer.files[0], vertTA, vertFileName);
+        handleFileDrop(e.dataTransfer.files[0], vertTA, vertFileName);
 });
 fragTA.addEventListener('drop', e => {
     e.preventDefault();
     if (e.dataTransfer.files.length)
-    handleFileDrop(e.dataTransfer.files[0], fragTA, fragFileName);
+        handleFileDrop(e.dataTransfer.files[0], fragTA, fragFileName);
 });
 function exportFullHTML() {
     const template = `<!DOCTYPE html>
@@ -201,14 +227,14 @@ canvas { width: 100vw; height: 100vh; display: block; }
     const vertexShader = \`${vertTA.value.replace(/\\/g, '\\\\').replace(/`/g, '\\`')}\`;
     const fragmentShader = \`${fragTA.value.replace(/\\/g, '\\\\').replace(/`/g, '\\`')}\`;
     function compileShader(src, type) {
-    const s = gl.createShader(type);
-    gl.shaderSource(s, src);
-    gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
-        console.error(gl.getShaderInfoLog(s));
-        return null;
-    }
-    return s;
+        const s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+            console.error(gl.getShaderInfoLog(s));
+            return null;
+        }
+        return s;
     }
     const vs = compileShader(vertexShader, gl.VERTEX_SHADER);
     const fs = compileShader(fragmentShader, gl.FRAGMENT_SHADER);
@@ -217,8 +243,8 @@ canvas { width: 100vw; height: 100vh; display: block; }
     gl.attachShader(program, fs);
     gl.linkProgram(program);
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    console.error(gl.getProgramInfoLog(program));
-    return;
+        console.error(gl.getProgramInfoLog(program));
+        return;
     }
     const quadVerts = new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]);
     const buf = gl.createBuffer();
@@ -247,12 +273,12 @@ canvas { width: 100vw; height: 100vh; display: block; }
     }
     const startTime = performance.now();
     function resize() {
-    const w = canvas.clientWidth, h = canvas.clientHeight;
-    if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w;
-        canvas.height = h;
-        gl.viewport(0, 0, w, h);
-    }
+        const w = canvas.clientWidth, h = canvas.clientHeight;
+        if (canvas.width !== w || canvas.height !== h) {
+            canvas.width = w;
+            canvas.height = h;
+            gl.viewport(0, 0, w, h);
+        }
     }
     function render() {
         resize();
@@ -302,67 +328,48 @@ window.addEventListener('load', () => {
 window.addEventListener('resize', initSplit);
 ['mousedown', 'touchstart'].forEach(evt => {
     rowDivider.addEventListener(evt, e => {
-    drag.type = 'row';
-    drag.startPos = e.clientY || e.touches[0].clientY;
-    drag.startSize = vertPanel.getBoundingClientRect().height;
-    e.preventDefault();
+        drag.type = 'row';
+        drag.startPos = e.clientY || e.touches[0].clientY;
+        drag.startSize = vertPanel.getBoundingClientRect().height;
+        e.preventDefault();
     }, { passive: false });
+    
     divider.addEventListener(evt, e => {
-    drag.type = 'col';
-    drag.startPos = e.clientX || e.touches[0].clientX;
-    drag.startSize = editors.getBoundingClientRect().width;
-    e.preventDefault();
+        drag.type = 'col';
+        drag.startPos = e.clientX || e.touches[0].clientX;
+        drag.startSize = editors.getBoundingClientRect().width;
+        e.preventDefault();
     }, { passive: false });
 });
 ['mousemove', 'touchmove'].forEach(evt => {
     document.addEventListener(evt, e => {
-    if (!drag.type) return;
-    const pos = evt.includes('touch') ? 
-        (e.touches[0][drag.type === 'row' ? 'clientY' : 'clientX']) : 
-        (e[drag.type === 'row' ? 'clientY' : 'clientX']);
-    if (drag.type === 'row') {
-        const dy = pos - drag.startPos;
-        const totalH = editors.clientHeight - rowDivider.offsetHeight;
-        let topH = Math.max(50, Math.min(totalH - 50, drag.startSize + dy));
-        vertPanel.style.height = topH + 'px';
-        fragPanel.style.height = (totalH - topH) + 'px';
-    } else {
-        const newW = Math.max(100, Math.min(app.clientWidth - 100, drag.startSize + pos - drag.startPos));
-        editors.style.width = newW + 'px';
-    }
-    resizeCanvas();
-    e.preventDefault();
+        if (!drag.type) return;
+        const pos = evt.includes('touch') ? 
+            (e.touches[0][drag.type === 'row' ? 'clientY' : 'clientX']) : 
+            (e[drag.type === 'row' ? 'clientY' : 'clientX']);
+        if (drag.type === 'row') {
+            const dy = pos - drag.startPos;
+            const totalH = editors.clientHeight - rowDivider.offsetHeight;
+            let topH = Math.max(50, Math.min(totalH - 50, drag.startSize + dy));
+            vertPanel.style.height = topH + 'px';
+            fragPanel.style.height = (totalH - topH) + 'px';
+        } else {
+            const newW = Math.max(100, Math.min(app.clientWidth - 100, drag.startSize + pos - drag.startPos));
+            editors.style.width = newW + 'px';
+        }
+        resizeCanvas();
+        e.preventDefault();
     });
 });
 ['mouseup', 'touchend', 'touchcancel'].forEach(evt => {
     document.addEventListener(evt, () => drag.type = null);
 });
-function handleFile(input, ta) {
-    if (!input.files.length) return;
-    const r = new FileReader();
-    r.onload = e => { ta.value = e.target.result; rebuildProgram(); };
-    r.readAsText(input.files[0]);
-}
 [vertTA, fragTA].forEach(ta => ta.addEventListener('input', rebuildProgram));
 vertFile.addEventListener('change', () => handleFile(vertFile, vertTA));
 fragFile.addEventListener('change', () => handleFile(fragFile, fragTA));
-fsBtn.addEventListener('click', () => {
-    const fsElement = document.fullscreenElement || document.webkitFullscreenElement;
-    if (!fsElement) {
-    const request = previewPanel.requestFullscreen || previewPanel.webkitRequestFullscreen;
-    request.call(previewPanel);
-    } else {
-    const exit = document.exitFullscreen || document.webkitExitFullscreen;
-    exit.call(document);
-    }
-});
-['fullscreenchange', 'webkitfullscreenchange'].forEach(evt => {
-    document.addEventListener(evt, () => {
-    resizeCanvas();
-    fsBtn.textContent = (document.fullscreenElement || document.webkitFullscreenElement) ? '✕' : '⛶';
-    });
-});
+fsBtn.addEventListener('click', toggleEditors);
 rebuildProgram();
 render();
-window.rebuildProgram = rebuildProgram;window.render = render;
+window.rebuildProgram = rebuildProgram;
+window.render = render;
 })();

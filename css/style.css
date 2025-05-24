@@ -14,7 +14,7 @@ textarea { flex: 1; background: var(--2); color: var(--6); border: none; padding
 #preview-panel { flex: 1; position: relative; background: var(--1); display: flex; justify-content: center; align-items: center; }
 #lint { position: absolute; bottom: 0; left: 0; width: 100%; max-height: 20%; background: var(--0); color: var(--r); font-size: 0.9em; overflow: auto; white-space: pre-wrap; }
 #glcanvas { width: 100%; height: 100%; display: block; }
-#fsBtn { position: absolute; top: 10px; right: 10px; z-index: 10; background: var(--d); color: var(--6); border: none; padding: var(--pad); font-size: 1em; cursor: pointer; }
+#fsBtn { position: absolute; top: 10px; right: 10px; z-index: 10; background: var(--d); color: var(--6); border: none; padding: var(--pad); font-size: 1em; cursor: pointer;width:2rem; }
 .lbtn {position: absolute;bottom: 10px;right: 10px;background: var(--d);color: var(--l);padding: 12px 10px;border: none;cursor: pointer;}.expbtn:hover {background:var(--5);}
 .expbtn {position: absolute;bottom: 10px;right: 60px;background: var(--d);color: var(--l);padding: 12px 10px;border: none;cursor: pointer;z-index:4;}.lbtn:hover {background:var(--5);}
 .savew {display:none; position:absolute; width:100%; height:100%; background:var(--2); color:var(--6); padding:10px; z-index:100;}

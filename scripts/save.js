@@ -51,7 +51,7 @@
     const title = shaderTitle.value.trim(), img = shaderImageInput.files[0];
     if (!title || !img) return alert(!title ? "Give your shader a title!" : "Please upload a preview image.");
     compressImage(img, (compressedDataUrl) => {
-      fetch('save.php', {
+      fetch('../glsl/api/save.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -66,12 +66,10 @@
       .then(msg => (alert(msg), showTab('public')));
     });
   }
-  
   function fetchPublicShaders() {
     const container = $('publicShaderList');
     container.innerHTML = '<div>Loading shaders...</div>';
-    
-    fetch('fetch.php?action=list')
+    fetch('../glsl/api/fetch.php?action=list')
       .then(r => r.json())
       .then(list => {
         container.innerHTML = '';
@@ -85,12 +83,10 @@
         container.innerHTML = `<div>Error loading shaders: ${err.message}</div>`;
       });
   }
-  
   function fetchLocalShaders() {
     const container = $('localShaderList');
     container.innerHTML = '';
-    window._localShaderList = []; // Reset local list
-    
+    window._localShaderList = [];
     Object.entries(localStorage)
       .filter(([k]) => k.startsWith('shader_'))
       .forEach(([key, value]) => {
@@ -132,7 +128,7 @@
   }
   
   function loadPublicShader(token) {
-    fetch(`fetch.php?action=load&token=${token}`)
+    fetch(`../glsl/api/fetch.php?action=load&token=${token}`)
       .then(r => r.json())
       .then(shader => {
         if (shader.error) {
