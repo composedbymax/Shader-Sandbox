@@ -1,4 +1,3 @@
-//save.js
 (() => {
   const $ = id => document.getElementById(id),
     shaderWindow = $('shaderWindow'),
@@ -10,7 +9,7 @@
     uploadZone = $('uploadZone'),
     chooseFileBtn = $('chooseFileBtn'),
     capitalize = s => s[0].toUpperCase() + s.slice(1);
-  window._shaderList = [];
+  window._localShaderList = [];
   const openShaderWindow = () => (shaderWindow.style.display = 'block', showTab('save')),
         closeShaderWindow = () => (shaderWindow.style.display = 'none');
   function showTab(tab) {
@@ -45,7 +44,7 @@
       localStorage.setItem(`shader_${title}`, JSON.stringify({
         title, vert: vertCode.value, frag: fragCode.value, preview: compressedDataUrl
       }));
-      alert(`Saved “${title}” locally.`);
+      alert(`Saved "${title}" locally.`);
     });
   }
   function savePublic() {
@@ -68,38 +67,84 @@
     });
   }
   function fetchPublicShaders() {
-    fetch('public.json').then(r => r.json()).then(list => {
-      const c = $('publicShaderList');
-      c.innerHTML = '';
-      list.forEach(s => c.appendChild(shaderCard(s)));
-    });
-  }
-  function fetchLocalShaders() {
-    const c = $('localShaderList');
-    c.innerHTML = '';
-    Object.entries(localStorage)
-      .filter(([k]) => k.startsWith('shader_'))
-      .forEach(([k, v]) => {
-        try { c.appendChild(shaderCard(JSON.parse(v), k)); } catch {}
+    const container = $('publicShaderList');
+    container.innerHTML = '<div>Loading shaders...</div>';
+    fetch('fetch.php?action=list')
+      .then(r => r.json())
+      .then(list => {
+        container.innerHTML = '';
+        if (list.error) {
+          container.innerHTML = `<div>Error: ${list.error}</div>`;
+          return;
+        }
+        list.forEach(shader => container.appendChild(createPublicShaderCard(shader)));
+      })
+      .catch(err => {
+        container.innerHTML = `<div>Error loading shaders: ${err.message}</div>`;
       });
   }
-  function shaderCard(shader, key) {
-    const d = document.createElement('div');
-    d.style = 'border:1px solid var(--4);padding:4px;margin-bottom:8px;';
-    const index = window._shaderList.length;
-    window._shaderList.push(shader);
-    d.innerHTML = `
+  function fetchLocalShaders() {
+    const container = $('localShaderList');
+    container.innerHTML = '';
+    window._localShaderList = [];
+    Object.entries(localStorage)
+      .filter(([k]) => k.startsWith('shader_'))
+      .forEach(([key, value]) => {
+        try { 
+          const shader = JSON.parse(value);
+          const index = window._localShaderList.length;
+          window._localShaderList.push(shader);
+          container.appendChild(createLocalShaderCard(shader, key, index)); 
+        } catch {}
+      });
+  }
+  function createPublicShaderCard(shader) {
+    const div = document.createElement('div');
+    div.style = 'border:1px solid var(--4);padding:4px;margin-bottom:8px;';
+    div.innerHTML = `
       <div style="display:flex;align-items:center;gap:4px;">
         <strong style="display:inline-block;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${shader.title}">${shader.title}</strong>
-        ${shader.user ? `<span style="font-size:0.85em;color:var(--5);">by ${shader.user}</span>` : ''}
+        <span style="font-size:0.85em;color:var(--5);">by ${shader.user}</span>
       </div>
       <img src="${shader.preview}" class="img"><br>
-      <button class="ldbtn" data-index="${index}">Load</button>
-      ${key ? `<button class="xbtn" onclick='deleteLocal("${key}")'>X</button>` : ''}
+      <button class="ldbtn" data-public-id="${shader.id}">Load</button>
     `;
-    return d;
+    return div;
   }
-  function loadShader(shader) {
+  function createLocalShaderCard(shader, key, index) {
+    const div = document.createElement('div');
+    div.style = 'border:1px solid var(--4);padding:4px;margin-bottom:8px;';
+    div.innerHTML = `
+      <div style="display:flex;align-items:center;gap:4px;">
+        <strong style="display:inline-block;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${shader.title}">${shader.title}</strong>
+      </div>
+      <img src="${shader.preview}" class="img"><br>
+      <button class="ldbtn" data-local-index="${index}">Load</button>
+      <button class="xbtn" onclick='deleteLocal("${key}")'>X</button>
+    `;
+    return div;
+  }
+  function loadPublicShader(id) {
+    fetch(`fetch.php?action=load&id=${id}`)
+      .then(r => r.json())
+      .then(shader => {
+        if (shader.error) {
+          alert(`Error loading shader: ${shader.error}`);
+          return;
+        }
+        loadShaderData(shader);
+      })
+      .catch(err => {
+        alert(`Error loading shader: ${err.message}`);
+      });
+  }
+  function loadLocalShader(index) {
+    const shader = window._localShaderList[index];
+    if (shader) {
+      loadShaderData(shader);
+    }
+  }
+  function loadShaderData(shader) {
     shaderTitle.value = shader.title;
     vertCode.value = shader.vert;
     fragCode.value = shader.frag;
@@ -108,7 +153,7 @@
     closeShaderWindow();
   }
   function deleteLocal(key) {
-    confirm(`Delete “${key.replace('shader_', '')}”?`) && (localStorage.removeItem(key), fetchLocalShaders());
+    confirm(`Delete "${key.replace('shader_', '')}"?`) && (localStorage.removeItem(key), fetchLocalShaders());
   }
   chooseFileBtn.addEventListener('click', () => shaderImageInput.click());
   shaderImageInput.addEventListener('change', () => {
@@ -126,14 +171,18 @@
   );
   document.body.addEventListener('click', e => {
     if (e.target.classList.contains('ldbtn')) {
-      const index = e.target.getAttribute('data-index');
-      const shader = window._shaderList[index];
-      loadShader(shader);
+      const publicId = e.target.getAttribute('data-public-id');
+      const localIndex = e.target.getAttribute('data-local-index');
+      
+      if (publicId !== null) {
+        loadPublicShader(parseInt(publicId));
+      } else if (localIndex !== null) {
+        loadLocalShader(parseInt(localIndex));
+      }
     }
   });
   window.openShaderWindow = openShaderWindow;
   window.closeShaderWindow = closeShaderWindow;
-  window.loadShader = loadShader;
   window.deleteLocal = deleteLocal;
   window.showTab = showTab;
   window.saveLocally = saveLocally;
