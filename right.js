@@ -39,6 +39,7 @@
     }
   };
   const saveState = (element, operation = 'unknown') => {
+    if (element.tagName === 'INPUT' && element.type === 'file') return;
     if (!element) return;
     let value, selectionStart, selectionEnd;
     if (['INPUT', 'TEXTAREA'].includes(element.tagName)) {
@@ -68,20 +69,37 @@
   const restoreState = (state) => {
     if (!state || !state.element) return;
     const { element, value, selectionStart, selectionEnd } = state;
+    if (element.tagName === 'INPUT' && element.type === 'file') {
+      element.focus();
+      return;
+    }
     if (['INPUT', 'TEXTAREA'].includes(element.tagName)) {
       element.value = value;
-      if (selectionStart !== undefined && selectionEnd !== undefined) {
-        element.setSelectionRange(selectionStart, selectionEnd);
+      if (
+        typeof element.setSelectionRange === 'function' &&
+        Number.isInteger(selectionStart) &&
+        Number.isInteger(selectionEnd)
+      ) {
+        try {
+          element.setSelectionRange(selectionStart, selectionEnd);
+        } catch (e) {
+          console.warn('Restore Error', e);
+        }
       }
     } else if (element.isContentEditable) {
       element.innerHTML = value;
-      if (selectionStart !== undefined && selectionEnd !== undefined) {
+      if (
+        Number.isInteger(selectionStart) &&
+        Number.isInteger(selectionEnd)
+      ) {
         try {
           const range = document.createRange();
           const textNode = element.firstChild;
           if (textNode) {
-            range.setStart(textNode, Math.min(selectionStart, textNode.textContent.length));
-            range.setEnd(textNode, Math.min(selectionEnd, textNode.textContent.length));
+            const start = Math.min(selectionStart, textNode.textContent.length);
+            const end   = Math.min(selectionEnd,   textNode.textContent.length);
+            range.setStart(textNode, start);
+            range.setEnd(textNode, end);
             const sel = window.getSelection();
             sel.removeAllRanges();
             sel.addRange(range);
@@ -96,6 +114,7 @@
     window.render?.();
   };
   const addInputMonitoring = (element) => {
+    if (element.tagName === 'INPUT' && element.type === 'file') return;
     if (monitoredElements.has(element)) return;
     monitoredElements.add(element);
     let inputTimer = null;
@@ -109,7 +128,7 @@
           saveState(element, 'manual-edit');
           lastValue = currentValue;
         }
-      }, 2000); // adjust this later
+      }, 2000);
     };
     element.addEventListener('input', handleInput);
     element.addEventListener('paste', () => {
@@ -128,9 +147,10 @@
     const fragCode = document.querySelector('#fragCode');
     if (vertCode) addInputMonitoring(vertCode);
     if (fragCode) addInputMonitoring(fragCode);
-    document.querySelectorAll('input, textarea, [contenteditable]').forEach(el => {
-      addInputMonitoring(el);
-    });
+    document
+  .querySelectorAll('input:not([type=file]), textarea, [contenteditable]')
+  .forEach(el => addInputMonitoring(el));
+
   };
   document.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key === 'z') {
@@ -517,7 +537,7 @@
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       mutation.addedNodes.forEach((node) => {
-        if (node.nodeType === 1) { // Element node
+        if (node.nodeType === 1) {
           if (node.matches && node.matches('input, textarea, [contenteditable]')) {
             addInputMonitoring(node);
           }
