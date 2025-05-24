@@ -32,7 +32,7 @@
         canvas.height = img.height * scale;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        callback(canvas.toDataURL('image/jpeg', 0.6));
+        callback(canvas.toDataURL('image/jpeg', 0.5));
       };
     };
     reader.readAsDataURL(file);
@@ -66,9 +66,11 @@
       .then(msg => (alert(msg), showTab('public')));
     });
   }
+  
   function fetchPublicShaders() {
     const container = $('publicShaderList');
     container.innerHTML = '<div>Loading shaders...</div>';
+    
     fetch('fetch.php?action=list')
       .then(r => r.json())
       .then(list => {
@@ -83,10 +85,12 @@
         container.innerHTML = `<div>Error loading shaders: ${err.message}</div>`;
       });
   }
+  
   function fetchLocalShaders() {
     const container = $('localShaderList');
     container.innerHTML = '';
-    window._localShaderList = [];
+    window._localShaderList = []; // Reset local list
+    
     Object.entries(localStorage)
       .filter(([k]) => k.startsWith('shader_'))
       .forEach(([key, value]) => {
@@ -98,6 +102,7 @@
         } catch {}
       });
   }
+  
   function createPublicShaderCard(shader) {
     const div = document.createElement('div');
     div.style = 'border:1px solid var(--4);padding:4px;margin-bottom:8px;';
@@ -107,10 +112,11 @@
         <span style="font-size:0.85em;color:var(--5);">by ${shader.user}</span>
       </div>
       <img src="${shader.preview}" class="img"><br>
-      <button class="ldbtn" data-public-id="${shader.id}">Load</button>
+      <button class="ldbtn" data-public-token="${shader.token}">Load</button>
     `;
     return div;
   }
+  
   function createLocalShaderCard(shader, key, index) {
     const div = document.createElement('div');
     div.style = 'border:1px solid var(--4);padding:4px;margin-bottom:8px;';
@@ -124,8 +130,9 @@
     `;
     return div;
   }
-  function loadPublicShader(id) {
-    fetch(`fetch.php?action=load&id=${id}`)
+  
+  function loadPublicShader(token) {
+    fetch(`fetch.php?action=load&token=${token}`)
       .then(r => r.json())
       .then(shader => {
         if (shader.error) {
@@ -138,12 +145,14 @@
         alert(`Error loading shader: ${err.message}`);
       });
   }
+  
   function loadLocalShader(index) {
     const shader = window._localShaderList[index];
     if (shader) {
       loadShaderData(shader);
     }
   }
+  
   function loadShaderData(shader) {
     shaderTitle.value = shader.title;
     vertCode.value = shader.vert;
@@ -152,13 +161,16 @@
     window.render();
     closeShaderWindow();
   }
+  
   function deleteLocal(key) {
     confirm(`Delete "${key.replace('shader_', '')}"?`) && (localStorage.removeItem(key), fetchLocalShaders());
   }
+  
   chooseFileBtn.addEventListener('click', () => shaderImageInput.click());
   shaderImageInput.addEventListener('change', () => {
     fileNameDisplay.textContent = shaderImageInput.files[0]?.name || '';
   });
+  
   ['dragover', 'dragleave', 'drop'].forEach(evt =>
     uploadZone.addEventListener(evt, e => {
       e.preventDefault();
@@ -171,11 +183,11 @@
   );
   document.body.addEventListener('click', e => {
     if (e.target.classList.contains('ldbtn')) {
-      const publicId = e.target.getAttribute('data-public-id');
+      const publicToken = e.target.getAttribute('data-public-token');
       const localIndex = e.target.getAttribute('data-local-index');
       
-      if (publicId !== null) {
-        loadPublicShader(parseInt(publicId));
+      if (publicToken !== null) {
+        loadPublicShader(publicToken);
       } else if (localIndex !== null) {
         loadLocalShader(parseInt(localIndex));
       }
