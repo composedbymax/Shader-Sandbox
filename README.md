@@ -12,7 +12,7 @@
 
 # GLSL Editor - Max Warren
 
-A browser-based GLSL (OpenGL Shading Language) editor for writing, testing, recording and exporting vertex and fragment shaders or standalone .html animations. Users can interactively build shaders and preview them in real-time using WebGL.
+A browser-based GLSL (OpenGL Shading Language) editor for writing, testing, recording and exporting or loading vertex and fragment shaders or standalone .html animations. Users can interactively build shaders and preview them in real-time using WebGL.
 
 ---
 
@@ -81,3 +81,15 @@ This application requires browsers that support:
 
 - Requires a modern WebGL-capable browser.
 - Some older browsers may not support full-screen functionality or WebGL.
+
+
+
+
+## Future Updates
+
+- base64 images are large and should be saved and accessed from the best place to put them (local storage, indexedDB, possibly session storage), 
+
+only fetch the base64+name preview list from fetch.php on initial fetch (first time user hits 'public' button)
+then on subsequent times, it should be accessed from where its saved via the browser
+
+the exception is if the operating user saves something publicly, then it should fetch the preview list fresh
