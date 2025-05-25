@@ -162,5 +162,6 @@ void main() {
   </div>
   <script src="scripts/main.js"></script>
   <script src="/assets/js/hidev.js"></script>
+  <script src="scripts/audio.js"></script>
 </body>
 </html>

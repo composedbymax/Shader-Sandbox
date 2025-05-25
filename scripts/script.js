@@ -18,6 +18,7 @@ const app = $('app'),
         fragFileName = $('fragFileName'),
         fsBtn = $('fsBtn'),
         lintDiv = $('lint');
+const audioReactive = new AudioReactive();
 let fsClickTimestamps = [];
 let gl;
 gl = canvas.getContext('webgl2');
@@ -119,6 +120,7 @@ function rebuildProgram() {
         return;
     }
     program = p;
+    audioReactive.setGLContext(gl, program);
     gl.useProgram(program);
     attribLoc = gl.getAttribLocation(program, 'a_position');
     gl.enableVertexAttribArray(attribLoc);
@@ -156,6 +158,7 @@ function render() {
     if (uniforms.uColor) {
         gl.uniform3f(uniforms.uColor.loc, 1.0, 1.0, 1.0);
     }
+    audioReactive.update();
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     requestAnimationFrame(render);
 }
