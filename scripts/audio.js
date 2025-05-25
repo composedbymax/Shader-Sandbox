@@ -6,6 +6,7 @@ class AudioReactive {
     this.gl           = null;
     this.program      = null;
     this.sensitivity  = { bass:1, mid:1, treble:1, volume:1 };
+    this.showingInfo  = false;
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => this.init());
     } else {
@@ -66,6 +67,15 @@ class AudioReactive {
       </svg>
     `;
   }
+  InfoSVG() {
+    return `
+     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1" fill="none"/>
+      <line x1="12" y1="16" x2="12" y2="12" stroke="currentColor" stroke-width="2"/>
+      <circle cx="12" cy="8" r="1" fill="currentColor"/>
+    </svg>
+    `;
+  }
   Modal() {
     this.modal = this.EL(
       'div', {}, {
@@ -79,21 +89,31 @@ class AudioReactive {
       transform:'translate(-50%,-50%)',
       backgroundColor:'var(--1)', borderRadius:'2px',
       padding:'24px',
-      border:'0.1px solid var(--4)', minWidth:'320px', maxWidth:'400px'
+      border:'0.1px solid var(--4)', minWidth:'350px', maxWidth:'600px',
+      maxHeight:'80vh', overflowY:'auto'
     });
-    const header = this.EL('div', {}, {}, `
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-        <h3 style="margin:0;color:var(--7)">
-          ${this.SVG()} Controls
+    const header = this.EL('div', {}, {}, 
+      `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <h3 style="margin:0;color:var(--7);display:flex;align-items:center;gap:8px;">
+          ${this.SVG()} <span id="modal-title">Audio</span>
         </h3>
-        <button id="close-modal" style="background:none;border:none;color:var(--7);font-size:30px;cursor:pointer;">
-          ×
-        </button>
-      </div>
-    `);
+        <div style="display:flex;gap:8px;">
+          <button id="info-toggle" style="
+            background:none;border:none;color:var(--7);font-size:16px;cursor:pointer;
+            padding:4px;border-radius:2px;transition:background .2s ease;
+          " title="Show Documentation">
+            ${this.InfoSVG()}
+          </button>
+          <button id="close-modal" style="
+            background:none;border:none;color:var(--7);font-size:30px;cursor:pointer;
+          ">×</button>
+        </div>
+      </div>`
+    );
     wrap.appendChild(header);
-    wrap.appendChild(this.EL('div', {}, {}, `
-      <div style="margin-bottom:20px;padding:16px;background:var(--d);border-radius:2px">
+    this.settingsContent = this.EL('div', { id: 'settings-content' }, {});
+    this.settingsContent.appendChild(this.EL('div', {}, {}, 
+      `<div style="margin-bottom:20px;padding:0px;background:var(--d);border-radius:2px">
         <button id="audio-toggle" style="
           width:100%;padding:12px;background:var(--3);border:none;color:var(--7);border-radius:2px;
           cursor:pointer;transition:all .2s ease">
@@ -103,25 +123,22 @@ class AudioReactive {
           margin-top:8px;font-size:12px;color:var(--7);text-align:center">
           Click to enable microphone access
         </div>
-      </div>
-    `));
+      </div>`
+    ));
     const sliders = ['bass','mid','treble','volume']
-      .map(type => `
-        <div">
-          <label style="display:block;color:white">
+      .map(type => 
+        `<div style="margin-bottom:10px;">
+          <label style="display:block;color:white;margin-bottom:4px;">
             ${type[0].toUpperCase() + type.slice(1)} Sensitivity:
-            <span id="${type}-value" style="color:${this.color(type)}">1.0</span>
+            <span id="${type}-value" style="color:${this.color(type)};margin-left:8px;">1.0</span>
           </label>
-          <input id="${type}-slider" type="range"min="0.1" max="3" step="0.1" value="1.0"</div>
-      `).join('');
-    wrap.appendChild(this.EL('div', {}, {}, `
-      <h4 style="margin:0 0 16px 0;color:white;font-size:16px">
-        Sensitivity Controls
-      </h4>
-      ${sliders}
-    `));
-    wrap.appendChild(this.EL('div', {}, {}, `
-      <div style="margin-top:20px;padding:16px;background:var(--d);border-radius:0px">
+          <input id="${type}-slider" type="range" min="0.1" max="3" step="0.1" value="1.0" 
+                 style="width:100%;"/>
+        </div>`
+      ).join('');
+    this.settingsContent.appendChild(this.EL('div', {}, {}, `${sliders}`));
+    this.settingsContent.appendChild(this.EL('div', {}, {}, 
+      `<div style="margin-top:20px;padding:16px;background:var(--d);border-radius:0px">
         <h4 style="margin:0 0 12px 0;color:white;font-size:14px">
           Audio Levels
         </h4>
@@ -133,12 +150,53 @@ class AudioReactive {
                       transition:height .1s ease"></div>`)
             .join('')}
         </div>
-        <div style="display:flex;justify-content:space-between;color:var(--7)">
+        <div style="display:flex;justify-content:space-between;color:var(--7);margin-top:8px;">
           ${['Bass','Mid','Treble','Volume']
-            .map(lbl => `<span>${lbl}</span>`).join('')}
+            .map(lbl => `<span style="font-size:12px;">${lbl}</span>`).join('')}
         </div>
-      </div>
-    `));
+      </div>`
+    ));
+    this.infoContent = this.EL('div', { id: 'info-content' }, { display: 'none' });
+    this.infoContent.appendChild(this.EL('div', {}, {}, 
+      `<div style="color:var(--7);line-height:1.6;">
+        <h4 style="color:white;margin:0 0 16px 0;">Audio-Reactive Shader Uniforms</h4>
+        <p style="margin:0 0 16px 0;">
+          This system automatically passes audio data to your shaders as uniform variables. 
+          Use these in your fragment shader code:
+        </p>
+        <div style="background:var(--d);padding:16px;border-radius:4px;margin:16px 0;font-family:monospace;font-size:13px;">
+          <div style="color:#8be9fd;margin-bottom:8px;">// Available uniforms:</div>
+          <div style="color:#50fa7b;">uniform float</div> <span style="color:#f8f8f2;">u_bass;</span>    <span style="color:#6272a4;">// Bass frequencies (0.0-1.0)</span><br>
+          <div style="color:#50fa7b;">uniform float</div> <span style="color:#f8f8f2;">u_mid;</span>     <span style="color:#6272a4;">// Mid frequencies (0.0-1.0)</span><br>
+          <div style="color:#50fa7b;">uniform float</div> <span style="color:#f8f8f2;">u_treble;</span> <span style="color:#6272a4;">// High frequencies (0.0-1.0)</span><br>
+          <div style="color:#50fa7b;">uniform float</div> <span style="color:#f8f8f2;">u_volume;</span> <span style="color:#6272a4;">// Overall volume (0.0-1.0)</span>
+        </div>
+        <h5 style="color:white;margin:20px 0 12px 0;">Example Usage:</h5>
+        <div style="background:var(--d);padding:16px;border-radius:4px;margin:16px 0;font-family:monospace;font-size:13px;">
+          <div style="color:#8be9fd;">// Pulse effect with bass</div><br>
+          <span style="color:#f8f8f2;">vec3 color = baseColor * (</span><span style="color:#ff79c6;">1.0</span><span style="color:#f8f8f2;"> + u_bass * </span><span style="color:#ff79c6;">2.0</span><span style="color:#f8f8f2;">);</span><br><br>
+          <div style="color:#8be9fd;">// Frequency-based color mixing</div><br>
+          <span style="color:#f8f8f2;">vec3 audioColor = vec3(u_bass, u_mid, u_treble);</span><br><br>
+          <div style="color:#8be9fd;">// Time modulation with volume</div><br>
+          <span style="color:#f8f8f2;">float speed = u_time * (</span><span style="color:#ff79c6;">1.0</span><span style="color:#f8f8f2;"> + u_volume * </span><span style="color:#ff79c6;">5.0</span><span style="color:#f8f8f2;">);</span><br><br>
+          <div style="color:#8be9fd;">// Scale transformations</div><br>
+          <span style="color:#f8f8f2;">vec2 scaledUV = uv * (</span><span style="color:#ff79c6;">1.0</span><span style="color:#f8f8f2;"> + u_bass * </span><span style="color:#ff79c6;">0.5</span><span style="color:#f8f8f2;">);</span>
+        </div>
+        <h5 style="color:white;margin:20px 0 12px 0;">Notes:</h5>
+        <ul style="margin:0;padding-left:20px;">
+          <li style="margin-bottom:8px;">Bass frequencies are dampened to prevent overwhelming effects</li>
+          <li style="margin-bottom:8px;">Use sensitivity sliders to fine-tune responsiveness</li>
+          <li style="margin-bottom:8px;">Combine multiple frequencies for complex animations</li>
+          <li style="margin-bottom:8px;">Values are smoothed over time to reduce jitter</li>
+        </ul>
+        <div style="background:#1a4b32;padding:12px;border-radius:4px;margin:16px 0;border-left:4px solid #0a5c2e;">
+          <strong style="color:#4ade80;">Pro Tip:</strong> 
+          <span style="color:var(--7);">Try multiplying audio values by larger numbers (2.0-10.0) for more dramatic effects, or use them as offsets in noise functions.</span>
+        </div>
+      </div>`
+    ));
+    wrap.appendChild(this.settingsContent);
+    wrap.appendChild(this.infoContent);
     this.modal.appendChild(wrap);
     document.body.appendChild(this.modal);
     this.bindEvents();
@@ -149,6 +207,30 @@ class AudioReactive {
   bindEvents() {
     this.modal.querySelector('#close-modal').onclick = ()=> this.hide();
     this.modal.onclick = e => { if (e.target === this.modal) this.hide(); };
+    const infoBtn = this.modal.querySelector('#info-toggle');
+    const modalTitle = this.modal.querySelector('#modal-title');
+    infoBtn.onclick = () => {
+      this.showingInfo = !this.showingInfo;
+      if (this.showingInfo) {
+        this.settingsContent.style.display = 'none';
+        this.infoContent.style.display = 'block';
+        modalTitle.textContent = 'Documentation';
+        infoBtn.innerHTML = this.SVG();
+        infoBtn.title = 'Show Settings';
+      } else {
+        this.settingsContent.style.display = 'block';
+        this.infoContent.style.display = 'none';
+        modalTitle.textContent = 'Audio';
+        infoBtn.innerHTML = this.InfoSVG();
+        infoBtn.title = 'Show Documentation';
+      }
+    };
+    infoBtn.addEventListener('mouseenter', () => {
+      infoBtn.style.backgroundColor = 'var(--5)';
+    });
+    infoBtn.addEventListener('mouseleave', () => {
+      infoBtn.style.backgroundColor = 'transparent';
+    });
     const btn = this.modal.querySelector('#audio-toggle');
     const status = this.modal.querySelector('#audio-status');
     btn.onclick = async () => {
@@ -185,6 +267,12 @@ class AudioReactive {
   }
   show() {
     this.modal.style.display = 'block';
+    this.showingInfo = false;
+    this.settingsContent.style.display = 'block';
+    this.infoContent.style.display = 'none';
+    this.modal.querySelector('#modal-title').textContent = 'Audio';
+    this.modal.querySelector('#info-toggle').innerHTML = this.InfoSVG();
+    this.modal.querySelector('#info-toggle').title = 'Show Documentation';
     this.barAnimation();
   }
   hide() {
@@ -193,11 +281,11 @@ class AudioReactive {
   barAnimation() {
     const loop = () => {
       if (this.modal.style.display === 'none') return;
-      if (this.analyser && this.isActive) {
+      if (this.analyser && this.isActive && !this.showingInfo) {
         const data = new Uint8Array(this.analyser.frequencyBinCount);
         this.analyser.getByteFrequencyData(data);
         const sums = {
-          bass: (data.slice(0,20).reduce((a,b)=>a+b)/20) * 0.25,  // Heavy bass dampening in visualization too
+          bass: (data.slice(0,20).reduce((a,b)=>a+b)/20) * 0.25,
           mid:  data.slice(20,60).reduce((a,b)=>a+b)/40,
           treble: data.slice(60,120).reduce((a,b)=>a+b)/60,
           volume: data.reduce((a,b)=>a+b)/data.length
