@@ -239,7 +239,7 @@
         return;
       }
     }
-    console.log('Fetching fresh shader list');
+    console.log('Fetch');
     fetch('../glsl/api/fetch.php?action=list')
       .then(r => r.json())
       .then(async list => {

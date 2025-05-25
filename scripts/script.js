@@ -18,6 +18,7 @@ const app = $('app'),
         fragFileName = $('fragFileName'),
         fsBtn = $('fsBtn'),
         lintDiv = $('lint');
+let fsClickTimestamps = [];
 let gl;
 gl = canvas.getContext('webgl2');
 if (!gl) {
@@ -79,7 +80,7 @@ function toggleEditors() {
         editors.style.display = 'none';
         divider.style.display = 'none';
         fsBtn.textContent = '⊞';
-        fsBtn.title = 'Show Editors';
+        fsBtn.title = 'Show Editors (2 quick clicks for fullscreen)';
         app.style.gridTemplateColumns = '1fr auto 1fr';
     }
     setTimeout(resizeCanvas, 10);
@@ -367,7 +368,20 @@ window.addEventListener('resize', initSplit);
 [vertTA, fragTA].forEach(ta => ta.addEventListener('input', rebuildProgram));
 vertFile.addEventListener('change', () => handleFile(vertFile, vertTA));
 fragFile.addEventListener('change', () => handleFile(fragFile, fragTA));
-fsBtn.addEventListener('click', toggleEditors);
+fsBtn.onclick = _ => {
+  const now = performance.now();
+  fsClickTimestamps.push(now);
+  fsClickTimestamps.length > 2 && fsClickTimestamps.shift();
+  if (fsClickTimestamps.length === 2 && now - fsClickTimestamps[0] < 600) {
+    fsClickTimestamps = [];
+    const el = app,
+          enter = el.requestFullscreen   || el.webkitRequestFullscreen   || el.mozRequestFullScreen   || el.msRequestFullscreen,
+          exit  = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen,
+          fn   = document.fullscreenElement ? exit : enter,
+          ctx  = document.fullscreenElement ? document : el;
+    fn.call(ctx);
+  } else toggleEditors();
+};
 rebuildProgram();
 render();
 window.rebuildProgram = rebuildProgram;
