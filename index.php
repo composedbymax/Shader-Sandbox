@@ -33,6 +33,7 @@ created by Max Warren
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="/assets/css/slider.css">
   <link rel="stylesheet" href="/assets/css/root.css">
+   <script src="scripts/audio.js"></script>
 </head>
 <body>
   <div id="app">
@@ -92,6 +93,10 @@ void main() {
 precision mediump float;
 uniform vec2 u_resolution;
 uniform float u_time;
+uniform float u_volume;
+uniform float u_treble;
+uniform float u_mid;
+uniform float u_bass;
 float hash(vec2 p) {
     p = fract(p * vec2(123.34, 456.21));
     p += dot(p, p + 78.23);
@@ -104,7 +109,7 @@ float boxSDF(vec3 p, vec3 b) {
 float sceneSDF(vec3 p) {
     vec2 gridPos = floor(p.xz / 4.0);
     vec2 localPos = mod(p.xz, 4.0) - 2.0;
-    float h = hash(gridPos) * 10.0 + 2.0;
+    float h = hash(gridPos) * 10.0 + u_volume;
     float d = boxSDF(vec3(localPos.x, p.y, localPos.y), vec3(1.0, h, 1.0));
     return d;
 }
@@ -140,12 +145,12 @@ void main() {
     if(t < 100.0) {
         vec3 p = ro + rd * t;
         vec3 n = getNormal(p);
-        float diff = clamp(dot(n, vec3(0.5, 1.0, 0.5)), 0.0, 1.0);
-        float glow = 0.0;
+        float diff = clamp(dot(n, vec3(0.5, 1.0, 0.5)), u_treble, 1.0);
+        float glow = u_bass;
         if(abs(mod(p.y, 2.0) - 1.0) < 0.1) {
             glow = 1.0;
         }
-        col = mix(vec3(0.0, 0.5, 1.0) * diff, vec3(0.8, 0.2, 1.0), glow);
+        col = mix(vec3(u_mid, 0.5, 1.0) * diff, vec3(0.8, 0.2, 1.0), glow);
         col = mix(col, vec3(0.0), 1.0 - exp(-0.02 * t * t));
     }
     gl_FragColor = vec4(col, 1.0);
@@ -162,6 +167,5 @@ void main() {
   </div>
   <script src="scripts/main.js"></script>
   <script src="/assets/js/hidev.js"></script>
-  <script src="scripts/audio.js"></script>
 </body>
 </html>

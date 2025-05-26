@@ -1,3 +1,4 @@
+(function() {
 class AudioReactive {
   constructor() {
     this.isActive     = false;
@@ -21,6 +22,8 @@ class AudioReactive {
     }
     this.button();
     this.Modal();
+    navigator.mediaDevices.addEventListener('devicechange', () => this.loadAudioDevices());
+    this.loadAudioDevices();
   }
   EL(tag, props = {}, styles = {}, html = '') {
     const el = document.createElement(tag);
@@ -113,6 +116,19 @@ class AudioReactive {
     wrap.appendChild(header);
     this.settingsContent = this.EL('div', { id: 'settings-content' }, {});
     this.settingsContent.appendChild(this.EL('div', {}, {}, 
+      `<div style="margin-bottom:15px;">
+        <span style="display:block;color:var(--7);margin-bottom:8px;font-size:14px;">
+          Microphone Input:
+        </span>
+        <select id="mic-select" style="
+          width:100%;padding:8px;background:var(--3);border:1px solid var(--4);
+          color:var(--7);border-radius:2px;font-size:14px;cursor:pointer;
+        ">
+          <option value="">Loading devices...</option>
+        </select>
+      </div>`
+    ));
+    this.settingsContent.appendChild(this.EL('div', {}, {}, 
       `<div style="margin-bottom:20px;padding:0px;background:var(--d);border-radius:2px">
         <button id="audio-toggle" style="
           width:100%;padding:12px;background:var(--3);border:none;color:var(--7);border-radius:2px;
@@ -128,10 +144,10 @@ class AudioReactive {
     const sliders = ['bass','mid','treble','volume']
       .map(type => 
         `<div style="margin-bottom:10px;">
-          <label style="display:block;color:white;margin-bottom:4px;">
+          <span style="display:block;color:white;margin-bottom:4px;">
             ${type[0].toUpperCase() + type.slice(1)} Sensitivity:
             <span id="${type}-value" style="color:${this.color(type)};margin-left:8px;">1.0</span>
-          </label>
+          </span>
           <input id="${type}-slider" type="range" min="0.1" max="3" step="0.1" value="1.0" 
                  style="width:100%;"/>
         </div>`
@@ -195,77 +211,152 @@ class AudioReactive {
         </div>
       </div>`
     ));
-    wrap.appendChild(this.settingsContent);
-    wrap.appendChild(this.infoContent);
-    this.modal.appendChild(wrap);
-    document.body.appendChild(this.modal);
-    this.bindEvents();
+    const fileZone = this.EL('div', { id: 'file-drop' }, {
+  marginBottom: '20px',
+  padding: '20px',
+  background: 'var(--3)',
+  border: '2px dashed var(--4)',
+  textAlign: 'center',
+  cursor: 'pointer'
+}, `
+  <p style="color:var(--7)">
+    Drag & drop an audio file here<br>
+    or <button id="file-upload-btn" style="background:none;border:none;color:var(--7);text-decoration:underline;cursor:pointer">Browse files</button>
+  </p>
+  <input id="file-input" type="file" accept="audio/*" style="display:none"/>
+  <audio id="file-audio" controls style="width:100%;display:none;margin-top:10px"></audio>
+  <button id="clear-file-btn" style="display:none;margin-top:10px;padding:6px 12px;background:var(--d);border:none;color:var(--7);cursor:pointer">Clear File</button>
+`);
+  this.settingsContent.appendChild(fileZone);
+  wrap.appendChild(header);
+  wrap.appendChild(this.settingsContent);
+  wrap.appendChild(this.infoContent);
+  this.modal.appendChild(wrap);
+  document.body.appendChild(this.modal);
+  this.bindEvents();
   }
   color(type) {
     return { bass:'#ff4444', mid:'#44ff44', treble:'#4444ff', volume:'#ffff44' }[type];
   }
-  bindEvents() {
-    this.modal.querySelector('#close-modal').onclick = ()=> this.hide();
-    this.modal.onclick = e => { if (e.target === this.modal) this.hide(); };
-    const infoBtn = this.modal.querySelector('#info-toggle');
-    const modalTitle = this.modal.querySelector('#modal-title');
-    infoBtn.onclick = () => {
-      this.showingInfo = !this.showingInfo;
-      if (this.showingInfo) {
-        this.settingsContent.style.display = 'none';
-        this.infoContent.style.display = 'block';
-        modalTitle.textContent = 'Documentation';
-        infoBtn.innerHTML = this.SVG();
-        infoBtn.title = 'Show Settings';
-      } else {
-        this.settingsContent.style.display = 'block';
-        this.infoContent.style.display = 'none';
-        modalTitle.textContent = 'Audio';
-        infoBtn.innerHTML = this.InfoSVG();
-        infoBtn.title = 'Show Documentation';
+  async loadAudioDevices(preserveId) {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const audioInputs = devices.filter(d => d.kind === 'audioinput');
+      const select = this.modal.querySelector('#mic-select');
+      const oldValue = preserveId || select.value;
+      select.innerHTML = '';
+      audioInputs.forEach((device, idx) => {
+        const option = document.createElement('option');
+        option.value = device.deviceId;
+        option.text = device.label || `Microphone ${idx + 1}`;
+        select.appendChild(option);
+      });
+      if (oldValue && [...select.options].some(o => o.value === oldValue)) {
+        select.value = oldValue;
       }
-    };
-    infoBtn.addEventListener('mouseenter', () => {
-      infoBtn.style.backgroundColor = 'var(--5)';
+    } catch (error) {
+      console.warn('Could not enumerate audio devices:', error);
+    }
+  }
+  bindEvents() {
+  this.modal.querySelector('#close-modal').onclick = () => this.hide();
+  this.modal.onclick = e => { if (e.target === this.modal) this.hide(); };
+  const infoBtn    = this.modal.querySelector('#info-toggle');
+  const modalTitle = this.modal.querySelector('#modal-title');
+  infoBtn.onclick = () => {
+    this.showingInfo = !this.showingInfo;
+    if (this.showingInfo) {
+      this.settingsContent.style.display = 'none';
+      this.infoContent.style.display     = 'block';
+      modalTitle.textContent             = 'Documentation';
+      infoBtn.innerHTML                  = this.SVG();
+      infoBtn.title                      = 'Show Settings';
+    } else {
+      this.settingsContent.style.display = 'block';
+      this.infoContent.style.display     = 'none';
+      modalTitle.textContent             = 'Audio';
+      infoBtn.innerHTML                  = this.InfoSVG();
+      infoBtn.title                      = 'Show Documentation';
+    }
+  };
+  infoBtn.addEventListener('mouseenter', () => infoBtn.style.backgroundColor = 'var(--5)');
+  infoBtn.addEventListener('mouseleave', () => infoBtn.style.backgroundColor = 'transparent');
+  const micSelect = this.modal.querySelector('#mic-select');
+    micSelect.addEventListener('change', async () => {
+      if (this.isActive && !this.fileActive) {
+        this.stopAudio();
+        await this.getMic();
+      }
     });
-    infoBtn.addEventListener('mouseleave', () => {
-      infoBtn.style.backgroundColor = 'transparent';
-    });
-    const btn = this.modal.querySelector('#audio-toggle');
-    const status = this.modal.querySelector('#audio-status');
-    btn.onclick = async () => {
+    const micBtn = this.modal.querySelector('#audio-toggle');
+    const micStatus = this.modal.querySelector('#audio-status');
+    micBtn.onclick = async () => {
       if (!this.audioContext) {
         try {
           await this.getMic();
-          btn.textContent = 'Audio: ON';
-          this.style(btn, { backgroundColor:'#0a5c2e' });
-          status.textContent = 'Microphone active';
-          status.style.color = 'var(--7)';
-          this.isActive = true;
-          this.button.style.backgroundColor = '#0a5c2e';
+          micBtn.textContent                   = 'Audio: ON';
+          this.style(micBtn, { backgroundColor:'#0a5c2e' });
+          micStatus.textContent                = 'Microphone active';
+          micStatus.style.color                = 'var(--7)';
+          this.isActive                        = true;
+          this.fileActive                      = false;
+          this.button.style.backgroundColor    = '#0a5c2e';
         } catch {
-          btn.textContent = 'Access Denied';
-          this.style(btn, { backgroundColor:'#8b0000' });
-          status.textContent = 'Microphone access denied';
-          status.style.color = '#f87171';
+          micBtn.textContent                   = 'Access Denied';
+          this.style(micBtn, { backgroundColor:'#8b0000' });
+          micStatus.textContent                = 'Microphone access denied';
+          micStatus.style.color                = '#f87171';
         }
       } else {
         this.isActive = !this.isActive;
-        btn.textContent = this.isActive? 'Audio: ON' : 'Audio: OFF';
-        this.style(btn, { backgroundColor: this.isActive? '#0a5c2e':'#444' });
-        this.button.style.backgroundColor = this.isActive? '#0a5c2e':'var(--d)';
+        micBtn.textContent                    = this.isActive ? 'Audio: ON' : 'Audio: OFF';
+        this.style(micBtn, { backgroundColor: this.isActive ? '#0a5c2e' : '#444' });
+        this.button.style.backgroundColor     = this.isActive ? '#0a5c2e' : 'var(--d)';
       }
     };
     ['bass','mid','treble','volume'].forEach(type => {
-      const s = this.modal.querySelector(`#${type}-slider`);
-      const v = this.modal.querySelector(`#${type}-value`);
-      s.oninput = ()=> {
-        this.sensitivity[type] = +s.value;
-        v.textContent = s.value;
+      const slider = this.modal.querySelector(`#${type}-slider`);
+      const value  = this.modal.querySelector(`#${type}-value`);
+      slider.oninput = () => {
+        this.sensitivity[type] = +slider.value;
+        value.textContent      = slider.value;
       };
     });
+    const dropZone  = this.modal.querySelector('#file-drop');
+    const fileInput = this.modal.querySelector('#file-input');
+    const uploadBtn = this.modal.querySelector('#file-upload-btn');
+    const audioEl   = this.modal.querySelector('#file-audio');
+    const clearBtn  = this.modal.querySelector('#clear-file-btn');
+    uploadBtn.onclick = e => {
+      e.stopPropagation();
+      fileInput.click();
+    };
+    ['dragenter','dragover'].forEach(evt =>
+      dropZone.addEventListener(evt, e => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'var(--7)';
+      })
+    );
+    ['dragleave','drop'].forEach(evt =>
+      dropZone.addEventListener(evt, e => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'var(--4)';
+      })
+    );
+    dropZone.addEventListener('drop', e => {
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('audio/')) {
+        this.loadFile(file);
+      }
+    });
+    fileInput.onchange = () => {
+      const file = fileInput.files[0];
+      if (file) this.loadFile(file);
+    };
+    clearBtn.onclick = () => this.clearFile();
   }
-  show() {
+
+  async show() {
     this.modal.style.display = 'block';
     this.showingInfo = false;
     this.settingsContent.style.display = 'block';
@@ -300,16 +391,81 @@ class AudioReactive {
     };
     requestAnimationFrame(loop);
   }
+  stopAudio() {
+    if (this.audioContext) {
+      this.audioContext.close();
+      this.audioContext = null;
+      this.analyser = null;
+    }
+  }
   async getMic() {
-    this.audioContext = new (window.AudioContext||window.webkitAudioContext)();
-    if (this.audioContext.state==='suspended') await this.audioContext.resume();
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false }
+    const select = this.modal.querySelector('#mic-select');
+    const deviceId = select.value;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { 
+          deviceId: deviceId ? { exact: deviceId } : undefined,
+          echoCancellation: false, 
+          noiseSuppression: false, 
+          autoGainControl: false 
+        }
+      });
+      this.audioContext = new (window.AudioContext||window.webkitAudioContext)();
+      if (this.audioContext.state==='suspended') await this.audioContext.resume();
+      this.analyser = this.audioContext.createAnalyser();
+      this.analyser.fftSize = 512;
+      this.analyser.smoothingTimeConstant = .3;
+      this.audioContext.createMediaStreamSource(stream).connect(this.analyser);
+      await this.loadAudioDevices(deviceId);
+    } catch (error) {
+      throw error;
+    }
+  }
+  async loadFile(file) {
+    const old = this.modal.querySelector('#file-audio');
+    if (old) old.remove();
+    const audioEl = this.EL('audio', {
+      id: 'file-audio',
+      controls: true,
+      src: URL.createObjectURL(file)
+    }, {
+      width: '100%',
+      marginTop: '10px',
+      display: 'block'
     });
-    this.analyser = this.audioContext.createAnalyser();
+    this.modal.querySelector('#file-drop').appendChild(audioEl);
+    await audioEl.play();
+    if (this.audioContext) {
+      this.audioContext.close();
+    }
+    this.audioContext = new AudioContext();
+    this.analyser     = this.audioContext.createAnalyser();
     this.analyser.fftSize = 512;
     this.analyser.smoothingTimeConstant = .3;
-    this.audioContext.createMediaStreamSource(stream).connect(this.analyser);
+    this.fileSource = this.audioContext.createMediaElementSource(audioEl);
+    this.fileSource.connect(this.analyser);
+    this.analyser.connect(this.audioContext.destination);
+    this.isActive   = this.fileActive = true;
+    this.button.style.backgroundColor = '#0a5c2e';
+    this.barAnimation();
+  }
+  clearFile() {
+    const audioEl = this.modal.querySelector('#file-audio');
+    audioEl.pause();
+    audioEl.src = '';
+    URL.revokeObjectURL(audioEl.src);
+    this.modal.querySelector('#seek-slider').style.display = 'none';
+    this.modal.querySelector('#clear-file-btn').style.display = 'none';
+    audioEl.style.display = 'none';
+    if (this.audioContext) {
+      this.audioContext.close();
+      this.audioContext = null;
+      this.analyser     = null;
+    }
+    this.fileSource = null;
+    this.isActive   = false;
+    this.fileActive = false;
+    this.button.style.backgroundColor = 'var(--d)';
   }
   setGLContext(gl, program) {
     this.gl = gl; this.program = program;
@@ -333,3 +489,4 @@ class AudioReactive {
   }
 }
 window.AudioReactive = AudioReactive;
+})();
