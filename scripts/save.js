@@ -10,6 +10,36 @@
     chooseFileBtn = $('chooseFileBtn'),
     capitalize = s => s[0].toUpperCase() + s.slice(1);
   window._localShaderList = [];
+  let errorTracker = {
+    count: 0,
+    firstErrorTime: null,
+    refreshTriggered: false,
+    reset() {
+      this.count = 0;
+      this.firstErrorTime = null;
+      this.refreshTriggered = false;
+    },
+    addError() {
+      if (this.refreshTriggered) {
+        return false;
+      }
+      const now = Date.now();
+      if (!this.firstErrorTime) {
+        this.firstErrorTime = now;
+        this.count = 1;
+      } else if (now - this.firstErrorTime <= 5000) {
+        this.count++;
+      } else {
+        this.firstErrorTime = now;
+        this.count = 1;
+      }
+      if (this.count >= 4) {
+        this.refreshTriggered = true;
+        return true;
+      }
+      return false;
+    }
+  };
   function createToastContainer() {
     if (document.getElementById('toastContainer')) return;
     const container = document.createElement('div');
@@ -255,6 +285,28 @@
         container.innerHTML = `<div>Error loading shaders: ${err.message}</div>`;
       });
   }
+  async function forceRefreshPublicShaders() {
+    const container = $('publicShaderList');
+    container.innerHTML = '<div>Refreshing shaders...</div>';
+    console.log('Force refresh - clearing cache and fetching fresh data');
+    try {
+      await shaderCache.clearCache();
+      const response = await fetch('../glsl/api/fetch.php?action=list');
+      const list = await response.json();
+      if (list.error) {
+        container.innerHTML = `<div>Error: ${list.error}</div>`;
+        return;
+      }
+      await shaderCache.setCache(list);
+      displayPublicShaders(list);
+      showToast('Shader list refreshed', 'info');
+      errorTracker.reset();
+    } catch (err) {
+      container.innerHTML = `<div>Error loading shaders: ${err.message}</div>`;
+      errorTracker.refreshTriggered = false;
+    }
+  }
+  
   function displayPublicShaders(list) {
     const container = $('publicShaderList');
     container.innerHTML = '';
@@ -307,13 +359,24 @@
       .then(shader => {
         if (shader.error) {
           showToast(`Error loading shader: ${shader.error}`, 'error');
+          if (errorTracker.addError()) {
+            console.log('Error threshold reached - forcing cache refresh');
+            showToast('Multiple errors detected - refreshing shader list...', 'warning');
+            setTimeout(() => forceRefreshPublicShaders(), 1000);
+          }
           return;
         }
         loadShaderData(shader);
         showToast(`Loaded "${shader.title}"`, 'success');
+        errorTracker.reset();
       })
       .catch(err => {
         showToast(`Error loading shader: ${err.message}`, 'error');
+        if (errorTracker.addError()) {
+          console.log('Error threshold reached - forcing cache refresh');
+          showToast('Multiple errors detected - refreshing shader list...', 'warning');
+          setTimeout(() => forceRefreshPublicShaders(), 1000);
+        }
       });
   }
   function loadLocalShader(index) {
@@ -376,4 +439,5 @@
   window.saveLocally = saveLocally;
   window.savePublic = savePublic;
   window.clearPublicCache = clearPublicCache;
+  window.forceRefreshPublicShaders = forceRefreshPublicShaders;
 })();

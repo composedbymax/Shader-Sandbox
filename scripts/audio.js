@@ -8,6 +8,9 @@ class AudioReactive {
     this.program      = null;
     this.sensitivity  = { bass:1, mid:1, treble:1, volume:1 };
     this.showingInfo  = false;
+    this.micStream    = null;
+    this.fileSource   = null;
+    this.fileActive   = false;
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => this.init());
     } else {
@@ -67,6 +70,7 @@ class AudioReactive {
                  c4.44-.58 8-4.47 8-9.19v-1
                  c0-.55-.45-1-1-1s-1 .45-1 1z"/>
         <circle cx="12" cy="20" r="2" opacity="0.3"/>
+      </svg>
       </svg>
     `;
   }
@@ -284,34 +288,28 @@ class AudioReactive {
   const micSelect = this.modal.querySelector('#mic-select');
     micSelect.addEventListener('change', async () => {
       if (this.isActive && !this.fileActive) {
-        this.stopAudio();
-        await this.getMic();
+        await this.switchToMicrophone();
       }
     });
     const micBtn = this.modal.querySelector('#audio-toggle');
     const micStatus = this.modal.querySelector('#audio-status');
     micBtn.onclick = async () => {
-      if (!this.audioContext) {
+      if (this.fileActive) {
+        await this.switchToMicrophone();
+      } else if (!this.audioContext || !this.micStream) {
         try {
           await this.getMic();
-          micBtn.textContent                   = 'Audio: ON';
-          this.style(micBtn, { backgroundColor:'#0a5c2e' });
-          micStatus.textContent                = 'Microphone active';
-          micStatus.style.color                = 'var(--7)';
-          this.isActive                        = true;
-          this.fileActive                      = false;
-          this.button.style.backgroundColor    = '#0a5c2e';
+          this.updateMicrophoneUI(true, 'Microphone active');
+          this.isActive = true;
+          this.fileActive = false;
+          this.button.style.backgroundColor = '#0a5c2e';
         } catch {
-          micBtn.textContent                   = 'Access Denied';
-          this.style(micBtn, { backgroundColor:'#8b0000' });
-          micStatus.textContent                = 'Microphone access denied';
-          micStatus.style.color                = '#f87171';
+          this.updateMicrophoneUI(false, 'Microphone access denied', true);
         }
       } else {
         this.isActive = !this.isActive;
-        micBtn.textContent                    = this.isActive ? 'Audio: ON' : 'Audio: OFF';
-        this.style(micBtn, { backgroundColor: this.isActive ? '#0a5c2e' : '#444' });
-        this.button.style.backgroundColor     = this.isActive ? '#0a5c2e' : 'var(--d)';
+        this.updateMicrophoneUI(this.isActive, this.isActive ? 'Microphone active' : 'Microphone paused');
+        this.button.style.backgroundColor = this.isActive ? '#0a5c2e' : 'var(--d)';
       }
     };
     ['bass','mid','treble','volume'].forEach(type => {
@@ -355,7 +353,55 @@ class AudioReactive {
     };
     clearBtn.onclick = () => this.clearFile();
   }
-
+  updateMicrophoneUI(isEnabled, statusText, isError = false) {
+    const micBtn = this.modal.querySelector('#audio-toggle');
+    const micStatus = this.modal.querySelector('#audio-status');
+    if (isError) {
+      micBtn.textContent = 'Access Denied';
+      this.style(micBtn, { backgroundColor: '#8b0000' });
+      micStatus.style.color = '#f87171';
+    } else {
+      micBtn.textContent = isEnabled ? 'Microphone: ON' : 'Microphone: OFF';
+      this.style(micBtn, { backgroundColor: isEnabled ? '#0a5c2e' : '#444' });
+      micStatus.style.color = 'var(--7)';
+    }
+    micStatus.textContent = statusText;
+  }
+  async switchToMicrophone() {
+    try {
+      if (this.fileActive) {
+        this.clearFileAudio();
+      }
+      await this.getMic();
+      this.updateMicrophoneUI(true, 'Microphone active');
+      this.isActive = true;
+      this.fileActive = false;
+      this.button.style.backgroundColor = '#0a5c2e';
+    } catch (error) {
+      console.error('Failed to switch to microphone:', error);
+      this.updateMicrophoneUI(false, 'Failed to access microphone', true);
+    }
+  }
+  clearFileAudio() {
+    const audioEl = this.modal.querySelector('#file-audio');
+    const clearBtn = this.modal.querySelector('#clear-file-btn');
+    if (audioEl) {
+      audioEl.pause();
+      audioEl.currentTime = 0;
+      audioEl.style.display = 'none';
+      if (audioEl.src) {
+        URL.revokeObjectURL(audioEl.src);
+        audioEl.src = '';
+      }
+    }
+    if (clearBtn) {
+      clearBtn.style.display = 'none';
+    }
+    if (this.fileSource) {
+      this.fileSource.disconnect();
+      this.fileSource = null;
+    }
+  }
   async show() {
     this.modal.style.display = 'block';
     this.showingInfo = false;
@@ -391,18 +437,29 @@ class AudioReactive {
     };
     requestAnimationFrame(loop);
   }
-  stopAudio() {
-    if (this.audioContext) {
-      this.audioContext.close();
-      this.audioContext = null;
-      this.analyser = null;
+  
+  cleanupMicrophone() {
+    if (this.micStream) {
+      this.micStream.getTracks().forEach(track => track.stop());
+      this.micStream = null;
     }
   }
+  
+  stopAudio() {
+    this.cleanupMicrophone();
+    if (this.audioContext && this.audioContext.state !== 'closed') {
+      this.audioContext.close();
+    }
+    this.audioContext = null;
+    this.analyser = null;
+    this.fileSource = null;
+  }
   async getMic() {
+    this.cleanupMicrophone();
     const select = this.modal.querySelector('#mic-select');
     const deviceId = select.value;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      this.micStream = await navigator.mediaDevices.getUserMedia({
         audio: { 
           deviceId: deviceId ? { exact: deviceId } : undefined,
           echoCancellation: false, 
@@ -410,20 +467,25 @@ class AudioReactive {
           autoGainControl: false 
         }
       });
-      this.audioContext = new (window.AudioContext||window.webkitAudioContext)();
-      if (this.audioContext.state==='suspended') await this.audioContext.resume();
+      if (!this.audioContext || this.audioContext.state === 'closed') {
+        this.audioContext = new (window.AudioContext||window.webkitAudioContext)();
+      }
+      if (this.audioContext.state === 'suspended') {
+        await this.audioContext.resume();
+      }
       this.analyser = this.audioContext.createAnalyser();
       this.analyser.fftSize = 512;
       this.analyser.smoothingTimeConstant = .3;
-      this.audioContext.createMediaStreamSource(stream).connect(this.analyser);
+      const source = this.audioContext.createMediaStreamSource(this.micStream);
+      source.connect(this.analyser);
       await this.loadAudioDevices(deviceId);
     } catch (error) {
+      this.cleanupMicrophone();
       throw error;
     }
   }
   async loadFile(file) {
-    const old = this.modal.querySelector('#file-audio');
-    if (old) old.remove();
+    this.clearFileAudio();
     const audioEl = this.EL('audio', {
       id: 'file-audio',
       controls: true,
@@ -433,39 +495,39 @@ class AudioReactive {
       marginTop: '10px',
       display: 'block'
     });
+    const clearBtn = this.modal.querySelector('#clear-file-btn');
+    clearBtn.style.display = 'block';
     this.modal.querySelector('#file-drop').appendChild(audioEl);
-    await audioEl.play();
-    if (this.audioContext) {
-      this.audioContext.close();
+    try {
+      if (!this.audioContext || this.audioContext.state === 'closed') {
+        this.audioContext = new AudioContext();
+      }
+      if (this.audioContext.state === 'suspended') {
+        await this.audioContext.resume();
+      }
+      this.cleanupMicrophone();
+      this.analyser = this.audioContext.createAnalyser();
+      this.analyser.fftSize = 512;
+      this.analyser.smoothingTimeConstant = .3;
+      this.fileSource = this.audioContext.createMediaElementSource(audioEl);
+      this.fileSource.connect(this.analyser);
+      this.analyser.connect(this.audioContext.destination);
+      this.isActive = true;
+      this.fileActive = true;
+      this.button.style.backgroundColor = '#0a5c2e';
+      this.updateMicrophoneUI(false, 'Audio file active - Click to switch to microphone');
+      await audioEl.play();
+    } catch (error) {
+      console.error('Failed to load audio file:', error);
+      this.clearFile();
     }
-    this.audioContext = new AudioContext();
-    this.analyser     = this.audioContext.createAnalyser();
-    this.analyser.fftSize = 512;
-    this.analyser.smoothingTimeConstant = .3;
-    this.fileSource = this.audioContext.createMediaElementSource(audioEl);
-    this.fileSource.connect(this.analyser);
-    this.analyser.connect(this.audioContext.destination);
-    this.isActive   = this.fileActive = true;
-    this.button.style.backgroundColor = '#0a5c2e';
-    this.barAnimation();
   }
   clearFile() {
-    const audioEl = this.modal.querySelector('#file-audio');
-    audioEl.pause();
-    audioEl.src = '';
-    URL.revokeObjectURL(audioEl.src);
-    this.modal.querySelector('#seek-slider').style.display = 'none';
-    this.modal.querySelector('#clear-file-btn').style.display = 'none';
-    audioEl.style.display = 'none';
-    if (this.audioContext) {
-      this.audioContext.close();
-      this.audioContext = null;
-      this.analyser     = null;
-    }
-    this.fileSource = null;
-    this.isActive   = false;
+    this.clearFileAudio();
     this.fileActive = false;
+    this.isActive = false;
     this.button.style.backgroundColor = 'var(--d)';
+    this.updateMicrophoneUI(false, 'Click to enable microphone access');
   }
   setGLContext(gl, program) {
     this.gl = gl; this.program = program;

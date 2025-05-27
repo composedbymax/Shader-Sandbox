@@ -99,7 +99,17 @@ function compileShader(src, type) {
 }
 function rebuildProgram() {
     resizeCanvas();
-    lintDiv.textContent = '';
+    const lintDiv = document.getElementById('lint');
+    const lintContent = document.getElementById('lintContent');
+    const copyBtn = document.getElementById('copyErrorsBtn');
+    const showError = (errorText) => {
+        lintContent.textContent = errorText;
+        copyBtn.style.display = 'block';
+        lintDiv.style.display = 'block';
+    };
+    lintContent.textContent = '';
+    copyBtn.style.display = 'none';
+    lintDiv.style.display = 'none';
     if (program) gl.deleteProgram(program);
     const errors = [];
     const vs = compileShader(vertTA.value, gl.VERTEX_SHADER);
@@ -107,7 +117,7 @@ function rebuildProgram() {
     if (vs.error) errors.push('Vertex: ' + vs.error);
     if (fs.error) errors.push('Fragment: ' + fs.error);
     if (errors.length) {
-        lintDiv.textContent = errors.join('\n');
+        showError(errors.join('\n'));
         return;
     }
     const p = gl.createProgram();
@@ -115,7 +125,7 @@ function rebuildProgram() {
     gl.attachShader(p, fs.shader);
     gl.linkProgram(p);
     if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
-        lintDiv.textContent = 'Link: ' + gl.getProgramInfoLog(p);
+        showError('Link: ' + gl.getProgramInfoLog(p));
         gl.deleteProgram(p);
         return;
     }
@@ -140,6 +150,20 @@ function rebuildProgram() {
         if (!(camel in uniforms)) uniforms[camel] = uniforms[name];
     });
 }
+document.getElementById('copyErrorsBtn').addEventListener('click', function() {
+    const btn = this;
+    const lintContent = document.getElementById('lintContent');
+    const errorText = lintContent.textContent;
+    navigator.clipboard.writeText(errorText).then(() => {
+        const originalText = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => {
+            btn.textContent = originalText;
+        }, 1000);
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+    });
+});
 function render() {
     if (!program) return;
     resizeCanvas();
@@ -211,6 +235,21 @@ fragTA.addEventListener('drop', e => {
         handleFileDrop(e.dataTransfer.files[0], fragTA, fragFileName);
 });
 function exportFullHTML() {
+    function escapeForTemplateLiteral(str) {
+        return str
+            .replace(/\\/g, '\\\\')
+            .replace(/`/g, '\\`')
+            .replace(/\$\{/g, '\\${')
+            .replace(/\r\n/g, '\\n')
+            .replace(/\r/g, '\\n')
+            .replace(/\n/g, '\\n');
+    }
+    const vertexSource = vertTA?.value || '';
+    const fragmentSource = fragTA?.value || '';
+    if (!vertexSource.trim() && !fragmentSource.trim()) {
+        alert('No shader code to export!');
+        return;
+    }
     const template = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -228,36 +267,39 @@ canvas { width: 100vw; height: 100vh; display: block; }
     const canvas = document.getElementById('glcanvas');
     const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
     if (!gl) { alert('WebGL not supported'); return; }
-    const vertexShader = \`${vertTA.value.replace(/\\/g, '\\\\').replace(/`/g, '\\`')}\`;
-    const fragmentShader = \`${fragTA.value.replace(/\\/g, '\\\\').replace(/`/g, '\\`')}\`;
+    const vertexShader = \`${escapeForTemplateLiteral(vertexSource)}\`;
+    const fragmentShader = \`${escapeForTemplateLiteral(fragmentSource)}\`;
     function compileShader(src, type) {
         const s = gl.createShader(type);
         gl.shaderSource(s, src);
         gl.compileShader(s);
         if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
-            console.error(gl.getShaderInfoLog(s));
+            console.error('Shader compilation error:', gl.getShaderInfoLog(s));
             return null;
         }
         return s;
     }
     const vs = compileShader(vertexShader, gl.VERTEX_SHADER);
     const fs = compileShader(fragmentShader, gl.FRAGMENT_SHADER);
+    if (!vs || !fs) {
+        console.error('Failed to compile shaders');
+        return;
+    }
     const program = gl.createProgram();
     gl.attachShader(program, vs);
     gl.attachShader(program, fs);
     gl.linkProgram(program);
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.error(gl.getProgramInfoLog(program));
+        console.error('Program linking error:', gl.getProgramInfoLog(program));
         return;
     }
     const quadVerts = new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]);
     const buf = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
-    const vertexShaderSrc = vertexShader;
     let attribName = 'a_position';
-    const attribRegex = /attribute\\s+(?:vec\\d+|float)\\s+(\\w+)/g;
-    const matches = [...vertexShaderSrc.matchAll(attribRegex)];
+    const attribRegex = /attribute\\s+(?:vec\\d+|float|int)\\s+(\\w+)/g;
+    const matches = [...vertexShader.matchAll(attribRegex)];
     if (matches.length > 0) {
         attribName = matches[0][1];
     }
@@ -266,8 +308,22 @@ canvas { width: 100vw; height: 100vh; display: block; }
         gl.enableVertexAttribArray(attribLoc);
         gl.vertexAttribPointer(attribLoc, 2, gl.FLOAT, false, 0, 0);
     } else {
-        console.error('Could not find attribute:', attribName);
-        return;
+        console.warn('Could not find attribute:', attribName);
+        const fallbacks = ['a_position', 'position', 'a_vertex', 'vertex'];
+        let found = false;
+        for (const fallback of fallbacks) {
+            const loc = gl.getAttribLocation(program, fallback);
+            if (loc !== -1) {
+                gl.enableVertexAttribArray(loc);
+                gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            console.error('No valid vertex attribute found');
+            return;
+        }
     }
     const uniforms = {};
     const numUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
@@ -288,26 +344,48 @@ canvas { width: 100vw; height: 100vh; display: block; }
         resize();
         gl.useProgram(program);
         const time = (performance.now() - startTime) * 0.001;
-        if (uniforms.u_time) gl.uniform1f(uniforms.u_time, time);
-        else if (uniforms.uTime) gl.uniform1f(uniforms.uTime, time);
-        if (uniforms.u_resolution) gl.uniform2f(uniforms.u_resolution, canvas.width, canvas.height);
-        else if (uniforms.uResolution) gl.uniform2f(uniforms.uResolution, canvas.width, canvas.height);
-        if (uniforms.uColor) gl.uniform3f(uniforms.uColor, 1.0, 1.0, 1.0);
+        const timeUniforms = ['time', 'u_time', 'uTime', 'iTime'];
+        for (const timeUniform of timeUniforms) {
+            if (uniforms[timeUniform]) {
+                gl.uniform1f(uniforms[timeUniform], time);
+                break;
+            }
+        }
+        const resolutionUniforms = ['resolution', 'u_resolution', 'uResolution', 'iResolution'];
+        for (const resUniform of resolutionUniforms) {
+            if (uniforms[resUniform]) {
+                gl.uniform2f(uniforms[resUniform], canvas.width, canvas.height);
+                break;
+            }
+        }
+        if (uniforms.uColor || uniforms.u_color || uniforms.color) {
+            const colorUniform = uniforms.uColor || uniforms.u_color || uniforms.color;
+            gl.uniform3f(colorUniform, 1.0, 1.0, 1.0);
+        }
+        if (uniforms.mouse || uniforms.u_mouse || uniforms.uMouse || uniforms.iMouse) {
+            const mouseUniform = uniforms.mouse || uniforms.u_mouse || uniforms.uMouse || uniforms.iMouse;
+            gl.uniform2f(mouseUniform, 0.0, 0.0);
+        }
         gl.drawArrays(gl.TRIANGLES, 0, 6);
         requestAnimationFrame(render);
     }
     render();
 })();
-<\/script>
+</script>
 </body>
 </html>`;
-    const blob = new Blob([template], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'webgl.html';
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+        const blob = new Blob([template], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'webgl-shader.html';
+        a.click();
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Export failed:', error);
+        alert('Failed to export HTML file: ' + error.message);
+    }
 }
 function addExportButtons() {
     const vertExportBtn = document.createElement('button');

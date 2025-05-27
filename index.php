@@ -29,6 +29,7 @@ created by Max Warren
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <script>window.userLoggedIn = <?php echo isset($_SESSION['user']) ? 'true' : 'false'; ?>;window.userRole = <?php echo isset($_SESSION['user_role']) ? json_encode($_SESSION['user_role']) : 'null'; ?>;</script>
   <script>"serviceWorker"in navigator&&navigator.serviceWorker.register("/glsl/sw.js",{scope:"/glsl/"});</script>
+  <script src="scripts/cover.js"></script>
   <link rel="preload" href="css/style.css" as="style">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="/assets/css/slider.css">
@@ -162,10 +163,14 @@ void main() {
     <div id="preview-panel">
       <canvas id="glcanvas"></canvas>
       <button id="fsBtn">⛶</button>
-      <div id="lint"></div>
-    </div>
+      <div id="lint">
+        <button id="copyErrorsBtn" style="display: none;">Copy All Errors</button>
+        <div id="lintContent"></div>
+      </div>
+</div>
   </div>
   <script src="scripts/main.js"></script>
+  <script src="scripts/player.js"></script>
   <script src="/assets/js/hidev.js"></script>
 </body>
 </html>

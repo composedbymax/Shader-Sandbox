@@ -6,58 +6,28 @@
              canvas.getContext('experimental-webgl', { preserveDrawingBuffer: true });
   const style = document.createElement('style');
   style.textContent = `
-    #recSettings {
-      display: none; position: absolute; bottom: 42px; left: 10px;
-      background: var(--d); color: var(--l); padding: 10px;
-      z-index: 100; font-size: 0.9rem;
-      min-width: 240px;
-      max-height:80%;
-      overflow-y: auto;
+    #recSettings{display: none;position: absolute;bottom: 42px;left: 10px;background: var(--d);color: var(--l);padding: 10px;z-index: 100;font-size: 0.9rem;min-width: 240px;max-height:80%;overflow-y: auto;}
+    #recSettings label{display: block;margin-bottom: 6px;}
+    #recSettings input{margin-left: 4px;}
+    #recSettings .preset{margin-right: 4px;margin-top: 4px;}
+    #recSettings button{padding: 4px 8px;margin: 2px;cursor: pointer;border:0px;border-radius:6px;}
+    #recSettings .active{background:var(--a);color: white;}
+    #recBtn{width:2rem;height:2rem;position: absolute;bottom: 10px;left: 10px;background: var(--d);color: var(--l);border: none;padding: 8px;cursor: pointer;z-index: 100;font-size: 1rem;display: flex;align-items: center;justify-content: center;z-index:1;}
+    #recBtn svg{width: 14px;height: 14px;}
+    #recBtn svg circle{fill: #ff0000;}
+    #recordingIndicator{display: none;position: absolute;top: 10px;right: 10px;background: rgba(255,0,0,0.7);color: var(--l);padding: 5px 10px;border-radius: 4px;z-index: 100;animation: pulse 1.5s infinite;}
+    @keyframes pulse{0%{opacity: 1;}
+    50%{opacity: 0.6;}
+    100%{opacity: 1;}
     }
-    #recSettings label { display: block; margin-bottom: 6px; }
-    #recSettings input { margin-left: 4px; }
-    #recSettings .preset { margin-right: 4px; margin-top: 4px; }
-    #recSettings button {
-      padding: 4px 8px;
-      margin: 2px;
-      cursor: pointer;
-      border:0px;
-      border-radius:6px;
-    }
-    #recSettings .active {
-      background:var(--a);
-      color: white;
-    }
-    #recBtn {
-      width:2rem;
-      height:2rem;
-      position: absolute; bottom: 10px; left: 10px;
-      background: var(--d); color: var(--l); border: none;
-      padding: 8px; cursor: pointer;
-      z-index: 100; font-size: 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index:1;
-    }
-    #recBtn svg {
-      width: 14px;
-      height: 14px;
-    }
-    #recBtn svg circle {
-      fill: #ff0000;
-    }
-    #recordingIndicator {
-      display: none; position: absolute; top: 10px; right: 10px;
-      background: rgba(255,0,0,0.7); color: var(--l); padding: 5px 10px;
-      border-radius: 4px; z-index: 100; animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.6; }
-      100% { opacity: 1; }
-    }
-    input, select {padding: 1rem; border-radius: 5px; border: 0px; width: 100%;  background: var(--d); color: var(--l); }
+    input, select{padding: 1rem;border-radius: 5px;border: 0px;width: 100%;background: var(--d);color: var(--l);}
+    #videoPreview{display: none;margin-top: 10px;padding: 10px;background: rgba(0, 0, 0, 0.3);border-radius: 5px;}
+    #videoPreview video{width: 100%;max-height: 200px;border-radius: 5px;background: #000;}
+    #videoPreview .controls{margin-top: 10px;display: flex;gap: 5px;flex-wrap: wrap;}
+    #videoPreview .controls button{padding: 6px 12px;border: none;border-radius: 5px;cursor: pointer;font-size: 12px;flex: 1;min-width: 70px;}
+    #videoPreview .download-btn{background: var(--m);color: #000;}
+    #videoPreview .delete-btn{background: #ff4444;color: white;}
+    #videoPreview .info{color: var(--l);font-size: 11px;margin-top: 8px;line-height: 1.3;}
   `;
   document.head.appendChild(style);
   const recIndicator = document.createElement('div');
@@ -69,6 +39,16 @@
   recBtn.title = 'Record Settings';
   recBtn.innerHTML = `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40"/></svg>`;
   container.appendChild(recBtn);
+  const videoPreview = document.createElement('div');
+  videoPreview.id = 'videoPreview';
+  videoPreview.innerHTML = `
+    <video id="previewVideo" controls></video>
+    <div class="controls">
+      <button class="download-btn" id="downloadFromPreview">Download</button>
+      <button class="delete-btn" id="deleteVideo">Delete</button>
+    </div>
+    <div class="info" id="videoInfo"></div>
+  `;
   const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   const settingsPanel = document.createElement('div');
@@ -112,6 +92,7 @@
     <div id="recStats" style="margin-top: 8px; display: none;"></div>
   `;
   container.appendChild(settingsPanel);
+  settingsPanel.appendChild(videoPreview);
   const recWidth = settingsPanel.querySelector('#recWidth');
   const recHeight = settingsPanel.querySelector('#recHeight');
   const recFPS = settingsPanel.querySelector('#recFPS');
@@ -124,9 +105,16 @@
   const stopRec = settingsPanel.querySelector('#stopRec');
   const downloadLink = settingsPanel.querySelector('#downloadLink');
   const recStats = settingsPanel.querySelector('#recStats');
+  const previewVideo = videoPreview.querySelector('#previewVideo');
+  const downloadFromPreview = videoPreview.querySelector('#downloadFromPreview');
+  const deleteVideo = videoPreview.querySelector('#deleteVideo');
+  const videoInfo = videoPreview.querySelector('#videoInfo');
   let recorder, recordedChunks = [], hiddenCanvas, hiddenCtx, drawLoopId;
   let settingsPanelVisible = false;
   let recordingStartTime;
+  let currentVideoBlob = null;
+  let currentVideoUrl = null;
+  let currentVideoData = null;
   recQuality.addEventListener('input', () => {
     recQualityVal.textContent = recQuality.value;
   });
@@ -153,6 +141,26 @@
   recBtn.addEventListener('click', () => {
     settingsPanelVisible = !settingsPanelVisible;
     settingsPanel.style.display = settingsPanelVisible ? 'block' : 'none';
+  });
+  downloadFromPreview.addEventListener('click', () => {
+    if (currentVideoBlob && currentVideoData) {
+      const link = document.createElement('a');
+      link.href = currentVideoUrl;
+      link.download = `recording_${currentVideoData.width}x${currentVideoData.height}_${currentVideoData.codec}.${currentVideoData.extension}`;
+      link.click();
+    }
+  });
+  deleteVideo.addEventListener('click', () => {
+    if (currentVideoUrl) {
+      URL.revokeObjectURL(currentVideoUrl);
+    }
+    currentVideoBlob = null;
+    currentVideoUrl = null;
+    currentVideoData = null;
+    videoPreview.style.display = 'none';
+    previewVideo.src = '';
+    downloadLink.style.display = 'none';
+    recStats.style.display = 'none';
   });
   function checkCodecSupport(codec) {
     const codecOptions = {
@@ -249,18 +257,28 @@
       const blob = new Blob(recordedChunks, { type: mimeString });
       const fileSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
       const duration = ((Date.now() - recordingStartTime) / 1000).toFixed(1);
-      downloadLink.href = URL.createObjectURL(blob);
-      downloadLink.download = `recording_${w}x${h}_${selectedCodec}.${fileExtension}`;
-      downloadLink.style.display = 'inline-block';
-      downloadLink.textContent = `Download (${fileSizeMB} MB)`;
-      recStats.style.display = 'block';
-      recStats.innerHTML = `
-        <div>Size: ${fileSizeMB} MB</div>
-        <div>Duration: ${duration}s</div>
-        <div>Resolution: ${w}×${h}</div>
-        <div>Codec: ${selectedCodec}</div>
-        <div>Bitrate: ${recQuality.value} kbps</div>
+      if (currentVideoUrl) {
+        URL.revokeObjectURL(currentVideoUrl);
+      }
+      currentVideoBlob = blob;
+      currentVideoUrl = URL.createObjectURL(blob);
+      currentVideoData = {
+        width: w,
+        height: h,
+        codec: selectedCodec,
+        extension: fileExtension,
+        size: fileSizeMB,
+        duration: duration,
+        bitrate: recQuality.value
+      };
+      previewVideo.src = currentVideoUrl;
+      videoInfo.innerHTML = `
+        <div><strong>File:</strong> ${fileSizeMB} MB • ${duration}s • ${w}×${h}</div>
+        <div><strong>Settings:</strong> ${selectedCodec} • ${recQuality.value} kbps</div>
       `;
+      videoPreview.style.display = 'block';
+      downloadLink.style.display = 'none';
+      recStats.style.display = 'none';
       recIndicator.style.display = 'none';
       startRec.disabled = false;
       cancelAnimationFrame(drawLoopId);
