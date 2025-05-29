@@ -18,7 +18,6 @@
       display: none;
     }
   `;
-  
   document.head.appendChild(styleEl);
   function createEl(tag, attrs = {}, parent = document.body) {
     const el = document.createElement(tag);
@@ -26,6 +25,13 @@
     parent.appendChild(el);
     return el;
   }
+  document.addEventListener('fullscreenchange', () => {
+    const fsEl = document.fullscreenElement;
+    if (fsEl && !fsEl.contains(uploadBtn)) {
+      fsEl.appendChild(uploadBtn);
+      fsEl.appendChild(fileInput);
+    }
+  });
   const uploadBtn = createEl('button', {
     id: 'uploadHTMLBtn',
     textContent: 'Load'

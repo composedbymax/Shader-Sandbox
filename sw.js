@@ -2,11 +2,13 @@ const CACHE_VERSION = "v4";
 const CACHE_NAME = `glsl-app-${CACHE_VERSION}`;
 const ASSETS = [
     "/glsl/index.php",
+    "/glsl/scripts/audio.js",
     "/glsl/scripts/banner.js",
-    "/glsl/scripts/player.js",
+    "/glsl/scripts/cover.js",
     "/glsl/scripts/main.js",
     "/glsl/scripts/parse.js",
     "/glsl/scripts/performance.js",
+    "/glsl/scripts/player.js",
     "/glsl/scripts/recorder.js",
     "/glsl/scripts/right.js",
     "/glsl/scripts/save.js",
@@ -14,8 +16,6 @@ const ASSETS = [
     "/glsl/scripts/stay.js",
     "/assets/js/hidev.js",
     "/glsl/css/style.css",
-    "/assets/css/slider.css",
-    "/assets/css/root.css"
 ];
 self.addEventListener("install", (event) => {
     console.log(`${CACHE_VERSION} installing...`);

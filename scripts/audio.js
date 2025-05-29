@@ -218,14 +218,14 @@ class AudioReactive {
     const fileZone = this.EL('div', { id: 'file-drop' }, {
   marginBottom: '20px',
   padding: '20px',
-  background: 'var(--3)',
+  background: 'var(--d)',
   border: '2px dashed var(--4)',
   textAlign: 'center',
   cursor: 'pointer'
 }, `
   <p style="color:var(--7)">
     Drag & drop an audio file here<br>
-    or <button id="file-upload-btn" style="background:none;border:none;color:var(--7);text-decoration:underline;cursor:pointer">Browse files</button>
+    or <button id="file-upload-btn" style="background:var(--5);border-radius:2px;text-decoration:none;padding:0.5rem 1rem;border:none;color:var(--7);cursor:pointer">Browse files</button>
   </p>
   <input id="file-input" type="file" accept="audio/*" style="display:none"/>
   <audio id="file-audio" controls style="width:100%;display:none;margin-top:10px"></audio>
@@ -236,7 +236,6 @@ class AudioReactive {
   wrap.appendChild(this.settingsContent);
   wrap.appendChild(this.infoContent);
   this.modal.appendChild(wrap);
-  document.body.appendChild(this.modal);
   this.bindEvents();
   }
   color(type) {
@@ -403,15 +402,20 @@ class AudioReactive {
     }
   }
   async show() {
+    const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
+    const targetElement = fullscreenElement || document.body;
+    if (this.modal.parentNode !== targetElement) {
+      targetElement.appendChild(this.modal);
+    }
     this.modal.style.display = 'block';
-    this.showingInfo = false;
-    this.settingsContent.style.display = 'block';
-    this.infoContent.style.display = 'none';
-    this.modal.querySelector('#modal-title').textContent = 'Audio';
-    this.modal.querySelector('#info-toggle').innerHTML = this.InfoSVG();
-    this.modal.querySelector('#info-toggle').title = 'Show Documentation';
-    this.barAnimation();
-  }
+      this.showingInfo = false;
+      this.settingsContent.style.display = 'block';
+      this.infoContent.style.display = 'none';
+      this.modal.querySelector('#modal-title').textContent = 'Audio';
+      this.modal.querySelector('#info-toggle').innerHTML = this.InfoSVG();
+      this.modal.querySelector('#info-toggle').title = 'Show Documentation';
+      this.barAnimation();
+    }
   hide() {
     this.modal.style.display = 'none';
   }

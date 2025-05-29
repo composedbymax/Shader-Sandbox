@@ -221,7 +221,6 @@
     const title = shaderTitle.value.trim(), img = shaderImageInput.files[0];
     if (!title) return showToast("Please provide a title", 'warning');
     if (!img) return showToast("Please upload a preview image", 'warning');
-    
     compressImage(img, (compressedDataUrl) => {
       localStorage.setItem(`shader_${title}`, JSON.stringify({
         title, vert: vertCode.value, frag: fragCode.value, preview: compressedDataUrl
@@ -233,7 +232,6 @@
     const title = shaderTitle.value.trim(), img = shaderImageInput.files[0];
     if (!title) return showToast("Please provide a title", 'warning');
     if (!img) return showToast("Please upload a preview image", 'warning');
-    
     compressImage(img, (compressedDataUrl) => {
       fetch('../glsl/api/save.php', {
         method: 'POST',
@@ -306,7 +304,6 @@
       errorTracker.refreshTriggered = false;
     }
   }
-  
   function displayPublicShaders(list) {
     const container = $('publicShaderList');
     container.innerHTML = '';
