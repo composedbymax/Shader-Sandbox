@@ -16,10 +16,7 @@
     #recBtn svg{width: 14px;height: 14px;}
     #recBtn svg circle{fill: #ff0000;}
     #recordingIndicator{display: none;position: absolute;top: 10px;right: 10px;background: rgba(255,0,0,0.7);color: var(--l);padding: 5px 10px;border-radius: 4px;z-index: 100;animation: pulse 1.5s infinite;}
-    @keyframes pulse{0%{opacity: 1;}
-    50%{opacity: 0.6;}
-    100%{opacity: 1;}
-    }
+    @keyframes pulse{0%{opacity: 1;}50%{opacity: 0.6;}100%{opacity: 1;}}
     input, select{padding: 1rem;border-radius: 5px;border: 0px;width: 100%;background: var(--d);color: var(--l);}
     #videoPreview{display: none;margin-top: 10px;padding: 10px;background: rgba(0, 0, 0, 0.3);border-radius: 5px;}
     #videoPreview video{width: 100%;max-height: 200px;border-radius: 5px;background: #000;}
@@ -28,6 +25,7 @@
     #videoPreview .download-btn{background: var(--m);color: #000;}
     #videoPreview .delete-btn{background: #ff4444;color: white;}
     #videoPreview .info{color: var(--l);font-size: 11px;margin-top: 8px;line-height: 1.3;}
+    .audio-status{color: var(--7);font-size: 11px;margin-top: 5px;padding: 5px;background: rgba(0,0,0,0.2);border-radius: 3px;}
   `;
   document.head.appendChild(style);
   const recIndicator = document.createElement('div');
@@ -79,6 +77,11 @@
         }
       </select>
     </label>
+    <label>
+      Include Audio
+      <input type="checkbox" id="includeAudio" checked/>
+    </label>
+    <div id="audioStatus" class="audio-status">Audio: Not detected</div>
     <button id="recRotate" title="Rotate dimensions">⟲ Rotate</button>
     <div id="recPresets">
       <button class="preset active" data-w="1920" data-h="1080">1080p</button>
@@ -100,6 +103,8 @@
   const recQualityVal = settingsPanel.querySelector('#recQualityVal');
   const recCodec = settingsPanel.querySelector('#recCodec');
   const recRotate = settingsPanel.querySelector('#recRotate');
+  const includeAudio = settingsPanel.querySelector('#includeAudio');
+  const audioStatus = settingsPanel.querySelector('#audioStatus');
   const presets = settingsPanel.querySelectorAll('.preset');
   const startRec = settingsPanel.querySelector('#startRec');
   const stopRec = settingsPanel.querySelector('#stopRec');
@@ -115,6 +120,51 @@
   let currentVideoBlob = null;
   let currentVideoUrl = null;
   let currentVideoData = null;
+  function getAudioStream() {
+    if (window.AudioReactive && window.audioReactiveInstance) {
+      const audioInstance = window.audioReactiveInstance;
+      if (audioInstance.isActive && audioInstance.audioContext) {
+        try {
+          const destination = audioInstance.audioContext.createMediaStreamDestination();
+          if (audioInstance.fileActive && audioInstance.fileSource) {
+            audioInstance.fileSource.connect(destination);
+            audioStatus.textContent = 'Audio: File audio detected';
+            return destination.stream;
+          } else if (audioInstance.micStream && audioInstance.analyser) {
+            const micSource = audioInstance.audioContext.createMediaStreamSource(audioInstance.micStream);
+            micSource.connect(destination);
+            audioStatus.textContent = 'Audio: Microphone detected';
+            return destination.stream;
+          }
+        } catch (error) {
+          console.warn('Error capturing audio stream:', error);
+          audioStatus.textContent = 'Audio: Error capturing audio';
+        }
+      }
+    }
+    audioStatus.textContent = 'Audio: Not detected';
+    return null;
+  }
+  function updateAudioStatus() {
+    if (!settingsPanelVisible) return;
+    if (window.AudioReactive && window.audioReactiveInstance) {
+      const audioInstance = window.audioReactiveInstance;
+      if (audioInstance.isActive) {
+        if (audioInstance.fileActive) {
+          audioStatus.textContent = 'Audio: File audio active';
+        } else if (audioInstance.micStream) {
+          audioStatus.textContent = 'Audio: Microphone active';
+        } else {
+          audioStatus.textContent = 'Audio: Active but no source';
+        }
+      } else {
+        audioStatus.textContent = 'Audio: Inactive';
+      }
+    } else {
+      audioStatus.textContent = 'Audio: AudioReactive not found';
+    }
+  }
+  setInterval(updateAudioStatus, 1000);
   recQuality.addEventListener('input', () => {
     recQualityVal.textContent = recQuality.value;
   });
@@ -141,6 +191,9 @@
   recBtn.addEventListener('click', () => {
     settingsPanelVisible = !settingsPanelVisible;
     settingsPanel.style.display = settingsPanelVisible ? 'block' : 'none';
+    if (settingsPanelVisible) {
+      updateAudioStatus();
+    }
   });
   downloadFromPreview.addEventListener('click', () => {
     if (currentVideoBlob && currentVideoData) {
@@ -205,7 +258,20 @@
     hiddenCanvas.width = w;
     hiddenCanvas.height = h;
     hiddenCtx = hiddenCanvas.getContext('2d', { alpha: false });
-    const stream = hiddenCanvas.captureStream(fps);
+    const videoStream = hiddenCanvas.captureStream(fps);
+    let finalStream = videoStream;
+    if (includeAudio.checked) {
+      const audioStream = getAudioStream();
+      if (audioStream && audioStream.getAudioTracks().length > 0) {
+        finalStream = new MediaStream([
+          ...videoStream.getVideoTracks(),
+          ...audioStream.getAudioTracks()
+        ]);
+        console.log('Recording with audio tracks:', audioStream.getAudioTracks().length);
+      } else {
+        console.log('No audio stream available, recording video only');
+      }
+    }
     const bits = recQuality.value * 1000;
     const selectedCodec = recCodec.value;
     const mimeType = checkCodecSupport(selectedCodec);
@@ -223,12 +289,12 @@
       if (fallbackMimeType) {
         alert(`Your browser doesn't support ${selectedCodec} codec. Falling back to ${fallbackCodec}.`);
         recCodec.value = fallbackCodec;
-        startRecording(stream, fallbackMimeType, bits, w, h, fallbackCodec);
+        startRecording(finalStream, fallbackMimeType, bits, w, h, fallbackCodec);
       } else {
         alert(`Your browser doesn't support any of the available video codecs. Recording is not possible.`);
       }
     } else {
-      startRecording(stream, mimeType, bits, w, h, selectedCodec);
+      startRecording(finalStream, mimeType, bits, w, h, selectedCodec);
     }
   });
   function startRecording(stream, mimeType, bits, w, h, selectedCodec) {
@@ -236,6 +302,9 @@
       mimeType: mimeType,
       videoBitsPerSecond: bits
     };
+    if (stream.getAudioTracks().length > 0) {
+      options.audioBitsPerSecond = 128000;
+    }
     try {
       recorder = new MediaRecorder(stream, options);
     } catch (e) {
@@ -244,7 +313,6 @@
     }
     recordedChunks = [];
     recordingStartTime = Date.now();
-    
     recorder.ondataavailable = e => {
       if (e.data && e.data.size > 0) {
         recordedChunks.push(e.data);
@@ -257,6 +325,7 @@
       const blob = new Blob(recordedChunks, { type: mimeString });
       const fileSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
       const duration = ((Date.now() - recordingStartTime) / 1000).toFixed(1);
+      const hasAudio = stream.getAudioTracks().length > 0;
       if (currentVideoUrl) {
         URL.revokeObjectURL(currentVideoUrl);
       }
@@ -269,12 +338,14 @@
         extension: fileExtension,
         size: fileSizeMB,
         duration: duration,
-        bitrate: recQuality.value
+        bitrate: recQuality.value,
+        hasAudio: hasAudio
       };
       previewVideo.src = currentVideoUrl;
       videoInfo.innerHTML = `
         <div><strong>File:</strong> ${fileSizeMB} MB • ${duration}s • ${w}×${h}</div>
         <div><strong>Settings:</strong> ${selectedCodec} • ${recQuality.value} kbps</div>
+        <div><strong>Audio:</strong> ${hasAudio ? 'Included' : 'Video only'}</div>
       `;
       videoPreview.style.display = 'block';
       downloadLink.style.display = 'none';
@@ -285,7 +356,8 @@
     };
     function updateRecordingStats() {
       const duration = ((Date.now() - recordingStartTime) / 1000).toFixed(1);
-      recIndicator.textContent = `● RECORDING ${duration}s`;
+      const hasAudio = stream.getAudioTracks().length > 0;
+      recIndicator.textContent = `● RECORDING ${duration}s ${hasAudio ? '♪' : ''}`;
     }
     function drawLoop() {
       hiddenCtx.imageSmoothingEnabled = true;

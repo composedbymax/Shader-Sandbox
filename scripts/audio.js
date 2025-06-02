@@ -12,9 +12,13 @@ class AudioReactive {
     this.fileSource   = null;
     this.fileActive   = false;
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => this.init());
+      document.addEventListener('DOMContentLoaded', () => {
+        this.init();
+        window.audioReactiveInstance = this;
+      });
     } else {
       this.init();
+      window.audioReactiveInstance = this;
     }
   }
   init() {

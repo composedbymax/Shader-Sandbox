@@ -14,7 +14,6 @@ const ASSETS = [
     "/glsl/scripts/save.js",
     "/glsl/scripts/script.js",
     "/glsl/scripts/stay.js",
-    "/assets/js/hidev.js",
     "/glsl/css/style.css",
 ];
 self.addEventListener("install", (event) => {

@@ -1,22 +1,9 @@
 (function () {
   const styleEl = document.createElement('style');
   styleEl.textContent = `
-    #uploadHTMLBtn {
-      position: fixed;
-      bottom: 10px;
-      right: 8px;
-      background: var(--d);
-      color: var(--l);
-      border: none;
-      cursor: pointer;
-      padding: 12px 10px;
-    }
-    #uploadHTMLBtn:hover {
-      background: var(--5);
-    }
-    #uploadHTMLInput {
-      display: none;
-    }
+    #uploadHTMLBtn{position: fixed;bottom: 10px;right: 8px;background: var(--d);color: var(--l);border: none;cursor: pointer;padding: 12px 10px;}
+    #uploadHTMLBtn:hover{background: var(--5);}
+    #uploadHTMLInput{display: none;}
   `;
   document.head.appendChild(styleEl);
   function createEl(tag, attrs = {}, parent = document.body) {

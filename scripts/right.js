@@ -533,7 +533,7 @@
       el.addEventListener('mousedown', e => e.button === 2 && el.focus());
       addInputMonitoring(el);
     });
-  }, 500);
+  }, 1000);
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       mutation.addedNodes.forEach((node) => {

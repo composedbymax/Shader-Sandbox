@@ -34,7 +34,6 @@ created by Max Warren
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="/assets/css/slider.css">
   <link rel="stylesheet" href="/assets/css/root.css">
-  <script src="scripts/audio.js"></script>
 </head>
 <body>
   <div id="app">
@@ -160,15 +159,15 @@ void main() {
       </div>
     </div>
     <div id="divider"></div>
-    <div id="preview-panel">
-      <canvas id="glcanvas"></canvas>
-      <button id="fsBtn">⛶</button>
-      <div id="lint">
-        <button id="copyErrorsBtn" style="display: none;">Copy All Errors</button>
-        <div id="lintContent"></div>
+      <div id="preview-panel">
+        <canvas id="glcanvas"></canvas>
+        <button id="fsBtn">⛶</button>
+        <div id="lint">
+          <button id="copyErrorsBtn" style="display: none;">Copy All Errors</button>
+          <div id="lintContent"></div>
+        </div>
       </div>
-</div>
-  </div>
+    </div>
   <script src="scripts/main.js"></script>
   <script src="/assets/js/hidev.js" defer></script>
 </body>
