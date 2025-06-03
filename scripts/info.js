@@ -56,19 +56,17 @@
     modalContent.style.maxWidth = '600px';
     modalContent.style.lineHeight = '1.5em';
     modalContent.innerHTML = `
-      <h2 style="color: var(--6); margin-bottom: 1rem;">GLSL Editor – Instructions</h2>
+      <h2 style="color: var(--6); margin-bottom: 1rem;">GLSL Editor – Guide</h2>
       <ul style="text-align: left; padding-left: 1.2em; list-style-type: disc;">
-        <li><strong>Open the Editor:</strong> Use a modern browser (WebGL, Media API support required).</li>
-        <li><strong>Write Shaders:</strong> Use the editor to write <code>.vert</code> and <code>.frag</code> code.</li>
-        <li><strong>Real-Time Preview:</strong> See updates on the canvas as you code.</li>
-        <li><strong>Load Files:</strong> Import supported files: <code>.vert</code>, <code>.frag</code>, <code>.vs</code>, <code>.fs</code>, <code>.txt</code>.</li>
-        <li><strong>Export:</strong> Save shaders or generate standalone <code>.html</code> files.</li>
-        <li><strong>Record:</strong> Record WebM or MP4 animations of your shader output.</li>
-        <li><strong>Audio Reactive:</strong> Enable mic/system audio or upload files to drive visual feedback.</li>
-        <li><strong>Performance Metrics:</strong> Track FPS, GPU use, draw calls, etc.</li>
-        <li><strong>Syntax Linting:</strong> Get real-time GLSL error messages while typing.</li>
-        <li><strong>Customize Layout:</strong> Drag to resize shader and preview panels.</li>
-        <li><strong>Contact Me:</strong> compositionsbymax@gmail.com</li>
+        <li><strong>Save/Browse:</strong> Save shaders locally or publicly (premium), and explore public ones</li>
+        <li><strong>Editor:</strong> Write or edit <code>.vert</code> and <code>.frag</code> code with live updates</li>
+        <li><strong>Import/Export:</strong> Drag, drop, or upload <code>.vert</code>, <code>.frag</code>, <code>.vs</code>, <code>.fs</code>, <code>.txt</code>, or <code>.html</code> files</li>
+        <li><strong>Audio Reactive:</strong> Use mic, system audio, or uploaded files for audio-reactive effects (documentation in modal window for usage instructions)</li>
+        <li><strong>Record:</strong> Capture WebM/MP4 of canvas with included audio</li>
+        <li><strong>Performance:</strong> Monitor FPS, memory, draw calls</li>
+        <li><strong>Linting:</strong> Get instant syntax feedback</li>
+        <li><strong>Layout:</strong> Resize or hide panels to customize your workspace</li>
+        <li><strong>Support:</strong> Contact: compositionsbymax@gmail.com</li>
       </ul>
     `;
     const closeBtn = document.createElement('button');
