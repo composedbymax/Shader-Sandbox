@@ -116,26 +116,28 @@ class ColorPicker {
                 this.cancelPicker();
             }
         });
+
         const syncValues = (updateTextarea = false) => {
-        const r = parseFloat(redInput.value) || 0;
-        const g = parseFloat(greenInput.value) || 0;
-        const b = parseFloat(blueInput.value) || 0;
-        redSlider.value   = r;
-        greenSlider.value = g;
-        blueSlider.value  = b;
-        document.getElementById('glsl-red-value').textContent   = r.toFixed(2);
-        document.getElementById('glsl-green-value').textContent = g.toFixed(2);
-        document.getElementById('glsl-blue-value').textContent  = b.toFixed(2);
-        this.updatePreview(r, g, b);
+            const r = parseFloat(redInput.value) || 0;
+            const g = parseFloat(greenInput.value) || 0;
+            const b = parseFloat(blueInput.value) || 0;
+            redSlider.value   = r;
+            greenSlider.value = g;
+            blueSlider.value  = b;
+            document.getElementById('glsl-red-value').textContent   = r.toFixed(2);
+            document.getElementById('glsl-green-value').textContent = g.toFixed(2);
+            document.getElementById('glsl-blue-value').textContent  = b.toFixed(2);
+            this.updatePreview(r, g, b);
             if (updateTextarea) {
                 this.updateEditors(r, g, b);
                 this.highlightColor(
-                this.currentTextarea,
-                this.currentStartPos,
-                this.currentEndPos
+                    this.currentTextarea,
+                    this.currentStartPos,
+                    this.currentEndPos
                 );
             }
         };
+
         [redInput, greenInput, blueInput].forEach(input => {
             input.addEventListener('input', () => syncValues(false));
         });
@@ -148,8 +150,10 @@ class ColorPicker {
         });
         cancelBtn.addEventListener('click', () => this.cancelPicker());
         applyBtn.addEventListener('click', () => this.applyColor());
+
         document.addEventListener('keydown', (e) => {
-            if (overlay.style.display === 'block') {
+            const overlayEl = document.getElementById('glsl-color-picker-overlay');
+            if (overlayEl.style.display === 'block') {
                 if (e.key === 'Escape') {
                     this.cancelPicker();
                 } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
@@ -190,7 +194,6 @@ class ColorPicker {
         textarea._glslClickHandler = clickHandler;
     }
     handleTextareaClick(e, textarea) {
-        e.stopPropagation();
         const cursorPos = textarea.selectionStart;
         const text = textarea.value;
         const colorRegex = this.ColorRegex();
@@ -225,7 +228,6 @@ class ColorPicker {
         tab.style.left = (x + 5) + 'px';
         tab.style.top = (y + 5) + 'px';
         const tabClickHandler = (evt) => {
-            evt.stopPropagation();
             this.openPicker(textarea, match, startPos, endPos, x, y);
             this.removeTab();
         };
@@ -234,7 +236,12 @@ class ColorPicker {
         this.tabElement = tab;
         this.removeClickOutsideHandler();
         this.clickOutsideHandler = (evt) => {
-            if (!tab.contains(evt.target) && !textarea.contains(evt.target)) {
+            const clickedNode = evt.target;
+            if (
+                this.tabElement &&
+                !this.tabElement.contains(clickedNode) &&
+                !textarea.contains(clickedNode)
+            ) {
                 this.removeTab();
                 this.removeClickOutsideHandler();
             }
@@ -350,9 +357,7 @@ class ColorPicker {
             const newText = text.substring(0, this.currentStartPos) +
                             originalColorString +
                             text.substring(this.currentEndPos);
-
             this.currentTextarea.value = newText;
-
             const event = new Event('input', { bubbles: true });
             this.currentTextarea.dispatchEvent(event);
         }
