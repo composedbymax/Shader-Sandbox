@@ -64,31 +64,31 @@ class ColorPicker {
                 <div class="glsl-color-preview" id="glsl-color-preview"></div>
                 <div class="glsl-color-inputs">
                     <div class="glsl-input-group">
-                        <label>Red</label>
+                        <label for="glsl-red">Red</label>
                         <input type="number" id="glsl-red" step="0.01" min="0" max="2">
                     </div>
                     <div class="glsl-input-group">
-                        <label>Green</label>
+                        <label for="glsl-green">Green</label>
                         <input type="number" id="glsl-green" step="0.01" min="0" max="2">
                     </div>
                     <div class="glsl-input-group">
-                        <label>Blue</label>
+                        <label for="glsl-blue">Blue</label>
                         <input type="number" id="glsl-blue" step="0.01" min="0" max="2">
                     </div>
                 </div>
                 <div class="glsl-color-sliders">
                     <div class="glsl-slider-group">
-                        <label>R</label>
+                        <label for="glsl-red-slider">R</label>
                         <input type="range" id="glsl-red-slider" min="0" max="2" step="0.01">
                         <span id="glsl-red-value">0.00</span>
                     </div>
                     <div class="glsl-slider-group">
-                        <label>G</label>
+                        <label for="glsl-green-slider">G</label>
                         <input type="range" id="glsl-green-slider" min="0" max="2" step="0.01">
                         <span id="glsl-green-value">0.00</span>
                     </div>
                     <div class="glsl-slider-group">
-                        <label>B</label>
+                        <label for="glsl-blue-slider">B</label>
                         <input type="range" id="glsl-blue-slider" min="0" max="2" step="0.01">
                         <span id="glsl-blue-value">0.00</span>
                     </div>
@@ -116,7 +116,6 @@ class ColorPicker {
                 this.cancelPicker();
             }
         });
-
         const syncValues = (updateTextarea = false) => {
             const r = parseFloat(redInput.value) || 0;
             const g = parseFloat(greenInput.value) || 0;
@@ -137,7 +136,6 @@ class ColorPicker {
                 );
             }
         };
-
         [redInput, greenInput, blueInput].forEach(input => {
             input.addEventListener('input', () => syncValues(false));
         });
@@ -150,7 +148,6 @@ class ColorPicker {
         });
         cancelBtn.addEventListener('click', () => this.cancelPicker());
         applyBtn.addEventListener('click', () => this.applyColor());
-
         document.addEventListener('keydown', (e) => {
             const overlayEl = document.getElementById('glsl-color-picker-overlay');
             if (overlayEl.style.display === 'block') {

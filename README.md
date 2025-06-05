@@ -29,10 +29,10 @@ This application is built entirely with native PHP, HTML5, CSS, and JavaScript. 
 - **File Support**: Load and edit `.vert`, `.frag`, `.vs`, `.fs`, and `.txt` files.  
 - **Fullscreen Preview**: Toggle fullscreen mode for a larger preview area.  
 - **Load & Export Options**: Load or export shaders as `.vert` or `.frag` files, or generate a full HTML file to run your shaders externally.  
-- **Record WebM/MP4**: Record and preview your animation as a video file for easy sharing (MP4 or WEBM).  
+- **Record WebM/MP4**: Record and preview your animation as a video file for easy sharing (MP4 or WEBM) with included audio.
 - **Audio Reactive Support**: Make your animations react to mic input, internal system audio, or uploaded audio files, with adjustable levels.
 - **Runtime Metrics**: Monitor WebGL canvas performance by tracking FPS, memory usage, GPU details, and draw calls.
-- **Syntax Linting**: View error messages for syntax issues in your shaders.  
+- **Syntax Linting**: View and copy error messages for syntax issues in your shaders.  
 - **Responsive Layout**: Adjustable editor layout with drag-and-drop resizing for the panels.
 
 ---
