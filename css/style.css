@@ -1,16 +1,16 @@
 * {box-sizing: border-box; margin: 0; padding: 0; --0:rgba(0, 0, 0, 0.9);--1: #000000;--2:rgba(28, 28, 28, 0.99);--3:rgba(37, 37, 37, 0.8);--4: rgba(64, 64, 64, 0.9);--5: rgba(113, 113, 113, 0.7);--6: rgba(174, 174, 174, 0.9);--7: rgba(227, 227, 227, 0.9);--r: #9e0000c8;--pad: 6px 10px;}
 html, body { width: 100%; height: 100%; overflow: hidden; font-family: Consolas, Menlo, monospace;overscroll-behavior: none;-webkit-overflow-scrolling: none;}
 #app { display: flex; height: 100%; }
-#editors { width: 40%; background: var(--2); display: flex; flex-direction: column; border-right: 1px solid var(--4); position: relative; }
+#editors { width: 40%; background: var(--2); display: flex; flex-direction: column; border-right: 2px solid var(--4); position: relative; }
 .editor-panel { flex: none; display: flex; flex-direction: column; overflow: hidden;white-space: nowrap;}
 .panel-header { background: var(--3); color: var(--6); padding: var(--pad); font-size: 0.9em; display: flex; justify-content: space-between; align-items: center;}
 .panel-header input[type=file] { display: none;}
 .file-name { margin-left: 8px; color: var(--6); font-size: 0.9em;}
 .panel-header button {background: var(--4);border: none;padding: 2px 6px;cursor: pointer;}
 .panel-header button:hover, #divider:hover,#fsBtn:hover {background: var(--5);}
-#rowDivider { height: 8px; background: var(--4); cursor: row-resize; flex: none;}
+#rowDivider { height: 10px; background: var(--4); cursor: row-resize; flex: none;transition:0.5s all;}
 textarea { flex: 1; background: var(--2); color: var(--6); border: none; padding: var(--pad); font-size: 0.95em; line-height: 1.4; resize: none; overflow: auto; outline: none; }
-#divider { width: 10px; background: var(--3); cursor: col-resize;}
+#divider { width: 12px; background: var(--3); cursor: col-resize;transition:0.5s all;}
 #preview-panel { flex: 1; position: relative; background: var(--1); display: flex; justify-content: center; align-items: center; }
 #lint{position: absolute;bottom: 0;z-index:10000;left: 0;width: 100%;max-height: 30%;background: var(--0);color: var(--r);font-size: 0.9em;overflow: auto;white-space: pre-wrap;}
 #copyErrorsBtn{position: absolute;top: 5px;right: 5px;background: var(--3);color: var(--7);border: none;padding: 4px 8px;cursor: pointer;z-index: 10001;}
@@ -31,7 +31,7 @@ textarea { flex: 1; background: var(--2); color: var(--6); border: none; padding
 .img {margin:6px 0;max-width:100%}
 .ldbtn {padding:6px;background:var(--5);color:var(--7);border:none;cursor:pointer;width:80%;max-width:12.5rem;}
 .xbtn {float:right;padding:4px;background:var(--5);color:var(--7);border:none;cursor:pointer;}
-@media (max-width: 767px) {#divider { width: 12px;transition:0.5s all;}#rowDivider { height: 12px;transition:0.5s all;}}
+@media (max-width: 767px) {#divider { width: 14px;transition:0.5s all;}#rowDivider { height: 12px;transition:0.5s all;}}
 ::-webkit-scrollbar{width:14px;height:12px}
 ::-webkit-scrollbar-thumb{background-color:var(--4);border-radius:4px;border:3px solid var(--d);min-height:5rem;}
 ::-webkit-scrollbar-thumb:hover{background-color:var(--5);border-radius:4rem}

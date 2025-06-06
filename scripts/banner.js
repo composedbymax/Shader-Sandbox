@@ -69,6 +69,10 @@
       if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) return;
       e.preventDefault();
       wheelDelta -= e.deltaX;
+      if (wheelDelta < 0) {
+        wheelDelta = 0;
+        return;
+      }
       banner.style.transition = 'none';
       banner.style.transform = `translateX(${wheelDelta}px)`;
       banner.style.opacity = `${1 - Math.min(Math.abs(wheelDelta) / banner.offsetWidth, 1)}`;
@@ -78,7 +82,7 @@
     function checkWheelEnd() {
       banner.style.transition = '';
       if (Math.abs(wheelDelta) > THRESHOLD) {
-        banner.style.transform = `translateX(${wheelDelta > 0 ? banner.offsetWidth : -banner.offsetWidth}px)`;
+        banner.style.transform = `translateX(${banner.offsetWidth}px)`;
         banner.style.opacity = '0';
         setTimeout(dismiss, 300);
       } else {
@@ -97,15 +101,16 @@
     banner.addEventListener('touchmove', e => {
       if (!isDragging) return;
       currentX = e.touches[0].clientX;
-      const dx = startX - currentX;
-      banner.style.transform = `translateX(${-dx}px)`;
+      const dx = currentX - startX;
+      if (dx < 0) return;
+      banner.style.transform = `translateX(${dx}px)`;
       banner.style.opacity = `${1 - Math.abs(dx) / banner.offsetWidth}`;
     });
     banner.addEventListener('touchend', () => {
-      const dx = startX - currentX;
+      const dx = currentX - startX;
       banner.style.transition = '';
-      if (Math.abs(dx) > THRESHOLD) {
-        banner.style.transform = `translateX(${dx > 0 ? -banner.offsetWidth : banner.offsetWidth}px)`;
+      if (dx > THRESHOLD) {
+        banner.style.transform = `translateX(${banner.offsetWidth}px)`;
         banner.style.opacity = '0';
         setTimeout(dismiss, 300);
       } else {
@@ -122,16 +127,17 @@
     });
     window.addEventListener('mousemove', e => {
       if (!mouseDown) return;
-      const dx = mouseStartX - e.clientX; // Reversed
-      banner.style.transform = `translateX(${-dx}px)`;
+      const dx = e.clientX - mouseStartX;
+      if (dx < 0) return;
+      banner.style.transform = `translateX(${dx}px)`;
       banner.style.opacity = `${1 - Math.abs(dx) / banner.offsetWidth}`;
     });
     window.addEventListener('mouseup', e => {
       if (!mouseDown) return;
-      const dx = mouseStartX - e.clientX;
+      const dx = e.clientX - mouseStartX;
       banner.style.transition = '';
-      if (Math.abs(dx) > THRESHOLD) {
-        banner.style.transform = `translateX(${dx > 0 ? -banner.offsetWidth : banner.offsetWidth}px)`;
+      if (dx > THRESHOLD) {
+        banner.style.transform = `translateX(${banner.offsetWidth}px)`;
         banner.style.opacity = '0';
         setTimeout(dismiss, 300);
       } else {
