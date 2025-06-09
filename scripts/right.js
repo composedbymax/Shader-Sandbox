@@ -178,21 +178,21 @@
   };
   const styleCSS = `
     .custom-context-menu{background:var(--d);border:0.3px solid var(--l);border-radius:4px;user-select:none;position:absolute;z-index:99999;min-width:150px;display:none;}
-    .custom-context-menu-item{padding:8px 12px;color:#fff;cursor:pointer;font-size:12px;}
+    .custom-context-menu-item{padding:8px 12px;color:var(--7);cursor:pointer;font-size:12px;}
     .custom-context-menu-item:hover{background:var(--D);}
-    .custom-context-menu-item.disabled{color:#666;cursor:not-allowed;}
+    .custom-context-menu-item.disabled{color:var(--3);cursor:not-allowed;}
     .custom-context-menu-item.disabled:hover{background:transparent;}
-    .custom-context-menu-separator{height:2px;background:#444;margin:5px 0;}
-    .line-info{padding:8px 12px;color:#aaa;font-size:12px;border-bottom:1px solid #444;text-align:center;}
+    .custom-context-menu-separator{height:2px;background:var(--4);margin:5px 0;}
+    .line-info{padding:8px 12px;color:var(--6);font-size:12px;border-bottom:1px solid var(--4);text-align:center;}
     .inline-control{padding:8px 12px;background:var(--D);}
-    .inline-control label{display:block;color:#fff;margin-bottom:4px;font-size:11px;}
-    .inline-control input{width:100%;padding:4px;border-radius:3px;border:1px solid #555;background:var(--d);color:#fff;font-size:11px;}
+    .inline-control label{display:block;color:var(--7);margin-bottom:4px;font-size:11px;}
+    .inline-control input{width:100%;padding:4px;border-radius:3px;border:1px solid var(--5);background:var(--d);color:var(--7);font-size:11px;}
     .inline-control input[type="range"]{margin:4px 0;}
     .inline-buttons{display:flex;gap:4px;margin-top:6px;}
     .inline-buttons button{padding:4px 8px;border-radius:3px;border:none;cursor:pointer;font-size:11px;flex:1;}
-    .btn-cancel{background:#555;color:#fff;}
-    .btn-confirm{background:#2a6cb1;color:#fff;}
-    .slider-value{color:#aaa;font-size:10px;text-align:center;margin-top:2px;}
+    .btn-cancel{background:var(--3);color:var(--7);}
+    .btn-confirm{background:var(--a);color:var(--1);}
+    .slider-value{color:var(--6);font-size:10px;text-align:center;margin-top:2px;}
   `;
   const styleEl = create('style');
   styleEl.textContent = styleCSS;

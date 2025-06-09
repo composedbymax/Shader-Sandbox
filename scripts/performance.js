@@ -28,7 +28,7 @@ class GLSLPerformanceMonitor {
     (this.container = document.createElement("div")),
       (this.container.className = "glsl-performance-monitor-container"),
       (this.container.style.position = "absolute"),
-      (this.container.style.zIndex = "9999"),
+      (this.container.style.zIndex = "1"),
       this.updateContainerPosition(),
       (this.toggleButton = document.createElement("button")),
       (this.toggleButton.className = "glsl-performance-monitor-toggle"),
@@ -42,13 +42,13 @@ class GLSLPerformanceMonitor {
       (this.toggleButton.style.justifyContent = "center"),
       (this.toggleButton.style.alignItems = "center"),
       (this.toggleButton.innerHTML =
-        '\n        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">\n          <path d="M3 13H10V3H3V13ZM3 21H10V15H3V21ZM12 21H19V11H12V21ZM12 3V9H19V3H12Z" fill="#8ff"/>\n        </svg>\n      '),
+        '\n        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">\n          <path d="M3 13H10V3H3V13ZM3 21H10V15H3V21ZM12 21H19V11H12V21ZM12 3V9H19V3H12Z" fill="var(--7)"/>\n        </svg>\n      '),
       (this.overlay = document.createElement("div")),
       (this.overlay.className = "glsl-performance-monitor-panel"),
       (this.overlay.style.display = "none"),
       (this.overlay.style.padding = "12px"),
       (this.overlay.style.backgroundColor = "var(--d)"),
-      (this.overlay.style.color = "#fff"),
+      (this.overlay.style.color = "var(--7)"),
       (this.overlay.style.fontFamily = "monospace"),
       (this.overlay.style.fontSize = "12px"),
       (this.overlay.style.width = "60%");
@@ -60,7 +60,7 @@ class GLSLPerformanceMonitor {
     const s = document.createElement("div");
     (s.textContent = "Performance Monitor"),
       (s.style.fontWeight = "bold"),
-      (s.style.color = "#8ff"),
+      (s.style.color = "var(--7)"),
       t.appendChild(s),
       this.overlay.appendChild(t),
       this.options.showFPS &&
@@ -113,8 +113,8 @@ class GLSLPerformanceMonitor {
     (this.isPanelOpen = !this.isPanelOpen),
       (this.overlay.style.display = this.isPanelOpen ? "block" : "none");
     const t = this.isPanelOpen
-      ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">\n            <path d="M3 13H10V3H3V13ZM3 21H10V15H3V21ZM12 21H19V11H12V21ZM12 3V9H19V3H12Z" fill="#f88"/>\n          </svg>'
-      : '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">\n            <path d="M3 13H10V3H3V13ZM3 21H10V15H3V21ZM12 21H19V11H12V21ZM12 3V9H19V3H12Z" fill="#8ff"/>\n          </svg>';
+      ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">\n            <path d="M3 13H10V3H3V13ZM3 21H10V15H3V21ZM12 21H19V11H12V21ZM12 3V9H19V3H12Z" fill="var(--rh)"/>\n          </svg>'
+      : '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">\n            <path d="M3 13H10V3H3V13ZM3 21H10V15H3V21ZM12 21H19V11H12V21ZM12 3V9H19V3H12Z" fill="var(--7)"/>\n          </svg>';
     (this.toggleButton.innerHTML = t),
       this.isPanelOpen ? this.start() : this.stop();
   }
@@ -177,12 +177,12 @@ class GLSLPerformanceMonitor {
       if (
         (this.options.showFPS &&
           this.fpsDisplay &&
-          (this.fpsDisplay.innerHTML = `\n          <div><b>FPS:</b> <span style="color: #8ff">${this.metrics.fps.current}</span></div>\n          <div style="padding-left: 10px; color: #ccc">\n            avg: ${this.metrics.fps.average}, \n            min: ${this.metrics.fps.min}, \n            max: ${this.metrics.fps.max}\n          </div>\n        `),
+          (this.fpsDisplay.innerHTML = `\n          <div><b>FPS:</b> <span style="color: var(--ah)">${this.metrics.fps.current}</span></div>\n          <div style="padding-left: 10px; color: var(--6)">\n            avg: ${this.metrics.fps.average}, \n            min: ${this.metrics.fps.min}, \n            max: ${this.metrics.fps.max}\n          </div>\n        `),
         this.options.showDrawCalls &&
           this.drawCallsDisplay &&
-          (this.drawCallsDisplay.innerHTML = `\n          <div><b>Draw calls:</b> <span style="color: #8ff">${
+          (this.drawCallsDisplay.innerHTML = `\n          <div><b>Draw calls:</b> <span style="color: var(--ah)">${
             this.metrics.drawCalls
-          }</span></div>\n          <div style="padding-left: 10px; color: #ccc">\n            Triangles: ~<span style="color: #8ff">${Math.round(
+          }</span></div>\n          <div style="padding-left: 10px; color: var(--6)">\n            Triangles: ~<span style="color: var(--7)">${Math.round(
             this.metrics.triangleCount
           )}</span>\n          </div>\n        `),
         this.options.showMemory &&
@@ -191,9 +191,9 @@ class GLSLPerformanceMonitor {
           performance.memory)
       ) {
         const t = (t) => (t / 1048576).toFixed(2);
-        this.memoryDisplay.innerHTML = `\n          <div><b>Memory:</b> <span style="color: #8ff">${t(
+        this.memoryDisplay.innerHTML = `\n          <div><b>Memory:</b> <span style="color: var(--ah)">${t(
           this.metrics.memory.usedJSHeapSize
-        )} MB</span></div>\n          <div style="padding-left: 10px; color: #ccc">\n            Total: ${t(
+        )} MB</span></div>\n          <div style="padding-left: 10px; color: var(--6)">\n            Total: ${t(
           this.metrics.memory.totalJSHeapSize
         )} MB\n            (Limit: ${t(
           this.metrics.memory.jsHeapSizeLimit
@@ -201,7 +201,7 @@ class GLSLPerformanceMonitor {
       }
       this.options.showGPUInfo &&
         this.gpuInfoDisplay &&
-        (this.gpuInfoDisplay.innerHTML = `\n          <div><b>GPU:</b> <span style="color: #8ff">${this.metrics.gpuInfo.vendor}</span></div>\n          <div style="padding-left: 10px; color: #ccc">\n            ${this.metrics.gpuInfo.renderer}\n          </div>\n        `);
+        (this.gpuInfoDisplay.innerHTML = `\n          <div><b>GPU:</b> <span style="color: var(--ah)">${this.metrics.gpuInfo.vendor}</span></div>\n          <div style="padding-left: 10px; color: var(--6)">\n            ${this.metrics.gpuInfo.renderer}\n          </div>\n        `);
     }
   }
   collectGPUInfo() {

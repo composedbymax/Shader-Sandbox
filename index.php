@@ -29,11 +29,12 @@ created by Max Warren
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <script>window.userLoggedIn = <?php echo isset($_SESSION['user']) ? 'true' : 'false'; ?>;window.userRole = <?php echo isset($_SESSION['user_role']) ? json_encode($_SESSION['user_role']) : 'null'; ?>;</script>
   <script>"serviceWorker"in navigator&&navigator.serviceWorker.register("/glsl/sw.js",{scope:"/glsl/"});</script>
+  <link rel="preload" as="script" href="scripts/cover.js">
   <script src="scripts/cover.js"></script>
   <link rel="preload" href="css/style.css" as="style">
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="/assets/css/slider.css">
-  <link rel="stylesheet" href="/assets/css/root.css">
+  <link rel="stylesheet" href="css/slider.css">
+  <link rel="stylesheet" href="css/root.css">
 </head>
 <body>
   <div id="app">
@@ -169,6 +170,7 @@ void main() {
       </div>
     </div>
   <script src="scripts/main.js"></script>
-  <script src="/assets/js/hidev.js" defer></script>
+  <script src="scripts/theme.js"></script>
+  <script src="scripts/hidev.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,19 @@
+* {
+    --pad: 6px 10px;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace
+}
+html,
+body {
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: none;
+    background: var(--1);
+    color: var(--l);
+    overflow: hidden;
+    font: 16px/1.6 sans-serif
+}

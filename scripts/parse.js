@@ -1,7 +1,7 @@
 (function () {
   const styleEl = document.createElement('style');
   styleEl.textContent = `
-    #uploadHTMLBtn{position: fixed;bottom: 10px;right: 8px;background: var(--d);color: var(--l);border: none;cursor: pointer;padding: 12px 10px;}
+    #uploadHTMLBtn{position: absolute;bottom: 10px;right: 8px;background: var(--d);color: var(--l);border: none;cursor: pointer;padding: 12px 10px;z-index:1;}
     #uploadHTMLBtn:hover{background: var(--5);}
     #uploadHTMLInput{display: none;}
   `;
@@ -76,15 +76,41 @@
     }
   }
   function extractFromText(text) {
+    const vertexNames = [
+      'vertexShaderSource', 'vertexShader', 'vertex_shader', 'VERTEX_SHADER',
+      'vs', 'vert', 'vertShader', 'vertex'
+    ];
+    const fragmentNames = [
+      'fragmentShaderSource', 'fragmentShader', 'fragment_shader', 'FRAGMENT_SHADER',
+      'fs', 'frag', 'fragShader', 'fragment'
+    ];
+    
     const shaderMatch = name =>
-      text.match(new RegExp(`(?:const\\s+)?${name}\\s*=\\s*\`([\\s\\S]*?)\``));
-    const vm = shaderMatch('vertexShaderSource') || shaderMatch('vertexShader');
-    const fm = shaderMatch('fragmentShaderSource') || shaderMatch('fragmentShader');
+      text.match(new RegExp(`(?:const\\s+|let\\s+|var\\s+)?${name}\\s*=\\s*[\`"']([\\s\\S]*?)[\`"']`));
+    
+    let vm, fm;
+    for (const name of vertexNames) {
+      vm = shaderMatch(name);
+      if (vm) break;
+    }
+    for (const name of fragmentNames) {
+      fm = shaderMatch(name);
+      if (fm) break;
+    }
+    
     return { vs: vm && vm[1], fs: fm && fm[1] };
   }
+  function processShaderCode(code) {
+    return code
+      .replace(/\\n/g, '\n')
+      .replace(/\\t/g, '\t')
+      .replace(/\\r/g, '\r')
+      .replace(/\\"/g, '"')
+      .replace(/\\'/g, "'");
+  }
   function inject(vs, fs, filename) {
-    vertEditor.value = vs.trim();
-    fragEditor.value = fs.trim();
+    vertEditor.value = processShaderCode(vs.trim());
+    fragEditor.value = processShaderCode(fs.trim());
     vertNameEl.textContent = fragNameEl.textContent = `(${filename})`;
     if (typeof rebuildProgram === 'function') rebuildProgram();
     if (typeof render === 'function') render();

@@ -58,10 +58,10 @@
     createToastContainer();
     const toast = document.createElement('div');
     const colors = {
-      success: { bg: 'var(--2)', border: '#059669' },
-      error: { bg: '#ef4444', border: '#dc2626' },
-      info: { bg: '#3b82f6', border: '#2563eb' },
-      warning: { bg: '#993300', border: '#fff' }
+      success: { bg: 'var(--2)', border: 'var(--a)' },
+      error: { bg: 'var(--r)', border: 'var(--1)' },
+      info: { bg: 'var(--a)', border: 'var(--1)' },
+      warning: { bg: 'var(--r)', border: 'var(--1)' }
     };
     const color = colors[type] || colors.info;
     toast.style.cssText = `
@@ -70,7 +70,7 @@
       padding: 10px 16px;
       border-radius: 0;
       border: 2px solid ${color.border};
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 12px var(--1);
       margin-bottom: 10px;
       font-weight: 500;
       font-size: 14px;

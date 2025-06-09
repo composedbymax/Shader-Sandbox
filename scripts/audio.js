@@ -45,10 +45,11 @@ class AudioReactive {
   button() {
     const btnStyles = {
       position: 'absolute', top:'50%', right:'10px',
-      transform:'translateY(-50%)', padding:'10px',
+      transform:'translateY(-50%)', padding:'8px',
       backgroundColor:'var(--d)', color:'var(--6)', border:'none',
       borderRadius:'0', cursor:'pointer', fontSize:'12px',
-      display:'flex', transition:'all .2s ease', zIndex:'1000'
+      display:'flex', transition:'all .2s ease', zIndex:'1000',
+      height:'2rem', width: '2rem'
     };
     this.button = this.EL('button', { innerHTML: this.SVG() }, btnStyles);
     this.button.addEventListener('mouseenter', ()=> {
@@ -56,7 +57,7 @@ class AudioReactive {
     });
     this.button.addEventListener('mouseleave', ()=> {
       this.style(this.button, {
-        backgroundColor: this.isActive? '#0a5c2e' : 'var(--d)',
+        backgroundColor: this.isActive? 'var(--a)' : 'var(--d)',
         transform: 'translateY(-50%) scale(1)'
       });
     });
@@ -98,7 +99,7 @@ class AudioReactive {
     const wrap = this.EL('div', {}, {
       position:'absolute', top:'50%', left:'50%',
       transform:'translate(-50%,-50%)',
-      backgroundColor:'var(--1)', borderRadius:'2px',
+      backgroundColor:'var(--2)', borderRadius:'2px',
       padding:'24px',
       border:'0.1px solid var(--4)', minWidth:'350px', maxWidth:'600px',
       maxHeight:'80vh', overflowY:'auto'
@@ -213,8 +214,8 @@ class AudioReactive {
           <li style="margin-bottom:8px;">Combine multiple frequencies for complex animations</li>
           <li style="margin-bottom:8px;">Values are smoothed over time to reduce jitter</li>
         </ul>
-        <div style="background:#1a4b32;padding:12px;border-radius:4px;margin:16px 0;border-left:4px solid #0a5c2e;">
-          <strong style="color:#4ade80;">Pro Tip:</strong> 
+        <div style="background:#1a4b32;padding:12px;border-radius:4px;margin:16px 0;border-left:4px solid var(--a);">
+          <strong style="color:var(--a);">Pro Tip:</strong> 
           <span style="color:var(--7);">Try multiplying audio values by larger numbers (2.0-10.0) for more dramatic effects, or use them as offsets in noise functions.</span>
         </div>
       </div>`
@@ -305,14 +306,14 @@ class AudioReactive {
           this.updateMicrophoneUI(true, 'Microphone active');
           this.isActive = true;
           this.fileActive = false;
-          this.button.style.backgroundColor = '#0a5c2e';
+          this.button.style.backgroundColor = 'var(--a)';
         } catch {
           this.updateMicrophoneUI(false, 'Microphone access denied', true);
         }
       } else {
         this.isActive = !this.isActive;
         this.updateMicrophoneUI(this.isActive, this.isActive ? 'Microphone active' : 'Microphone paused');
-        this.button.style.backgroundColor = this.isActive ? '#0a5c2e' : 'var(--d)';
+        this.button.style.backgroundColor = this.isActive ? 'var(--a)' : 'var(--d)';
       }
     };
     ['bass','mid','treble','volume'].forEach(type => {
@@ -361,11 +362,11 @@ class AudioReactive {
     const micStatus = this.modal.querySelector('#audio-status');
     if (isError) {
       micBtn.textContent = 'Access Denied';
-      this.style(micBtn, { backgroundColor: '#8b0000' });
-      micStatus.style.color = '#f87171';
+      this.style(micBtn, { backgroundColor: 'var(--r)' });
+      micStatus.style.color = 'var(--r)';
     } else {
       micBtn.textContent = isEnabled ? 'Microphone: ON' : 'Microphone: OFF';
-      this.style(micBtn, { backgroundColor: isEnabled ? '#0a5c2e' : '#444' });
+      this.style(micBtn, { backgroundColor: isEnabled ? 'var(--a)' : 'var(--1)' });
       micStatus.style.color = 'var(--7)';
     }
     micStatus.textContent = statusText;
@@ -379,7 +380,7 @@ class AudioReactive {
       this.updateMicrophoneUI(true, 'Microphone active');
       this.isActive = true;
       this.fileActive = false;
-      this.button.style.backgroundColor = '#0a5c2e';
+      this.button.style.backgroundColor = 'var(--a)';
     } catch (error) {
       console.error('Failed to switch to microphone:', error);
       this.updateMicrophoneUI(false, 'Failed to access microphone', true);
@@ -522,7 +523,7 @@ class AudioReactive {
       this.analyser.connect(this.audioContext.destination);
       this.isActive = true;
       this.fileActive = true;
-      this.button.style.backgroundColor = '#0a5c2e';
+      this.button.style.backgroundColor = 'var(--a)';
       this.updateMicrophoneUI(false, 'Audio file active - Click to switch to microphone');
       await audioEl.play();
     } catch (error) {

@@ -33,7 +33,7 @@
     wrapper.style.gap = '8px';
     wrapper.style.padding = '0.5em 0';
     wrapper.style.borderRadius = '10px';
-    wrapper.style.color = '#fff';
+    wrapper.style.color = 'var(--7)';
     wrapper.style.minWidth = '400px';
     currentPlayerWrapper = wrapper;
     const timeContainer = document.createElement('div');
@@ -42,7 +42,7 @@
     timeContainer.style.justifyContent = 'center';
     timeContainer.style.gap = '5px';
     timeContainer.style.fontSize = '12px';
-    timeContainer.style.color = '#ccc';
+    timeContainer.style.color = 'var(--6)';
     timeContainer.style.minWidth = '80px';
     const currentTimeDisplay = document.createElement('div');
     currentTimeDisplay.textContent = '0:00';
@@ -60,8 +60,8 @@
     controlsRow.style.position = 'relative';
     const playPause = document.createElement('button');
     playPause.textContent = '►';
-    playPause.style.background = '#00ffd4';
-    playPause.style.color = '#000';
+    playPause.style.background = 'var(--a)';
+    playPause.style.color = 'var(--1)';
     playPause.style.border = 'none';
     playPause.style.borderRadius = '5px';
     playPause.style.cursor = 'pointer';
@@ -79,7 +79,7 @@
     seekBar.style.appearance = 'none';
     seekBar.style.height = '2rem';
     seekBar.style.borderRadius = '2px';
-    seekBar.style.background = '#484848';
+    seekBar.style.background = 'var(--4)';
     seekBar.style.outline = 'none';
     const volumeContainer = document.createElement('div');
     volumeContainer.style.display = 'flex';
@@ -96,7 +96,7 @@
     volumeKnob.style.appearance = 'none';
     volumeKnob.style.height = '1.5rem';
     volumeKnob.style.borderRadius = '5px';
-    volumeKnob.style.background = '#484848';
+    volumeKnob.style.background = 'var(--4)';
     volumeKnob.style.outline = 'none';
     const volumeDisplay = document.createElement('div');
     volumeDisplay.textContent = Math.round(audio.volume * 100) + '%';
@@ -106,8 +106,8 @@
     volumeDisplay.style.marginBottom = '5px';
     volumeDisplay.style.padding = '4px 8px';
     volumeDisplay.style.fontSize = '11px';
-    volumeDisplay.style.color = '#fff';
-    volumeDisplay.style.background = 'rgba(0, 0, 0, 0.8)';
+    volumeDisplay.style.color = 'var(--7)';
+    volumeDisplay.style.background = 'var(--1)';
     volumeDisplay.style.borderRadius = '4px';
     volumeDisplay.style.opacity = '0';
     volumeDisplay.style.visibility = 'hidden';

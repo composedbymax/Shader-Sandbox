@@ -12,20 +12,29 @@
     #recSettings .preset{margin-right: 4px;margin-top: 4px;}
     #recSettings button{padding: 4px 8px;margin: 2px;cursor: pointer;border:0px;border-radius:6px;}
     #recSettings .active{background:var(--a);color: white;}
-    #recBtn{width:2rem;height:2rem;position: absolute;bottom: 10px;left: 10px;background: var(--d);color: var(--l);border: none;padding: 8px;cursor: pointer;z-index: 100;font-size: 1rem;display: flex;align-items: center;justify-content: center;z-index:1;}
+    #recBtn{width:2rem;height:2rem;position: absolute;bottom: 10px;left: 10px;background: var(--d);color: var(--l);border: none;padding: 8px;cursor: pointer;z-index: 1001;font-size: 1rem;display: flex;align-items: center;justify-content: center;}
     #recBtn svg{width: 14px;height: 14px;}
-    #recBtn svg circle{fill: #ff0000;}
-    #recordingIndicator{display: none;position: absolute;top: 10px;right: 10px;background: rgba(255,0,0,0.7);color: var(--l);padding: 5px 10px;border-radius: 4px;z-index: 100;animation: pulse 1.5s infinite;}
+    #recBtn svg circle{fill: var(--r);}
+    #recordingIndicator{display: none;position: absolute;top: 10px;right: 10px;background:var(--rh);color: var(--1);padding: 5px 10px;border-radius: 4px;z-index: 100;animation: pulse 1.5s infinite;}
     @keyframes pulse{0%{opacity: 1;}50%{opacity: 0.6;}100%{opacity: 1;}}
     input, select{padding: 1rem;border-radius: 5px;border: 0px;width: 100%;background: var(--d);color: var(--l);}
-    #videoPreview{display: none;margin-top: 10px;padding: 10px;background: rgba(0, 0, 0, 0.3);border-radius: 5px;}
-    #videoPreview video{width: 100%;max-height: 200px;border-radius: 5px;background: #000;}
+    .checkbox-container{position: relative;display: inline-flex;align-items: center;cursor: pointer;margin-left: 8px;}
+    .checkbox-container input[type="checkbox"]{opacity: 0;position: absolute;width: 18px;height: 18px;margin: 0;padding: 0;cursor: pointer;}
+    .custom-checkbox{width: 18px;height: 18px;border: 2px solid var(--l);border-radius: 3px;background: var(--d);position: relative;display: flex;align-items: center;justify-content: center;transition: all 0.2s ease;}
+    .checkbox-container input[type="checkbox"]:checked + .custom-checkbox{background: var(--a);border-color: var(--a);}
+    .custom-checkbox::after{content: '';position: absolute;width: 5px;height: 9px;border: solid white;border-width: 0 2px 2px 0;transform: rotate(45deg) scale(0);transition: transform 0.15s ease-in-out;top: 1px;}
+    .checkbox-container input[type="checkbox"]:checked + .custom-checkbox::after{transform: rotate(45deg) scale(1);}
+    .checkbox-container:hover .custom-checkbox{border-color: var(--a);}
+    #videoPreview{display: none;margin-top: 10px;padding: 10px;background: var(--1);border-radius: 5px;}
+    #videoPreview video{width: 100%;max-height: 200px;border-radius: 5px;background: var(--1);}
     #videoPreview .controls{margin-top: 10px;display: flex;gap: 5px;flex-wrap: wrap;}
     #videoPreview .controls button{padding: 6px 12px;border: none;border-radius: 5px;cursor: pointer;font-size: 12px;flex: 1;min-width: 70px;}
-    #videoPreview .download-btn{background: var(--m);color: #000;}
-    #videoPreview .delete-btn{background: #ff4444;color: white;}
+    #videoPreview .download-btn{background: var(--m);color: var(--1);}
+    #videoPreview .download-btn:hover{background: var(--6);color: var(--7);}
+    #videoPreview .delete-btn{background: var(--r);color: var(--7);}
+    #videoPreview .delete-btn:hover{background: var(--rh);color: var(--1);}
     #videoPreview .info{color: var(--l);font-size: 11px;margin-top: 8px;line-height: 1.3;}
-    .audio-status{color: var(--7);font-size: 11px;margin-top: 5px;padding: 5px;background: rgba(0,0,0,0.2);border-radius: 3px;}
+    .audio-status{color: var(--7);font-size: 11px;margin-top: 5px;padding: 5px;background: var(--D);border-radius: 3px;}
   `;
   document.head.appendChild(style);
   const recIndicator = document.createElement('div');
@@ -68,18 +77,21 @@
     <label>Codec: 
       <select id="recCodec">
         <option value="h264" selected>H.264 (MP4)</option>
-        ${isSafari || isIOS ? 
-          `<option value="vp9" disabled>VP9 (Not supported in Safari)</option>
-           <option value="vp8" disabled>VP8 (Not supported in Safari)</option>` 
-        : 
-          `<option value="vp9">VP9 (WebM)</option>
-           <option value="vp8">VP8 (WebM)</option>`
-        }
+        ${isSafari || isIOS ? `
+          <option value="vp9" disabled>VP9 (Not supported in Safari)</option>
+           <option value="vp8" disabled>VP8 (Not supported in Safari)</option> 
+        ` : `
+          <option value="vp9">VP9 (WebM)</option>
+           <option value="vp8">VP8 (WebM)</option>
+        `}
       </select>
     </label>
-    <label>
+    <label style="display: flex; align-items: center;">
       Include Audio
-      <input type="checkbox" id="includeAudio" checked/>
+      <div class="checkbox-container">
+        <input type="checkbox" id="includeAudio" checked/>
+        <div class="custom-checkbox"></div>
+      </div>
     </label>
     <div id="audioStatus" class="audio-status">Audio: Not detected</div>
     <button id="recRotate" title="Rotate dimensions">⟲ Rotate</button>
@@ -91,7 +103,7 @@
     </div>
     <button class="start" id="startRec">Start Recording</button>
     <button class="stop" id="stopRec" disabled>Stop</button>
-    <a id="downloadLink" style="border:0px;border-radius:6px;background:var(--m);display:none;text-decoration:none; color:#000;">Download</a>
+    <a id="downloadLink" style="border:0px;border-radius:6px;background:var(--m);display:none;text-decoration:none; color:var(--1);">Download</a>
     <div id="recStats" style="margin-top: 8px; display: none;"></div>
   `;
   container.appendChild(settingsPanel);

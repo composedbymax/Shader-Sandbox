@@ -19,7 +19,7 @@
   function createLink(href, text) {
     const a = document.createElement('a');
     Object.assign(a.style, {
-      color: '#00ffd4',
+      color: 'var(--a)',
       marginLeft: '4px',
       textDecoration: 'underline',
     });

@@ -6,6 +6,7 @@ const ASSETS = [
     "/glsl/scripts/banner.js",
     "/glsl/scripts/color.js",
     "/glsl/scripts/cover.js",
+    "/glsl/scripts/hidev.js",
     "/glsl/scripts/info.js",
     "/glsl/scripts/main.js",
     "/glsl/scripts/parse.js",
@@ -16,6 +17,9 @@ const ASSETS = [
     "/glsl/scripts/save.js",
     "/glsl/scripts/script.js",
     "/glsl/scripts/stay.js",
+    "/glsl/scripts/theme.js",
+    "/glsl/css/root.css",
+    "/glsl/css/slider.css",
     "/glsl/css/style.css",
 ];
 self.addEventListener("install", (event) => {
