@@ -99,9 +99,9 @@ class AudioReactive {
     const wrap = this.EL('div', {}, {
       position:'absolute', top:'50%', left:'50%',
       transform:'translate(-50%,-50%)',
-      backgroundColor:'var(--2)', borderRadius:'2px',
+      backgroundColor:'var(--D)', borderRadius:'2px',
       padding:'24px',
-      border:'0.1px solid var(--4)', minWidth:'350px', maxWidth:'600px',
+      border:'0.1px solid var(--4)', minWidth:'250px', maxWidth:'600px',
       maxHeight:'80vh', overflowY:'auto'
     });
     const header = this.EL('div', {}, {}, 

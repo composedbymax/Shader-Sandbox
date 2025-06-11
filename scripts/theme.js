@@ -7,6 +7,7 @@
       this.db = null;
       this.currentTheme = "default";
       this.isModalOpen = false;
+      this.showColorEditor = false;
       this.defaultColors = {
         "--0": "rgba(0, 0, 0, 0.9)",
         "--1": "#000000",
@@ -25,6 +26,65 @@
         "--m": "#94a3b8",
         "--r": "#b91040",
         "--rh": "rgba(227, 48, 98, 0.79)"
+      };
+      this.presetThemes = {
+        "CODE": {
+          "--0": "rgba(2, 6, 23, 0.9)",
+          "--1": "#0f172a",
+          "--2": "rgba(0, 12, 24, 0.99)",
+          "--3": "rgba(30, 41, 59, 0.8)",
+          "--4": "rgba(51, 65, 85, 0.9)",
+          "--5": "rgba(71, 85, 105, 0.7)",
+          "--6": "rgba(148, 163, 184, 0.9)",
+          "--7": "rgba(203, 213, 225, 0.9)",
+          "--d": "rgba(22, 22, 22, 0.89)",
+          "--D": "rgba(12, 12, 12, 0.61)",
+          "--l": "#f1f5f9",
+          "--a": "#0ea5e9",
+          "--ah": "rgba(56, 189, 248, 0.848)",
+          "--b": "#1e40af",
+          "--m": "#64748b",
+          "--r": "#dc2626",
+          "--rh": "rgba(239, 68, 68, 0.79)"
+        },
+        "DARK": {
+          "--0": "rgba(0, 0, 0, 0.9)",
+          "--1": "#000000",
+          "--2": "rgba(10, 10, 10, 0.99)",
+          "--3": "rgba(33, 33, 33, 0.47)",
+          "--4": "rgba(38, 38, 38, 0.9)",
+          "--5": "rgba(113, 113, 113, 0.7)",
+          "--6": "rgba(50, 226, 205, 0.9)",
+          "--7": "rgba(186, 186, 186, 0.9)",
+          "--d": "rgba(28, 28, 28, 0.89)",
+          "--D": "#070a12",
+          "--l": "#f8fafc",
+          "--a": "rgba(180, 19, 137, 1)",
+          "--ah": "rgba(255, 15, 155, 0.85)",
+          "--b": "#1e293b",
+          "--m": "#94a3b8",
+          "--r": "rgba(199, 0, 0, 1)",
+          "--rh": "rgba(255, 20, 20, 0.84)"
+        },
+        "LIGHT": {
+          "--0": "rgba(255, 255, 255, 0.9)",
+          "--1": "#ffffff",
+          "--2": "rgba(245, 245, 245, 0.99)",
+          "--3": "rgba(186, 186, 186, 0.76)",
+          "--4": "rgba(220, 220, 220, 0.9)",
+          "--5": "rgba(223, 223, 223, 0.9)",
+          "--6": "rgba(27, 28, 28, 0.9)",
+          "--7": "rgba(113, 113, 113, 0.9)",
+          "--d": "rgba(255, 255, 255, 0.23)",
+          "--D": "rgba(78, 78, 78, 0.3)",
+          "--l": "#0f172a",
+          "--a": "rgba(180, 19, 137, 1)",
+          "--ah": "rgba(255, 15, 155, 0.85)",
+          "--b": "#e2e8f0",
+          "--m": "#475569",
+          "--r": "rgba(199, 0, 0, 1)",
+          "--rh": "rgba(255, 20, 20, 0.84)"
+        }
       };
       this.init();
     }
@@ -67,7 +127,7 @@
       button.id = "theme-manager-btn";
       button.setAttribute("aria-label", "Open Theme Manager");
       button.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26"
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
           viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round"
           style="pointer-events: none;">
@@ -103,7 +163,7 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 380px;
+        width: 300px;
         max-height: calc(100vh - 40px);
         background: var(--3);
         color: var(--1);
@@ -120,23 +180,33 @@
             <button id="close-modal" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--r); padding: 0; width: 24px; height: 24px;" aria-label="Close Theme Manager">×</button>
           </div>
           <div style="margin-top: 15px;">
-            <label for="theme-name" style="display: block; font-size: 11px; margin-bottom: 4px; color: var(--6);">Name:</label>
-            <input type="text" id="theme-name" placeholder="enter name" style="width: 100%; padding: 6px 8px; border: 1px solid var(--5); border-radius: 4px; font-size: 12px; margin-bottom: 8px; box-sizing: border-box;">
-            <div style="display: flex; gap: 6px;">
-              <button id="save-theme" style="flex: 1; padding: 6px 8px; background: var(--a); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">Save</button>
-              <label for="load-theme" style="flex: 1; position: relative;">
-                <select id="load-theme" style="width: 100%; padding: 6px 4px;background:var(--3); border: 1px solid var(--5); border-radius: 4px; cursor: pointer; font-size: 11px; box-sizing: border-box;">
-                  <option value="">Load theme...</option>
-                </select>
-              </label>
-              <button id="delete-theme" style="padding: 6px 8px; background: var(--r); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">Del</button>
-            </div>
+            <label for="theme-select" style="display: block; font-size: 11px; margin-bottom: 4px; color: var(--6);">Select Theme:</label>
+            <select id="theme-select" style="width: 100%; padding: 8px; background: var(--3); border: 1px solid var(--5); border-radius: 4px; cursor: pointer; font-size: 12px; box-sizing: border-box; color: var(--6);">
+              <option value="">Choose a theme...</option>
+            </select>
+          </div>
+          <div style="margin-top: 12px;">
+            <button id="toggle-editor" style="width: 100%; padding: 8px; background: var(--b); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+              Color Editor
+            </button>
           </div>
         </div>
-        <div id="color-inputs" style="max-height: calc(100vh - 200px); overflow-y: auto; padding: 15px;">
-        </div>
-        <div style="padding: 15px; border-top: 1px solid var(--5); background: var(--7);">
-          <button id="reset-colors" style="width: 100%; padding: 8px; background: var(--4); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Reset to Default</button>
+        <div id="color-editor-section" style="display: none;">
+          <div style="padding: 15px; border-bottom: 1px solid var(--5); background: var(--4);">
+            <div style="margin-bottom: 12px;">
+              <label for="theme-name" style="display: block; font-size: 11px; margin-bottom: 4px; color: var(--6);">Theme Name:</label>
+              <input type="text" id="theme-name" placeholder="Enter custom theme name" style="width: 100%; padding: 6px 8px; border: 1px solid var(--5); border-radius: 4px; font-size: 12px; margin-bottom: 8px; box-sizing: border-box;">
+              <div style="display: flex; gap: 6px;">
+                <button id="save-theme" style="flex: 1; padding: 6px 8px; background: var(--a); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">Save</button>
+                <button id="delete-theme" style="padding: 6px 8px; background: var(--r); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">Delete</button>
+              </div>
+            </div>
+          </div>
+          <div id="color-inputs" style="max-height: calc(100vh - 300px); overflow-y: auto; padding: 15px;">
+          </div>
+          <div style="padding: 15px; border-top: 1px solid var(--5); background: var(--7);">
+            <button id="reset-colors" style="width: 100%; padding: 8px; background: var(--4); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Reset to Default</button>
+          </div>
         </div>
       `;
       document.body.appendChild(modal);
@@ -146,13 +216,15 @@
     setupModalEvents() {
       const modal = document.getElementById("theme-modal");
       const closeButton = document.getElementById("close-modal");
+      const themeSelect = document.getElementById("theme-select");
+      const toggleEditorButton = document.getElementById("toggle-editor");
       const saveButton = document.getElementById("save-theme");
-      const loadSelect = document.getElementById("load-theme");
       const deleteButton = document.getElementById("delete-theme");
       const resetButton = document.getElementById("reset-colors");
       closeButton.onclick = () => this.closeModal();
+      themeSelect.onchange = () => this.loadSelectedTheme(themeSelect.value);
+      toggleEditorButton.onclick = () => this.toggleColorEditor();
       saveButton.onclick = () => this.saveTheme();
-      loadSelect.onchange = () => this.loadTheme(loadSelect.value);
       deleteButton.onclick = () => this.deleteTheme();
       resetButton.onclick = () => this.resetToDefault();
       document.addEventListener("click", (event) => {
@@ -162,6 +234,141 @@
           this.closeModal();
         }
       });
+    }
+    toggleColorEditor() {
+      const section = document.getElementById("color-editor-section");
+      const button = document.getElementById("toggle-editor");
+      this.showColorEditor = !this.showColorEditor;
+      if (this.showColorEditor) {
+        section.style.display = "block";
+        button.textContent = "Hide Color Editor";
+        button.style.background = "var(--r)";
+      } else {
+        section.style.display = "none";
+        button.textContent = "Color Editor";
+        button.style.background = "var(--b)";
+      }
+    }
+    async loadSelectedTheme(themeName) {
+      if (!themeName) return;
+      if (this.presetThemes[themeName]) {
+        this.applyThemeColors(this.presetThemes[themeName]);
+        this.currentTheme = themeName;
+        this.showNotification(`"${themeName}" preset loaded!`, "success");
+        return;
+      }
+      try {
+        const transaction = this.db.transaction([this.storeName], "readonly");
+        const store = transaction.objectStore(this.storeName);
+        const theme = await new Promise((resolve, reject) => {
+          const request = store.get(themeName);
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+        if (theme) {
+          this.applyThemeColors(theme.colors);
+          this.currentTheme = themeName;
+          this.showNotification(`"${themeName}" loaded!`, "success");
+        }
+      } catch (error) {
+        this.showNotification("Load failed!", "error");
+        console.error("Load theme error:", error);
+      }
+    }
+    applyThemeColors(colors) {
+      const root = document.documentElement;
+      Object.entries(colors).forEach(([property, color]) => {
+        root.style.setProperty(property, color);
+        if (this.showColorEditor) {
+          const propertyId = property.replace("--", "");
+          const preview = document.getElementById(`preview-${propertyId}`);
+          const colorInput = document.getElementById(`color-${propertyId}`);
+          const alphaSlider = document.getElementById(`alpha-${propertyId}`);
+          if (preview) {
+            preview.style.background = color;
+          }
+          if (colorInput) {
+            colorInput.value = this.extractHexFromColor(color);
+          }
+          if (alphaSlider) {
+            const rgb = this.colorToRgb(color);
+            alphaSlider.value = rgb.a;
+            const alphaLabel = alphaSlider.previousElementSibling;
+            if (alphaLabel) {
+              alphaLabel.textContent = `α: ${rgb.a.toFixed(2)}`;
+            }
+          }
+        }
+      });
+    }
+    async updateThemesList() {
+      const select = document.getElementById("theme-select");
+      if (!select) return;
+      try {
+        select.innerHTML = '<option value="">Choose a theme...</option>';
+        const presetGroup = document.createElement("optgroup");
+        presetGroup.label = "Presets";
+        Object.keys(this.presetThemes).forEach(themeName => {
+          const option = document.createElement("option");
+          option.value = themeName;
+          option.textContent = themeName;
+          presetGroup.appendChild(option);
+        });
+        select.appendChild(presetGroup);
+        const transaction = this.db.transaction([this.storeName], "readonly");
+        const store = transaction.objectStore(this.storeName);
+        const themes = await new Promise((resolve, reject) => {
+          const request = store.getAll();
+          request.onsuccess = () => resolve(request.result || []);
+          request.onerror = () => reject(request.error);
+        });
+        if (themes.length > 0) {
+          const customGroup = document.createElement("optgroup");
+          customGroup.label = "Custom";
+          themes.forEach((theme) => {
+            const option = document.createElement("option");
+            option.value = theme.name;
+            option.textContent = theme.name;
+            customGroup.appendChild(option);
+          });
+          select.appendChild(customGroup);
+        }
+      } catch (error) {
+        console.error("Update themes list error:", error);
+      }
+    }
+    async deleteTheme() {
+      const select = document.getElementById("theme-select");
+      const themeName = select.value;
+      if (!themeName) {
+        this.showNotification("Select a theme first!", "error");
+        return;
+      }
+      if (this.presetThemes[themeName]) {
+        this.showNotification("Cannot delete preset themes!", "error");
+        return;
+      }
+      if (themeName === "default") {
+        this.showNotification("Cannot delete default theme!", "error");
+        return;
+      }
+      if (confirm(`Delete "${themeName}"?`)) {
+        try {
+          const transaction = this.db.transaction([this.storeName], "readwrite");
+          const store = transaction.objectStore(this.storeName);
+          await new Promise((resolve, reject) => {
+            const request = store.delete(themeName);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+          });
+          await this.updateThemesList();
+          this.showNotification(`"${themeName}" deleted!`, "success");
+          select.value = "";
+        } catch (error) {
+          this.showNotification("Delete failed!", "error");
+          console.error("Delete theme error:", error);
+        }
+      }
     }
     updateColorRealTime(property, color, alpha = null) {
       const root = document.documentElement;
@@ -330,31 +537,7 @@
       });
     }
     resetToDefault() {
-      const root = document.documentElement;
-      Object.entries(this.defaultColors).forEach(([property, color]) => {
-        root.style.setProperty(property, color);
-        const propertyId = property.replace("--", "");
-        const preview = document.getElementById(`preview-${propertyId}`);
-        const alphaSlider = document.getElementById(`alpha-${propertyId}`);
-        if (preview) {
-          preview.style.background = color;
-        }
-        if (alphaSlider) {
-          const rgb = this.colorToRgb(color);
-          alphaSlider.value = rgb.a;
-          const alphaLabel = alphaSlider.previousElementSibling;
-          if (alphaLabel) {
-            alphaLabel.textContent = `α: ${rgb.a.toFixed(2)}`;
-          }
-        }
-      });
-      Object.entries(this.defaultColors).forEach(([property, color]) => {
-        const propertyId = property.replace("--", "");
-        const colorInput = document.getElementById(`color-${propertyId}`);
-        if (colorInput) {
-          colorInput.value = this.extractHexFromColor(color);
-        }
-      });
+      this.applyThemeColors(this.defaultColors);
       this.showNotification("Reset to default!", "success");
     }
     async saveTheme() {
@@ -362,6 +545,10 @@
       const themeName = nameInput.value.trim();
       if (!themeName) {
         this.showNotification("Enter theme name!", "error");
+        return;
+      }
+      if (this.presetThemes[themeName]) {
+        this.showNotification("Cannot overwrite preset themes!", "error");
         return;
       }
       const colors = {};
@@ -373,7 +560,6 @@
       try {
         const transaction = this.db.transaction([this.storeName], "readwrite");
         const store = transaction.objectStore(this.storeName);
-        
         await new Promise((resolve, reject) => {
           const request = store.put({
             name: themeName,
@@ -383,114 +569,23 @@
           request.onsuccess = () => resolve();
           request.onerror = () => reject(request.error);
         });
-        
         this.currentTheme = themeName;
         await this.updateThemesList();
         this.showNotification(`"${themeName}" saved!`, "success");
         nameInput.value = "";
-        
       } catch (error) {
         this.showNotification("Save failed!", "error");
         console.error("Save theme error:", error);
       }
     }
-    async loadTheme(themeName) {
-      if (!themeName) return;
-      try {
-        const transaction = this.db.transaction([this.storeName], "readonly");
-        const store = transaction.objectStore(this.storeName);
-        const theme = await new Promise((resolve, reject) => {
-          const request = store.get(themeName);
-          request.onsuccess = () => resolve(request.result);
-          request.onerror = () => reject(request.error);
-        });
-        if (theme) {
-          const root = document.documentElement;
-          Object.entries(theme.colors).forEach(([property, color]) => {
-            root.style.setProperty(property, color);
-            const propertyId = property.replace("--", "");
-            const preview = document.getElementById(`preview-${propertyId}`);
-            const alphaSlider = document.getElementById(`alpha-${propertyId}`);
-            if (preview) {
-              preview.style.background = color;
-              const colorInput = document.getElementById(`color-${propertyId}`);
-              if (colorInput) {
-                colorInput.value = this.extractHexFromColor(color);
-              }
-            }
-            if (alphaSlider) {
-              const rgb = this.colorToRgb(color);
-              alphaSlider.value = rgb.a;
-              const alphaLabel = alphaSlider.previousElementSibling;
-              if (alphaLabel) {
-                alphaLabel.textContent = `α: ${rgb.a.toFixed(2)}`;
-              }
-            }
-          });
-          this.currentTheme = themeName;
-          this.showNotification(`"${themeName}" loaded!`, "success");
-        }
-      } catch (error) {
-        this.showNotification("Load failed!", "error");
-        console.error("Load theme error:", error);
-      }
-    }
-    async deleteTheme() {
-      const select = document.getElementById("load-theme");
-      const themeName = select.value;
-      if (!themeName || themeName === "default") {
-        this.showNotification("Select valid theme!", "error");
-        return;
-      }
-      if (confirm(`Delete "${themeName}"?`)) {
-        try {
-          const transaction = this.db.transaction([this.storeName], "readwrite");
-          const store = transaction.objectStore(this.storeName);
-          await new Promise((resolve, reject) => {
-            const request = store.delete(themeName);
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
-          });
-          await this.updateThemesList();
-          this.showNotification(`"${themeName}" deleted!`, "success");
-          select.value = "";
-        } catch (error) {
-          this.showNotification("Delete failed!", "error");
-          console.error("Delete theme error:", error);
-        }
-      }
-    }
-    async updateThemesList() {
-      const select = document.getElementById("load-theme");
-      if (!select) return;
-      try {
-        const transaction = this.db.transaction([this.storeName], "readonly");
-        const store = transaction.objectStore(this.storeName);
-        const themes = await new Promise((resolve, reject) => {
-          const request = store.getAll();
-          request.onsuccess = () => resolve(request.result || []);
-          request.onerror = () => reject(request.error);
-        });
-        select.innerHTML = '<option value="">Load theme...</option>';
-        themes.forEach((theme) => {
-          const option = document.createElement("option");
-          option.value = theme.name;
-          option.textContent = theme.name;
-          select.appendChild(option);
-        });
-      } catch (error) {
-        console.error("Update themes list error:", error);
-      }
-    }
     async loadSavedTheme() {
       const savedTheme = localStorage.getItem("currentTheme");
       if (savedTheme && savedTheme !== "default") {
-        await this.loadTheme(savedTheme);
+        await this.loadSelectedTheme(savedTheme);
       }
     }
     showNotification(message, type = "info") {
       const notification = document.createElement("div");
-      
       const backgroundColor = type === "success" 
         ? "var(--a)" 
         : type === "error" 
@@ -499,16 +594,16 @@
       notification.style.cssText = `
         position: fixed;
         top: 20px;
-        right: 410px;
+        left: 50%;
         z-index: 10002;
         padding: 8px 12px;
-        border-radius: 4px;
         color: white;
         font-size: 12px;
         font-weight: bold;
         background: ${backgroundColor};
-        transform: translateX(100%);
-        transition: transform 0.3s ease;
+        border: 2px var(--1);
+        transform: translateY(-10%);
+        transition: all 0.4s;
       `;
       notification.textContent = message;
       document.body.appendChild(notification);
@@ -516,7 +611,7 @@
         notification.style.transform = "translateX(0)";
       }, 100);
       setTimeout(() => {
-        notification.style.transform = "translateX(100%)";
+        notification.style.transform = "translateX(200%)";
         setTimeout(() => {
           if (document.body.contains(notification)) {
             document.body.removeChild(notification);
@@ -539,6 +634,14 @@
     closeModal() {
       document.getElementById("theme-modal").style.display = "none";
       this.isModalOpen = false;
+      this.showColorEditor = false;
+      const button = document.getElementById("toggle-editor");
+      const section = document.getElementById("color-editor-section");
+      if (button && section) {
+        button.textContent = "Color Editor";
+        button.style.background = "var(--b)";
+        section.style.display = "none";
+      }
       localStorage.setItem("currentTheme", this.currentTheme);
     }
   }
