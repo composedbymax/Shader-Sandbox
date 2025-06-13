@@ -28,24 +28,24 @@
         "--rh": "rgba(227, 48, 98, 0.79)"
       };
       this.presetThemes = {
-        "CODE": {
-          "--0": "rgba(2, 6, 23, 0.9)",
-          "--1": "#0f172a",
+       "CODE": {
+          "--0": "rgba(0, 0, 0, 0.9)",
+          "--1": "#000000",
           "--2": "rgba(0, 12, 24, 0.99)",
-          "--3": "rgba(30, 41, 59, 0.8)",
-          "--4": "rgba(51, 65, 85, 0.9)",
-          "--5": "rgba(71, 85, 105, 0.7)",
-          "--6": "rgba(148, 163, 184, 0.9)",
-          "--7": "rgba(203, 213, 225, 0.9)",
-          "--d": "rgba(22, 22, 22, 0.89)",
-          "--D": "rgba(12, 12, 12, 0.61)",
-          "--l": "#f1f5f9",
-          "--a": "#0ea5e9",
-          "--ah": "rgba(56, 189, 248, 0.848)",
-          "--b": "#1e40af",
-          "--m": "#64748b",
-          "--r": "#dc2626",
-          "--rh": "rgba(239, 68, 68, 0.79)"
+          "--3": "rgba(16, 25, 44, 0.8)",
+          "--4": "rgba(24, 29, 41, 0.63)",
+          "--5": "rgba(76, 83, 93, 0.7)",
+          "--6": "rgba(174, 174, 174, 0.9)",
+          "--7": "rgba(227, 227, 227, 0.9)",
+          "--D": "#070a12",
+          "--a": "rgba(4, 35, 108, 1)",
+          "--ah": "rgba(13, 82, 242, 0.72)",
+          "--b": "#1e293b",
+          "--d": "rgba(15, 17, 23, .885)",
+          "--l": "#f8fafc",
+          "--m": "#94a3b8",
+          "--r": "#b91040",
+          "--rh": "rgba(227, 48, 98, 1)"
         },
         "DARK": {
           "--0": "rgba(0, 0, 0, 0.9)",
@@ -127,8 +127,8 @@
       button.id = "theme-manager-btn";
       button.setAttribute("aria-label", "Open Theme Manager");
       button.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-          viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15"
+          viewBox="0 0 24 24" fill="none" stroke="var(--6)" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round"
           style="pointer-events: none;">
           <path d="M2 18c0 1.1.9 2 2 2h1l3-3-2-2-3 3v1z"></path>
@@ -137,8 +137,8 @@
       `;
       button.style.cssText = `
         position: fixed;
-        bottom: 10px;
-        left: 10px;
+        top: 10px;
+        right: 42px;
         z-index: 1000;
         background: var(--d);
         border: none;
@@ -152,9 +152,16 @@
         justify-content: center;
         padding: 0;
       `;
+      button.onmouseover = () => {
+        button.style.backgroundColor = "var(--5)";
+      };
+      button.onmouseout = () => {
+        button.style.backgroundColor = "var(--d)";
+      };
       button.onclick = () => this.toggleModal();
       document.body.appendChild(button);
     }
+
     createModal() {
       const modal = document.createElement("div");
       modal.id = "theme-modal";

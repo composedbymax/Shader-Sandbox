@@ -13,6 +13,7 @@
     #recSettings button{padding: 4px 8px;margin: 2px;cursor: pointer;border:0px;border-radius:6px;}
     #recSettings .active{background:var(--a);color: white;}
     #recBtn{width:2rem;height:2rem;position: absolute;bottom: 10px;left: 10px;background: var(--d);color: var(--l);border: none;padding: 8px;cursor: pointer;z-index: 1001;font-size: 1rem;display: flex;align-items: center;justify-content: center;}
+    #recBtn:hover{background:var(--5)}
     #recBtn svg{width: 14px;height: 14px;}
     #recBtn svg circle{fill: var(--r);}
     #recordingIndicator{display: none;position: absolute;top: 10px;right: 10px;background:var(--rh);color: var(--1);padding: 5px 10px;border-radius: 4px;z-index: 100;animation: pulse 1.5s infinite;}
@@ -44,7 +45,7 @@
   const recBtn = document.createElement('button');
   recBtn.id = 'recBtn';
   recBtn.title = 'Record Settings';
-  recBtn.innerHTML = `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40"/></svg>`;
+  recBtn.innerHTML = `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45"/></svg>`;
   container.appendChild(recBtn);
   const videoPreview = document.createElement('div');
   videoPreview.id = 'videoPreview';

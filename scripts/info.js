@@ -12,6 +12,8 @@
   btn.style.zIndex = '10';
   btn.style.background = 'var(--d)';
   btn.style.color = 'var(--6)';
+  btn.onmouseenter = () => {btn.style.background = 'var(--5)';};
+  btn.onmouseleave = () => {btn.style.background = 'var(--d)';};
   btn.style.border = 'none';
   btn.style.fontSize = '1em';
   btn.style.cursor = 'pointer';
@@ -23,7 +25,7 @@
   btn.title = 'Instructions';
   btn.innerHTML = `
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none"
-         stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+         stroke="var(--6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
          viewBox="0 0 24 24" aria-hidden="true">
       <circle cx="12" cy="12" r="10" />
       <line x1="12" y1="16" x2="12" y2="12" />
@@ -83,7 +85,7 @@
     closeBtn.style.cursor = 'pointer';
     closeBtn.style.border = 'none';
     closeBtn.style.backgroundColor = 'var(--3)';
-    closeBtn.style.color = 'var(--7)';
+    closeBtn.style.color = 'var(--r)';
     closeBtn.style.fontSize = '1.2rem';
     closeBtn.style.zIndex = '10000';
     closeBtn.addEventListener('mouseenter', () => {
