@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v8";
+const CACHE_VERSION = "v10";
 const CACHE_NAME = `glsl-app-${CACHE_VERSION}`;
 const ASSETS = [
     "/glsl/index.php",
@@ -6,6 +6,7 @@ const ASSETS = [
     "/glsl/scripts/banner.js",
     "/glsl/scripts/color.js",
     "/glsl/scripts/cover.js",
+    "/glsl/scripts/format.js",
     "/glsl/scripts/hidev.js",
     "/glsl/scripts/info.js",
     "/glsl/scripts/main.js",
