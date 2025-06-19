@@ -39,7 +39,7 @@ created by Max Warren
 <body>
   <div id="app">
     <div id="editors">
-      <button class="lbtn" onclick="openShaderWindow()">Save / Browse</button>
+      <button class="lbtn" onclick="openShaderWindow()" title="Save shaders and browse public gallery">Save / Browse</button>
       <div id="shaderWindow" class="savew">
         <div class="toggles">
           <button id="tabSaveBtn" onclick="showTab('save')" class="togbtn">Save</button>
@@ -73,7 +73,7 @@ created by Max Warren
       <div id="vertPanel" class="editor-panel">
         <div class="panel-header">
           <span>Vertex Shader</span>
-          <button type="button" id="vertFileBtn">Upload<span class="file-name" id="vertFileName"></span></button>
+          <button type="button" id="vertFileBtn" title="Upload a Vertex Shader (.frag,.fs,.txt)">Upload<span class="file-name" id="vertFileName"></span></button>
           <input type="file" id="vertFile" accept=".vert,.vs,.txt" />
         </div>
         <textarea id="vertCode">
@@ -86,7 +86,7 @@ void main() {
       <div id="fragPanel" class="editor-panel">
         <div class="panel-header">
           <span>Fragment Shader</span>
-          <button type="button" id="fragFileBtn">Upload<span class="file-name" id="fragFileName"></span></button>
+          <button type="button" id="fragFileBtn" title="Upload a Fragment Shader (.frag,.fs,.txt)">Upload<span class="file-name" id="fragFileName"></span></button>
           <input type="file" id="fragFile" accept=".frag,.fs,.txt" />
         </div>
         <textarea id="fragCode">

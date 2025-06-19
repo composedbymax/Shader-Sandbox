@@ -125,6 +125,7 @@
     createButton() {
       const button = document.createElement("button");
       button.id = "theme-manager-btn";
+      button.title = 'Theme Manager';
       button.setAttribute("aria-label", "Open Theme Manager");
       button.innerHTML = `
         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15"
@@ -139,7 +140,7 @@
         position: fixed;
         top: 10px;
         right: 42px;
-        z-index: 1000;
+        z-index: 1;
         background: var(--d);
         border: none;
         width: 2rem;
@@ -161,7 +162,6 @@
       button.onclick = () => this.toggleModal();
       document.body.appendChild(button);
     }
-
     createModal() {
       const modal = document.createElement("div");
       modal.id = "theme-modal";

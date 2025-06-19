@@ -41,6 +41,7 @@ class GLSLPerformanceMonitor {
       (this.toggleButton.style.display = "flex"),
       (this.toggleButton.style.justifyContent = "center"),
       (this.toggleButton.style.alignItems = "center"),
+      this.toggleButton.title = "Performance Monitor";
       (this.toggleButton.innerHTML =
         '\n        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">\n          <path d="M3 13H10V3H3V13ZM3 21H10V15H3V21ZM12 21H19V11H12V21ZM12 3V9H19V3H12Z" fill="var(--6)"/>\n        </svg>\n      '),
       (this.toggleButton.onmouseenter = () => {this.toggleButton.style.backgroundColor = "var(--5)";}),

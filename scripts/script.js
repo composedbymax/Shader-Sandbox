@@ -390,14 +390,17 @@ canvas { width: 100vw; height: 100vh; display: block; }
 function addExportButtons() {
     const vertExportBtn = document.createElement('button');
     vertExportBtn.textContent = 'Export';
+    vertExportBtn.title = 'Export Vertex Shader';
     vertExportBtn.onclick = () => exportShader('vert', vertTA.value);
     vertPanel.querySelector('.panel-header').appendChild(vertExportBtn);
     const fragExportBtn = document.createElement('button');
     fragExportBtn.textContent = 'Export';
+    fragExportBtn.title = 'Export Fragment Shader';
     fragExportBtn.onclick = () => exportShader('frag', fragTA.value);
     fragPanel.querySelector('.panel-header').appendChild(fragExportBtn);
     const fullExportBtn = document.createElement('button');
     fullExportBtn.textContent = 'Export';
+    fullExportBtn.title = 'Export Full HTML';
     fullExportBtn.style.position = 'absolute';
     fullExportBtn.classList.add('expbtn');
     fullExportBtn.onclick = exportFullHTML;

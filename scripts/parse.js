@@ -17,11 +17,15 @@
     if (fsEl && !fsEl.contains(uploadBtn)) {
       fsEl.appendChild(uploadBtn);
       fsEl.appendChild(fileInput);
+    } else if (!fsEl) {
+      document.body.appendChild(uploadBtn);
+      document.body.appendChild(fileInput);
     }
   });
   const uploadBtn = createEl('button', {
     id: 'uploadHTMLBtn',
-    textContent: 'Load'
+    textContent: 'Load',
+    title: 'Upload HTML or JS file'
   });
   const fileInput = createEl('input', {
     id: 'uploadHTMLInput',

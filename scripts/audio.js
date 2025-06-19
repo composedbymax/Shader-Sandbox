@@ -51,7 +51,10 @@ class AudioReactive {
       display:'flex', transition:'all .2s ease', zIndex:'1000',
       height:'2rem', width: '2rem'
     };
-    this.button = this.EL('button', { innerHTML: this.SVG() }, btnStyles);
+    this.button = this.EL('button', {
+      innerHTML: this.SVG(),
+      title: 'Audio Reactivity'
+    }, btnStyles);
     this.button.addEventListener('mouseenter', ()=> {
       this.style(this.button, { backgroundColor:'var(--5)' });
     });
