@@ -108,8 +108,19 @@
             content += `Line ${match.lineNumber}: ${match.lineContent}\n`;
         });
         tooltip.textContent = content;
-        tooltip.style.left = event.pageX + 10 + 'px';
-        tooltip.style.top = event.pageY + 10 + 'px';
+        const tooltipRect = tooltip.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        let left = event.pageX + 10;
+        let top = event.pageY + 10;
+        if (left + tooltipRect.width > viewportWidth) {
+            left = event.pageX - tooltipRect.width - 10;
+        }
+        if (top + tooltipRect.height > viewportHeight) {
+            top = event.pageY - tooltipRect.height - 10;
+        }
+        tooltip.style.left = left + 'px';
+        tooltip.style.top = top + 'px';
         tooltip.classList.add('show');
     }
     function hideTooltip() {
@@ -118,18 +129,46 @@
             tooltip.classList.remove('show');
         }
     }
+    function wrapText(text, maxWidth, fontSize = 9) {
+        const words = text.split(/,\s*/);
+        const lines = [];
+        let currentLine = '';
+        const charWidth = fontSize * 0.6;
+        const maxChars = Math.floor(maxWidth / charWidth);
+        for (let word of words) {
+            if (currentLine.length + word.length + 2 <= maxChars) {
+                if (currentLine) currentLine += ', ';
+                currentLine += word;
+            } else {
+                if (currentLine) lines.push(currentLine);
+                currentLine = word;
+            }
+        }
+        if (currentLine) lines.push(currentLine);
+        
+        return lines;
+    }
     function createFlowchartSVG(vertexStages, fragmentStages) {
         const svg = document.getElementById('flowchartSVG');
         svg.innerHTML = '';
         const boxWidth = 200;
-        const boxHeight = 50;
+        const baseBoxHeight = 50;
         const gap = 15;
         const columnGap = 100;
         const topPadding = 50;
         const bottomPadding = 30;
-        const maxStages = Math.max(vertexStages.length, fragmentStages.length);
-        const contentHeight = maxStages * (boxHeight + gap) - gap; // Remove last gap
-        const totalHeight = topPadding + contentHeight + bottomPadding;
+        const lineHeight = 12;
+        const calculateStageHeight = (stage) => {
+            const lineNumbers = stage.matches.map(m => `L${m.lineNumber}`).join(', ');
+            const wrappedLines = wrapText(lineNumbers, boxWidth - 20);
+            return Math.max(baseBoxHeight, baseBoxHeight + (wrappedLines.length - 1) * lineHeight);
+        };
+        const vertexHeights = vertexStages.map(calculateStageHeight);
+        const fragmentHeights = fragmentStages.map(calculateStageHeight);
+        const totalVertexHeight = vertexHeights.reduce((sum, height) => sum + height + gap, 0) - gap;
+        const totalFragmentHeight = fragmentHeights.reduce((sum, height) => sum + height + gap, 0) - gap;
+        const maxContentHeight = Math.max(totalVertexHeight, totalFragmentHeight);
+        const totalHeight = topPadding + maxContentHeight + bottomPadding;
         const totalWidth = boxWidth * 2 + columnGap + 50;
         svg.setAttribute('width', '100%');
         svg.setAttribute('height', totalHeight);
@@ -159,11 +198,12 @@
         fragmentHeader.setAttribute("font-weight", "bold");
         fragmentHeader.textContent = "Fragment Shader";
         svg.appendChild(fragmentHeader);
+        let currentY = topPadding;
         vertexStages.forEach((stage, i) => {
-            const y = topPadding + i * (boxHeight + gap);
+            const boxHeight = vertexHeights[i];
             const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
             rect.setAttribute("x", 25);
-            rect.setAttribute("y", y);
+            rect.setAttribute("y", currentY);
             rect.setAttribute("width", boxWidth);
             rect.setAttribute("height", boxHeight);
             rect.setAttribute("rx", 6);
@@ -173,40 +213,44 @@
             rect.addEventListener('mousemove', (e) => {
                 const tooltip = document.getElementById('flowchartTooltip');
                 if (tooltip && tooltip.classList.contains('show')) {
-                    tooltip.style.left = e.pageX + 10 + 'px';
-                    tooltip.style.top = e.pageY + 10 + 'px';
+                    showTooltip(e, stage);
                 }
             });
             svg.appendChild(rect);
             const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
             text.setAttribute("x", 25 + boxWidth / 2);
-            text.setAttribute("y", y + boxHeight / 2 - 5);
+            text.setAttribute("y", currentY + boxHeight / 2 - 10);
             text.setAttribute("class", "flowchart-label");
             text.textContent = stage.name;
             svg.appendChild(text);
             const lineNumbers = stage.matches.map(m => `L${m.lineNumber}`).join(', ');
-            const lineText = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            lineText.setAttribute("x", 25 + boxWidth / 2);
-            lineText.setAttribute("y", y + boxHeight / 2 + 10);
-            lineText.setAttribute("class", "flowchart-line-number");
-            lineText.textContent = lineNumbers;
-            svg.appendChild(lineText);
+            const wrappedLines = wrapText(lineNumbers, boxWidth - 20);
+            wrappedLines.forEach((line, lineIndex) => {
+                const lineText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                lineText.setAttribute("x", 25 + boxWidth / 2);
+                lineText.setAttribute("y", currentY + boxHeight / 2 + 5 + (lineIndex * lineHeight));
+                lineText.setAttribute("class", "flowchart-line-number");
+                lineText.textContent = line;
+                svg.appendChild(lineText);
+            });
             if (i < vertexStages.length - 1) {
                 const arrow = document.createElementNS("http://www.w3.org/2000/svg", "line");
                 arrow.setAttribute("x1", 25 + boxWidth / 2);
-                arrow.setAttribute("y1", y + boxHeight);
+                arrow.setAttribute("y1", currentY + boxHeight);
                 arrow.setAttribute("x2", 25 + boxWidth / 2);
-                arrow.setAttribute("y2", y + boxHeight + gap);
+                arrow.setAttribute("y2", currentY + boxHeight + gap);
                 arrow.setAttribute("class", "flowchart-arrow");
                 svg.appendChild(arrow);
             }
+            currentY += boxHeight + gap;
         });
+        currentY = topPadding;
         fragmentStages.forEach((stage, i) => {
-            const y = topPadding + i * (boxHeight + gap);
+            const boxHeight = fragmentHeights[i];
             const x = boxWidth + columnGap + 25;
             const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
             rect.setAttribute("x", x);
-            rect.setAttribute("y", y);
+            rect.setAttribute("y", currentY);
             rect.setAttribute("width", boxWidth);
             rect.setAttribute("height", boxHeight);
             rect.setAttribute("rx", 6);
@@ -216,38 +260,41 @@
             rect.addEventListener('mousemove', (e) => {
                 const tooltip = document.getElementById('flowchartTooltip');
                 if (tooltip && tooltip.classList.contains('show')) {
-                    tooltip.style.left = e.pageX + 10 + 'px';
-                    tooltip.style.top = e.pageY + 10 + 'px';
+                    showTooltip(e, stage);
                 }
             });
             svg.appendChild(rect);
             const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
             text.setAttribute("x", x + boxWidth / 2);
-            text.setAttribute("y", y + boxHeight / 2 - 5);
+            text.setAttribute("y", currentY + boxHeight / 2 - 10);
             text.setAttribute("class", "flowchart-label");
             text.textContent = stage.name;
             svg.appendChild(text);
             const lineNumbers = stage.matches.map(m => `L${m.lineNumber}`).join(', ');
-            const lineText = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            lineText.setAttribute("x", x + boxWidth / 2);
-            lineText.setAttribute("y", y + boxHeight / 2 + 10);
-            lineText.setAttribute("class", "flowchart-line-number");
-            lineText.textContent = lineNumbers;
-            svg.appendChild(lineText);
+            const wrappedLines = wrapText(lineNumbers, boxWidth - 20);
+            wrappedLines.forEach((line, lineIndex) => {
+                const lineText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                lineText.setAttribute("x", x + boxWidth / 2);
+                lineText.setAttribute("y", currentY + boxHeight / 2 + 5 + (lineIndex * lineHeight));
+                lineText.setAttribute("class", "flowchart-line-number");
+                lineText.textContent = line;
+                svg.appendChild(lineText);
+            });
             if (i < fragmentStages.length - 1) {
                 const arrow = document.createElementNS("http://www.w3.org/2000/svg", "line");
                 arrow.setAttribute("x1", x + boxWidth / 2);
-                arrow.setAttribute("y1", y + boxHeight);
+                arrow.setAttribute("y1", currentY + boxHeight);
                 arrow.setAttribute("x2", x + boxWidth / 2);
-                arrow.setAttribute("y2", y + boxHeight + gap);
+                arrow.setAttribute("y2", currentY + boxHeight + gap);
                 arrow.setAttribute("class", "flowchart-arrow");
                 svg.appendChild(arrow);
             }
+            currentY += boxHeight + gap;
         });
         if (vertexStages.length > 0 && fragmentStages.length > 0) {
-            const vertexEnd = topPadding + (vertexStages.length - 1) * (boxHeight + gap) + boxHeight / 2;
-            const fragmentStart = topPadding + boxHeight / 2;
-            const midY = Math.max(vertexEnd, fragmentStart);
+            const vertexEndY = topPadding + totalVertexHeight / 2;
+            const fragmentStartY = topPadding + fragmentHeights[0] / 2;
+            const midY = Math.max(vertexEndY, fragmentStartY);
             const connector = document.createElementNS("http://www.w3.org/2000/svg", "path");
             const startX = 25 + boxWidth;
             const endX = boxWidth + columnGap + 25;
