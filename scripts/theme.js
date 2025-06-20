@@ -137,7 +137,7 @@
         </svg>
       `;
       button.style.cssText = `
-        position: fixed;
+        position: absolute;
         top: 10px;
         right: 42px;
         z-index: 1;
@@ -152,6 +152,7 @@
         align-items: center;
         justify-content: center;
         padding: 0;
+        pointer-events: auto;
       `;
       button.onmouseover = () => {
         button.style.backgroundColor = "var(--5)";
@@ -160,6 +161,13 @@
         button.style.backgroundColor = "var(--d)";
       };
       button.onclick = () => this.toggleModal();
+      document.addEventListener('fullscreenchange', () => {
+        if (document.fullscreenElement) {
+          document.fullscreenElement.appendChild(button);
+        } else {
+          document.body.appendChild(button);
+        }
+      });
       document.body.appendChild(button);
     }
     createModal() {
