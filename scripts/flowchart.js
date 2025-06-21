@@ -10,6 +10,11 @@
         .flowchart-controls button:hover{background: var(--ah);}
         .flowchart-controls .close-btn{background: var(--r);margin-left: 10px;}
         .flowchart-controls .close-btn:hover{background: var(--rh);}
+        .export-dropdown{position: relative;display: inline-block;}
+        .export-dropdown-content{display: none;position: absolute;right: 0;background-color: var(--4);min-width: 120px;box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);z-index: 1;border-radius: 4px;overflow: hidden;}
+        .export-dropdown-content button{display: block;width: 100%;text-align: left;padding: 8px 12px;border: none;background: var(--4);color: var(--7);cursor: pointer;font-size: 14px;border-radius: 0;}
+        .export-dropdown-content button:hover{background: var(--5);}
+        .export-dropdown.show .export-dropdown-content{display: block;}
         .flowchart-content{flex: 1;overflow: auto;display: flex;flex-direction: column;min-height: 0;}
         #flowchartSVG{flex: 1;width: 100%;background: var(--3);overflow: auto;min-height: 300px;}
         .flowchart-node{fill: var(--2);stroke: var(--3);stroke-width: 2px;filter: drop-shadow(2px 2px 4px var(--0));cursor: pointer;}
@@ -28,6 +33,7 @@
     const style = document.createElement('style');
     style.textContent = flowchartCSS;
     document.head.appendChild(style);
+    let currentFlowchartData = null;
     const shaderPatterns = {
         vertex: {
             'Vertex Input': { pattern: /attribute\s+\w+\s+\w+|in\s+\w+\s+\w+/, priority: 1 },
@@ -145,7 +151,6 @@
             }
         }
         if (currentLine) lines.push(currentLine);
-        
         return lines;
     }
     function createFlowchartSVG(vertexStages, fragmentStages) {
@@ -309,21 +314,177 @@
         const fragmentCode = document.getElementById('fragCode')?.value || '';
         const vertexStages = analyzeShaderCode(vertexCode, 'vertex');
         const fragmentStages = analyzeShaderCode(fragmentCode, 'fragment');
+        currentFlowchartData = {
+            vertexStages,
+            fragmentStages,
+            vertexCode,
+            fragmentCode,
+            timestamp: new Date().toISOString()
+        };
         createFlowchartSVG(vertexStages, fragmentStages);
     }
-    function exportFlowchart() {
+    function exportAsPNG() {
         const svg = document.getElementById('flowchartSVG');
-        const svgData = new XMLSerializer().serializeToString(svg);
+        if (!svg) return;
+        const svgClone = svg.cloneNode(true);
+        const computedStyle = window.getComputedStyle(document.documentElement);
+        const cssVarMap = {
+            '--0': 'rgba(0,0,0,0.3)',
+            '--1': 'rgba(0,0,0,0.1)',
+            '--2': '#1a1a1a',
+            '--3': '#333333',
+            '--4': '#2a2a2a',
+            '--5': '#666666',
+            '--6': '#444444',
+            '--7': '#ffffff',
+            '--a': '#4a9eff',
+            '--b': '#ff6b6b',
+            '--m': '#ff9f43',
+            '--r': '#ee5a52',
+            '--ah': '#357abd',
+            '--rh': '#d63031'
+        };
+        function resolveCSSVars(element) {
+            ['fill', 'stroke'].forEach(attr => {
+                const value = element.getAttribute(attr);
+                if (value && value.startsWith('var(')) {
+                    const varName = value.match(/var\((--[^)]+)\)/)?.[1];
+                    if (varName && cssVarMap[varName]) {
+                        element.setAttribute(attr, cssVarMap[varName]);
+                    }
+                }
+            });
+            const style = element.getAttribute('style');
+            if (style) {
+                let newStyle = style;
+                Object.entries(cssVarMap).forEach(([varName, value]) => {
+                    newStyle = newStyle.replace(new RegExp(`var\\(${varName}\\)`, 'g'), value);
+                });
+                element.setAttribute('style', newStyle);
+            }
+            Array.from(element.children).forEach(child => resolveCSSVars(child));
+        }
+        resolveCSSVars(svgClone);
+        const styleElement = document.createElementNS("http://www.w3.org/2000/svg", "style");
+        styleElement.textContent = `
+            .flowchart-node { fill: #1a1a1a; stroke: #333333; stroke-width: 2px; }
+            .flowchart-node.vertex { fill: #1a1a1a; stroke: #4a9eff; }
+            .flowchart-node.fragment { fill: #1a1a1a; stroke: #ff9f43; }
+            .flowchart-node.common { fill: #1a1a1a; stroke: #ff6b6b; }
+            .flowchart-label { font-family: Arial, sans-serif; fill: #ffffff; text-anchor: middle; dominant-baseline: middle; }
+            .flowchart-line-number { font-family: monospace; fill: #666666; text-anchor: middle; }
+            .flowchart-arrow { stroke: #666666; stroke-width: 2px; fill: none; }
+        `;
+        svgClone.insertBefore(styleElement, svgClone.firstChild);
+        const defs = svgClone.querySelector('defs');
+        if (defs) {
+            const marker = defs.querySelector('#flowchart-arrow-marker path');
+            if (marker) {
+                marker.setAttribute('fill', '#666666');
+            }
+        }
+        const rect = svg.getBoundingClientRect();
+        svgClone.setAttribute('width', rect.width);
+        svgClone.setAttribute('height', rect.height);
+        const svgData = new XMLSerializer().serializeToString(svgClone);
         const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        const scale = 2;
+        canvas.width = rect.width * scale;
+        canvas.height = rect.height * scale;
+        img.onload = function() {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.scale(scale, scale);
+            ctx.drawImage(img, 0, 0);
+            canvas.toBlob(function(blob) {
+                if (blob) {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'glsl-flowchart.png';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                }
+            }, 'image/png');
+            URL.revokeObjectURL(img.src);
+        };
+        img.onerror = function() {
+            console.error('Failed to load SVG for PNG conversion');
+            alert('Failed to export PNG. Try the SVG export instead.');
+            URL.revokeObjectURL(img.src);
+        };
         const url = URL.createObjectURL(svgBlob);
+        img.src = url;
+    }
+    function exportAsJSON() {
+        if (!currentFlowchartData) {
+            alert('Please generate a flowchart first');
+            return;
+        }
+        const jsonData = JSON.stringify(currentFlowchartData, null, 2);
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = 'flowchart.svg';
+        link.download = 'glsl-flowchart.json';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
     }
+    function exportAsTXT() {
+        if (!currentFlowchartData) {
+            alert('Please generate a flowchart first');
+            return;
+        }
+        let txtContent = `GLSL Shader Flowchart Analysis\n`;
+        txtContent += `Generated: ${currentFlowchartData.timestamp}\n\n`;
+        txtContent += `=== VERTEX SHADER STAGES ===\n`;
+        currentFlowchartData.vertexStages.forEach((stage, i) => {
+            txtContent += `\n${i + 1}. ${stage.name} (${stage.type})\n`;
+            txtContent += `   Priority: ${stage.priority}\n`;
+            txtContent += `   Found on lines:\n`;
+            stage.matches.forEach(match => {
+                txtContent += `     Line ${match.lineNumber}: ${match.lineContent}\n`;
+            });
+        });
+        txtContent += `\n=== FRAGMENT SHADER STAGES ===\n`;
+        currentFlowchartData.fragmentStages.forEach((stage, i) => {
+            txtContent += `\n${i + 1}. ${stage.name} (${stage.type})\n`;
+            txtContent += `   Priority: ${stage.priority}\n`;
+            txtContent += `   Found on lines:\n`;
+            stage.matches.forEach(match => {
+                txtContent += `     Line ${match.lineNumber}: ${match.lineContent}\n`;
+            });
+        });
+        txtContent += `\n=== ORIGINAL CODE ===\n\n`;
+        txtContent += `--- Vertex Shader ---\n${currentFlowchartData.vertexCode}\n\n`;
+        txtContent += `--- Fragment Shader ---\n${currentFlowchartData.fragmentCode}\n`;
+        const blob = new Blob([txtContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'glsl-flowchart.txt';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+    function toggleExportDropdown() {
+        const dropdown = document.getElementById('exportDropdown');
+        dropdown.classList.toggle('show');
+    }
+    document.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('exportDropdown');
+        if (dropdown && !dropdown.contains(event.target)) {
+            dropdown.classList.remove('show');
+        }
+    });
     function openFlowchartWindow() {
         document.getElementById('flowchartOverlay').classList.add('show');
         document.getElementById('flowchartWindow').classList.add('show');
@@ -346,7 +507,14 @@
                 <h3>Flowchart <span style="font-size: 12px; color: var(--a);">(Hover nodes for details)</span></h3>
                 <div class="flowchart-controls">
                     <button onclick="glslFlowchart.generate()">Regenerate</button>
-                    <button onclick="glslFlowchart.export()">Export SVG</button>
+                    <div class="export-dropdown" id="exportDropdown">
+                        <button onclick="glslFlowchart.toggleExport()">Export ▼</button>
+                        <div class="export-dropdown-content">
+                            <button onclick="glslFlowchart.exportPNG()">PNG Image</button>
+                            <button onclick="glslFlowchart.exportJSON()">JSON Data</button>
+                            <button onclick="glslFlowchart.exportTXT()">Text Report</button>
+                        </div>
+                    </div>
                     <button class="close-btn" onclick="glslFlowchart.close()">Close</button>
                 </div>
             </div>
@@ -380,7 +548,10 @@
         open: openFlowchartWindow,
         close: closeFlowchartWindow,
         generate: generateFlowchart,
-        export: exportFlowchart
+        exportPNG: exportAsPNG,
+        exportJSON: exportAsJSON,
+        exportTXT: exportAsTXT,
+        toggleExport: toggleExportDropdown
     };
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
