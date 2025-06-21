@@ -316,6 +316,13 @@
     function init() {
         injectStyles();
         document.addEventListener('keydown', handleKeydown);
+        document.addEventListener('fullscreenchange', () => {
+            const modal  = document.getElementById('glslFormatterModal');
+            const button = document.getElementById('glslFormatterToggleButton'); // if you have a toolbar button
+            const root   = document.fullscreenElement || document.body;
+            if (button) root.appendChild(button);
+            if (modal)  root.appendChild(modal);
+        });
         window.GLSLFormatter = {
             openModal,
             closeModal,

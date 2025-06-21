@@ -558,8 +558,20 @@
             createFlowchartWindow();
             setupKeyboardListener();
         });
+        
     } else {
         createFlowchartWindow();
         setupKeyboardListener();
+        document.addEventListener('fullscreenchange', () => {
+        const overlay   = document.getElementById('flowchartOverlay');
+        const windowDiv = document.getElementById('flowchartWindow');
+        if (document.fullscreenElement) {
+            document.fullscreenElement.appendChild(overlay);
+            document.fullscreenElement.appendChild(windowDiv);
+        } else {
+            document.body.appendChild(overlay);
+            document.body.appendChild(windowDiv);
+        }
+        });
     }
 })();
