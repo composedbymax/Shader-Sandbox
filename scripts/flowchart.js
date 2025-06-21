@@ -1,38 +1,38 @@
 (function() {
     'use strict';
     const flowchartCSS = `
-        #flowchartWindow{position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);width: 90vw;max-width: 1000px;height: 80vh;border-radius: 4px;z-index: 999999;display: none;flex-direction: column;}
-        #flowchartWindow.show{display: flex;}
-        .flowchart-header{background: var(--4);padding: 15px 20px;border-bottom: 1px solid var(--6);display: flex;justify-content: space-between;align-items: center;border-radius: 4px 4px 0 0;}
-        .flowchart-header h3{margin: 0;color: var(--7);font-size: 18px;}
-        .flowchart-controls{display: flex;gap: 10px;align-items: center;}
-        .flowchart-controls button{padding: 8px 15px;background: var(--a);color: var(--0);border: none;border-radius: 2px;cursor: pointer;font-size: 14px;}
-        .flowchart-controls button:hover{background: var(--ah);}
-        .flowchart-controls .close-btn{background: var(--r);margin-left: 10px;}
-        .flowchart-controls .close-btn:hover{background: var(--rh);}
-        .export-dropdown{position: relative;display: inline-block;}
-        .export-dropdown-content{display: none;position: absolute;right: 0;background-color: var(--4);min-width: 120px;box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);z-index: 1;border-radius: 4px;overflow: hidden;}
-        .export-dropdown-content button{display: block;width: 100%;text-align: left;padding: 8px 12px;border: none;background: var(--4);color: var(--7);cursor: pointer;font-size: 14px;border-radius: 0;}
-        .export-dropdown-content button:hover{background: var(--5);}
-        .export-dropdown.show .export-dropdown-content{display: block;}
-        .flowchart-content{flex: 1;overflow: auto;display: flex;flex-direction: column;min-height: 0;}
-        #flowchartSVG{flex: 1;width: 100%;background: var(--3);overflow: auto;min-height: 300px;}
-        .flowchart-node{fill: var(--2);stroke: var(--3);stroke-width: 2px;filter: drop-shadow(2px 2px 4px var(--0));cursor: pointer;}
-        .flowchart-node:hover{stroke-width: 3px;filter: drop-shadow(3px 3px 6px var(--1));}
-        .flowchart-node.vertex{fill: var(--2);stroke: var(--a);}
-        .flowchart-node.fragment{fill: var(--2);stroke: var(--m);}
-        .flowchart-node.common{fill: var(--2);stroke: var(--b);}
-        .flowchart-label{font-size: 11px;text-anchor: middle;dominant-baseline: middle;fill: var(--7);font-weight: 500;pointer-events: none;}
-        .flowchart-line-number{font-size: 9px;text-anchor: middle;fill: var(--5);font-family: monospace;pointer-events: none;}
-        .flowchart-arrow{stroke: var(--5);stroke-width: 2px;fill: none;marker-end: url(#flowchart-arrow-marker);}
-        .flowchart-overlay{position: fixed;top: 0;left: 0;width: 100%;height: 100%;background: var(--0);z-index: 99999;display: none;}
-        .flowchart-overlay.show{display: block;}
-        .flowchart-tooltip{position: absolute;background: var(--4);color: var(--7);padding: 8px 12px;border-radius: 4px;font-size: 12px;font-family: monospace;white-space: pre-wrap;max-width: 300px;z-index: 9999999;pointer-events: none;opacity: 0;transition: opacity 0.2s;}
-        .flowchart-tooltip.show{opacity: 1;}
+        #flowchartWindow { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90vw; max-width: 1000px; height: 80vh; border-radius: 4px; z-index: 999999; display: none; flex-direction: column; }
+        #flowchartWindow.show { display: flex; }
+        .flowchart-header { background: var(--4); padding: 15px 20px; border-bottom: 1px solid var(--6); display: flex; justify-content: space-between; align-items: center; border-radius: 4px 4px 0 0; }
+        .flowchart-header h3 { margin: 0; color: var(--7); font-size: 18px; }
+        .flowchart-controls { display: flex; gap: 10px; align-items: center; }
+        .flowchart-controls button { padding: 8px 15px; background: var(--a); color: var(--0); border: none; border-radius: 2px; cursor: pointer; font-size: 14px; }
+        .flowchart-controls button:hover { background: var(--ah); }
+        .flowchart-controls .close-btn { background: var(--r); margin-left: 10px; }
+        .flowchart-controls .close-btn:hover { background: var(--rh); }
+        .export-dropdown { position: relative; display: inline-block; }
+        .export-dropdown-content { display: none; position: absolute; right: 0; background-color: var(--4); min-width: 120px; box-shadow: 0px 8px 16px rgba(0,0,0,0.2); z-index: 1; border-radius: 4px; overflow: hidden; }
+        .export-dropdown-content button { display: block; width: 100%; text-align: left; padding: 8px 12px; border: none; background: var(--4); color: var(--7); cursor: pointer; font-size: 14px; }
+        .export-dropdown-content button:hover { background: var(--5); }
+        .export-dropdown.show .export-dropdown-content { display: block; }
+        .flowchart-content { flex: 1; overflow: auto; display: flex; flex-direction: column; min-height: 0; }
+        #flowchartSVG { flex: 1; width: 100%; background: var(--3); overflow: auto; min-height: 300px; }
+        .flowchart-node { fill: var(--2); stroke: var(--3); stroke-width: 2px; filter: drop-shadow(2px 2px 4px var(--0)); cursor: pointer; }
+        .flowchart-node:hover { stroke-width: 3px; filter: drop-shadow(3px 3px 6px var(--1)); }
+        .flowchart-node.vertex { stroke: var(--a); }
+        .flowchart-node.fragment { stroke: var(--m); }
+        .flowchart-node.common { stroke: var(--b); }
+        .flowchart-label { font-size: 11px; text-anchor: middle; dominant-baseline: middle; fill: var(--7); font-weight: 500; pointer-events: none; }
+        .flowchart-line-number { font-size: 9px; text-anchor: middle; fill: var(--5); font-family: monospace; pointer-events: none; }
+        .flowchart-arrow { stroke: var(--5); stroke-width: 2px; fill: none; marker-end: url(#flowchart-arrow-marker); }
+        .flowchart-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--0); z-index: 99999; display: none; }
+        .flowchart-overlay.show { display: block; }
+        .flowchart-tooltip { position: absolute; background: var(--4); color: var(--7); padding: 8px 12px; border-radius: 4px; font-size: 12px; font-family: monospace; white-space: pre-wrap; max-width: 300px; z-index: 9999999; pointer-events: none; opacity: 0; transition: opacity 0.2s; }
+        .flowchart-tooltip.show { opacity: 1; }
     `;
-    const style = document.createElement('style');
-    style.textContent = flowchartCSS;
-    document.head.appendChild(style);
+    const styleEl = document.createElement('style');
+    styleEl.textContent = flowchartCSS;
+    document.head.appendChild(styleEl);
     let currentFlowchartData = null;
     const shaderPatterns = {
         vertex: {
@@ -310,18 +310,12 @@
         }
     }
     function generateFlowchart() {
-        const vertexCode = document.getElementById('vertCode')?.value || '';
-        const fragmentCode = document.getElementById('fragCode')?.value || '';
-        const vertexStages = analyzeShaderCode(vertexCode, 'vertex');
-        const fragmentStages = analyzeShaderCode(fragmentCode, 'fragment');
-        currentFlowchartData = {
-            vertexStages,
-            fragmentStages,
-            vertexCode,
-            fragmentCode,
-            timestamp: new Date().toISOString()
-        };
-        createFlowchartSVG(vertexStages, fragmentStages);
+        const vert = document.getElementById('vertCode')?.value || '';
+        const frag = document.getElementById('fragCode')?.value || '';
+        const vStages = analyzeShaderCode(vert, 'vertex');
+        const fStages = analyzeShaderCode(frag, 'fragment');
+        currentFlowchartData = { vertexStages: vStages, fragmentStages: fStages, vertexCode: vert, fragmentCode: frag, timestamp: new Date().toISOString() };
+        createFlowchartSVG(vStages, fStages);
     }
     function exportAsPNG() {
         const svg = document.getElementById('flowchartSVG');
@@ -504,9 +498,8 @@
         windowDiv.id = 'flowchartWindow';
         windowDiv.innerHTML = `
             <div class="flowchart-header">
-                <h3>Flowchart <span style="font-size: 12px; color: var(--a);">(Hover nodes for details)</span></h3>
+                <h3>Flowchart <span style="font-size:12px;color:var(--a)">(Hover nodes for details)</span></h3>
                 <div class="flowchart-controls">
-                    <button onclick="glslFlowchart.generate()">Regenerate</button>
                     <div class="export-dropdown" id="exportDropdown">
                         <button onclick="glslFlowchart.toggleExport()">Export ▼</button>
                         <div class="export-dropdown-content">
@@ -522,22 +515,17 @@
                 <svg id="flowchartSVG"></svg>
             </div>
         `;
-        windowDiv.addEventListener('click', function(e) {
-            e.stopPropagation();
-        });
+        windowDiv.addEventListener('click', e => e.stopPropagation());
         document.body.appendChild(overlay);
         document.body.appendChild(windowDiv);
     }
     function setupKeyboardListener() {
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', e => {
             if (e.shiftKey && e.key === 'V') {
                 e.preventDefault();
-                const isVisible = document.getElementById('flowchartWindow').classList.contains('show');
-                if (isVisible) {
-                    closeFlowchartWindow();
-                } else {
-                    openFlowchartWindow();
-                }
+                const win = document.getElementById('flowchartWindow');
+                if (win.classList.contains('show')) closeFlowchartWindow();
+                else openFlowchartWindow();
             }
             if (e.key === 'Escape' && document.getElementById('flowchartWindow').classList.contains('show')) {
                 closeFlowchartWindow();
@@ -547,31 +535,29 @@
     window.glslFlowchart = {
         open: openFlowchartWindow,
         close: closeFlowchartWindow,
-        generate: generateFlowchart,
         exportPNG: exportAsPNG,
         exportJSON: exportAsJSON,
         exportTXT: exportAsTXT,
         toggleExport: toggleExportDropdown
     };
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', () => {
             createFlowchartWindow();
             setupKeyboardListener();
         });
-        
     } else {
         createFlowchartWindow();
         setupKeyboardListener();
         document.addEventListener('fullscreenchange', () => {
-        const overlay   = document.getElementById('flowchartOverlay');
-        const windowDiv = document.getElementById('flowchartWindow');
-        if (document.fullscreenElement) {
-            document.fullscreenElement.appendChild(overlay);
-            document.fullscreenElement.appendChild(windowDiv);
-        } else {
-            document.body.appendChild(overlay);
-            document.body.appendChild(windowDiv);
-        }
+            const overlay = document.getElementById('flowchartOverlay');
+            const win     = document.getElementById('flowchartWindow');
+            if (document.fullscreenElement) {
+                document.fullscreenElement.appendChild(overlay);
+                document.fullscreenElement.appendChild(win);
+            } else {
+                document.body.appendChild(overlay);
+                document.body.appendChild(win);
+            }
         });
     }
 })();
