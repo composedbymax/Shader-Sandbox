@@ -1,12 +1,101 @@
-// player.js
 (function() {
   const processedAudioElements = new WeakSet();
   let currentPlayerWrapper = null;
+  let countdownEnabled = false;
+  let countdownActive = false;
+  let countdownInterval = null;
+  let originalAudioSrc = null;
   function formatTime(seconds) {
     if (isNaN(seconds) || !isFinite(seconds)) return '0:00';
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+  function createNotification(count) {
+    const notification = document.createElement('div');
+    notification.textContent = count;
+    notification.style.position = 'fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.background = 'var(--a)';
+    notification.style.color = 'var(--1)';
+    notification.style.padding = '10px 15px';
+    notification.style.borderRadius = '8px';
+    notification.style.fontSize = '16px';
+    notification.style.fontWeight = 'bold';
+    notification.style.zIndex = '10000';
+    notification.style.boxShadow = '0 4px 12px var(--0)';
+    notification.style.animation = 'countdownPulse 0.8s ease-out';
+    notification.style.minWidth = '40px';
+    notification.style.textAlign = 'center';
+    if (!document.getElementById('countdown-styles')) {
+      const style = document.createElement('style');
+      style.id = 'countdown-styles';
+      style.textContent = `
+        @keyframes countdownPulse {
+          0% { transform: scale(0.8); opacity: 0; }
+          50% { transform: scale(1.1); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 900);
+  }
+  function createSilentAudio(duration) {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const sampleRate = audioContext.sampleRate;
+    const buffer = audioContext.createBuffer(1, duration * sampleRate, sampleRate);
+    const length = buffer.length;
+    const arrayBuffer = new ArrayBuffer(44 + length * 2);
+    const view = new DataView(arrayBuffer);
+    const writeString = (offset, string) => {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    };
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + length * 2, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeString(36, 'data');
+    view.setUint32(40, length * 2, true);
+    for (let i = 0; i < length; i++) {
+      view.setInt16(44 + i * 2, 0, true);
+    }
+    audioContext.close();
+    return new Blob([arrayBuffer], { type: 'audio/wav' });
+  }
+  function startCountdown(audio, originalSrc) {
+    if (countdownActive) return;
+    countdownActive = true;
+    let count = 10;
+    createNotification(count);
+    countdownInterval = setInterval(() => {
+      count--;
+      if (count > 0) {
+        createNotification(count);
+      } else {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+        countdownActive = false;
+        audio.src = originalSrc;
+        audio.load();
+        audio.play();
+      }
+    }, 1000);
   }
   function removeOldPlayer() {
     if (currentPlayerWrapper && currentPlayerWrapper.parentNode) {
@@ -16,6 +105,12 @@
         oldAudio.src = '';
         oldAudio.load();
       }
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+        countdownActive = false;
+      }
+      
       currentPlayerWrapper.parentNode.removeChild(currentPlayerWrapper);
       currentPlayerWrapper = null;
     }
@@ -26,6 +121,7 @@
     }
     processedAudioElements.add(audio);
     removeOldPlayer();
+    originalAudioSrc = audio.src;
     audio.controls = false;
     const wrapper = document.createElement('div');
     wrapper.style.display = 'flex';
@@ -113,18 +209,61 @@
     volumeDisplay.style.visibility = 'hidden';
     volumeDisplay.style.transition = 'opacity 0.2s, visibility 0.2s';
     volumeDisplay.style.pointerEvents = 'none';
+    const countdownToggle = document.createElement('button');
+    countdownToggle.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"/>
+      <path d="M12.5 7H11v6l5.2 3.2.8-1.3-4.5-2.7V7z"/>
+    </svg>`;
+    countdownToggle.title = 'Toggle 10s countdown';
+    countdownToggle.style.background = countdownEnabled ? 'var(--a)' : 'var(--4)';
+    countdownToggle.style.color = countdownEnabled ? 'var(--1)' : 'var(--7)';
+    countdownToggle.style.border = 'none';
+    countdownToggle.style.borderRadius = '5px';
+    countdownToggle.style.cursor = 'pointer';
+    countdownToggle.style.width = '2rem';
+    countdownToggle.style.height = '2rem';
+    countdownToggle.style.fontSize = '12px';
+    countdownToggle.style.flexShrink = '0';
+    countdownToggle.style.transition = 'background 0.2s';
+    countdownToggle.style.display = 'flex';
+    countdownToggle.style.alignItems = 'center';
+    countdownToggle.style.justifyContent = 'center';
     volumeContainer.appendChild(volumeKnob);
     volumeContainer.appendChild(volumeDisplay);
     controlsRow.appendChild(playPause);
     controlsRow.appendChild(seekBar);
+    controlsRow.appendChild(countdownToggle);
     controlsRow.appendChild(volumeContainer);
     audio.parentNode.insertBefore(wrapper, audio);
     wrapper.appendChild(timeContainer);
     wrapper.appendChild(controlsRow);
     wrapper.appendChild(audio);
+    countdownToggle.addEventListener('click', () => {
+      countdownEnabled = !countdownEnabled;
+      countdownToggle.style.background = countdownEnabled ? 'var(--a)' : 'var(--4)';
+      countdownToggle.style.color = countdownEnabled ? 'var(--1)' : 'var(--7)';
+    });
     playPause.addEventListener('click', () => {
-      if (!audio.src) return;
-      audio.paused ? audio.play() : audio.pause();
+      if (!audio.src && !originalAudioSrc) return;
+      if (audio.paused) {
+        if (countdownEnabled && !countdownActive) {
+          const silentBlob = createSilentAudio(10);
+          const silentUrl = URL.createObjectURL(silentBlob);
+          audio.src = silentUrl;
+          audio.load();
+          audio.play();
+          startCountdown(audio, originalAudioSrc);
+        } else {
+          audio.play();
+        }
+      } else {
+        audio.pause();
+        if (countdownInterval) {
+          clearInterval(countdownInterval);
+          countdownInterval = null;
+          countdownActive = false;
+        }
+      }
     });
     audio.addEventListener('play', () => {
       playPause.textContent = '❚❚';
