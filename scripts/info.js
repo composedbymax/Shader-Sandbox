@@ -53,22 +53,28 @@
     overlay.style.padding = '20px';
     overlay.style.boxSizing = 'border-box';
     overlay.style.overflowY = 'auto';
+    overlay.style.overflowX = 'hidden';
     const modalContent = document.createElement('div');
     modalContent.style.marginTop = '2rem';
+    modalContent.style.width = '100%';
     modalContent.style.maxWidth = '600px';
+    modalContent.style.minWidth = '0';
     modalContent.style.lineHeight = '1.5em';
+    modalContent.style.boxSizing = 'border-box';
+    modalContent.style.wordWrap = 'break-word';
+    modalContent.style.overflowWrap = 'break-word';
     modalContent.innerHTML = `
-      <h2 style="color: var(--6); margin-bottom: 1rem;">GLSL Editor – Guide</h2>
-      <ul style="text-align: left; padding-left: 1.2em; list-style-type: disc;">
-        <li><strong>Save/Browse:</strong> Save shaders locally or publicly (premium), and explore public ones</li>
-        <li><strong>Editor:</strong> Write or edit <code>.vert</code> and <code>.frag</code> code with live updates</li>
-        <li><strong>Import/Export:</strong> Drag, drop, or upload <code>.vert</code>, <code>.frag</code>, <code>.vs</code>, <code>.fs</code>, <code>.txt</code>, or <code>.html</code> files</li>
-        <li><strong>Audio Reactive:</strong> Use mic, system audio, or uploaded files for audio-reactive effects (documentation in modal window for usage instructions)</li>
-        <li><strong>Record:</strong> Capture WebM/MP4 of canvas with included audio</li>
-        <li><strong>Performance:</strong> Monitor FPS, memory, draw calls</li>
-        <li><strong>Linting:</strong> Get instant syntax feedback</li>
-        <li><strong>Layout:</strong> Resize or hide panels to customize your workspace</li>
-        <li><strong>Support:</strong> Contact: compositionsbymax@gmail.com</li>
+      <h2 style="color: var(--6); margin-bottom: 1rem; word-wrap: break-word;">GLSL Editor – Guide</h2>
+      <ul style="text-align: left; padding-left: 1.2em; list-style-type: disc; margin: 0; word-wrap: break-word;">
+        <li style="margin-bottom: 0.5em;"><strong>Save/Browse:</strong> Save shaders locally or publicly (premium), and explore public ones</li>
+        <li style="margin-bottom: 0.5em;"><strong>Editor:</strong> Write or edit <code style="word-break: break-all; background: var(--1); padding: 2px 4px; border-radius: 3px;">.vert</code> and <code style="word-break: break-all; background: var(--1); padding: 2px 4px; border-radius: 3px;">.frag</code> code with live updates</li>
+        <li style="margin-bottom: 0.5em;"><strong>Import/Export:</strong> Drag, drop, or upload <code style="word-break: break-all; background: var(--1); padding: 2px 4px; border-radius: 3px;">.vert</code>, <code style="word-break: break-all; background: var(--1); padding: 2px 4px; border-radius: 3px;">.frag</code>, <code style="word-break: break-all; background: var(--1); padding: 2px 4px; border-radius: 3px;">.vs</code>, <code style="word-break: break-all; background: var(--1); padding: 2px 4px; border-radius: 3px;">.fs</code>, <code style="word-break: break-all; background: var(--1); padding: 2px 4px; border-radius: 3px;">.txt</code>, or <code style="word-break: break-all; background: var(--1); padding: 2px 4px; border-radius: 3px;">.html</code> files</li>
+        <li style="margin-bottom: 0.5em;"><strong>Audio Reactive:</strong> Use mic, system audio, or uploaded files for audio-reactive effects (documentation in modal window for usage instructions)</li>
+        <li style="margin-bottom: 0.5em;"><strong>Record:</strong> Capture WebM/MP4 of canvas with included audio</li>
+        <li style="margin-bottom: 0.5em;"><strong>Performance:</strong> Monitor FPS, memory, draw calls</li>
+        <li style="margin-bottom: 0.5em;"><strong>Linting:</strong> Get instant syntax feedback</li>
+        <li style="margin-bottom: 0.5em;"><strong>Layout:</strong> Resize or hide panels to customize your workspace</li>
+        <li style="margin-bottom: 0.5em;"><strong>Support:</strong> Contact: <span style="word-break: break-all;">compositionsbymax@gmail.com</span></li>
       </ul>
     `;
     const closeBtn = document.createElement('button');
