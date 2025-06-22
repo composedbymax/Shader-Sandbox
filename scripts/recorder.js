@@ -12,7 +12,7 @@
     #recSettings .preset{margin-right: 4px;margin-top: 4px;}
     #recSettings button{padding: 4px 8px;margin: 2px;cursor: pointer;border:0px;border-radius:6px;}
     #recSettings .active{background:var(--a);color: white;}
-    #recBtn{width:2rem;height:2rem;position: absolute;bottom: 10px;left: 10px;background: var(--d);color: var(--l);border: none;padding: 8px;cursor: pointer;z-index: 1001;font-size: 1rem;display: flex;align-items: center;justify-content: center;}
+    #recBtn{width:2rem;height:2rem;position: absolute;bottom: 10px;left: 10px;background: var(--d);color: var(--l);border: none;padding: 8px;cursor: pointer;z-index: 1;font-size: 1rem;display: flex;align-items: center;justify-content: center;}
     #recBtn:hover{background:var(--5)}
     #recBtn svg{width: 14px;height: 14px;}
     #recBtn svg circle{fill: var(--r);}

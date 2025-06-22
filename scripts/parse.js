@@ -1,7 +1,7 @@
 (function () {
   const styleEl = document.createElement('style');
   styleEl.textContent = `
-    #uploadHTMLBtn{position: absolute;bottom: 10px;right: 8px;background: var(--d);color: var(--l);border: none;cursor: pointer;padding: 12px 10px;z-index:1;}
+    #uploadHTMLBtn{position: absolute;bottom: 10px;right: 78px;background: var(--d);color: var(--l);border: none;cursor: pointer;padding: 12px 10px;z-index:1;width:4.25rem}
     #uploadHTMLBtn:hover{background: var(--5);}
     #uploadHTMLInput{display: none;}
   `;
@@ -24,7 +24,7 @@
   });
   const uploadBtn = createEl('button', {
     id: 'uploadHTMLBtn',
-    textContent: 'Load',
+    textContent: 'Upload',
     title: 'Upload HTML or JS file'
   });
   const fileInput = createEl('input', {
@@ -82,16 +82,20 @@
   function extractFromText(text) {
     const vertexNames = [
       'vertexShaderSource', 'vertexShader', 'vertex_shader', 'VERTEX_SHADER',
-      'vs', 'vert', 'vertShader', 'vertex'
+      'vsSource', 'vs', 'vert', 'vertShader', 'vertex'
     ];
     const fragmentNames = [
       'fragmentShaderSource', 'fragmentShader', 'fragment_shader', 'FRAGMENT_SHADER',
-      'fs', 'frag', 'fragShader', 'fragment'
+      'fsSource', 'fs', 'frag', 'fragShader', 'fragment'
     ];
-    
-    const shaderMatch = name =>
-      text.match(new RegExp(`(?:const\\s+|let\\s+|var\\s+)?${name}\\s*=\\s*[\`"']([\\s\\S]*?)[\`"']`));
-    
+    const shaderMatch = name => {
+      let match = text.match(new RegExp(`(?:const\\s+|let\\s+|var\\s+)?${name}\\s*=\\s*[\`"']([\\s\\S]*?)[\`"']`));
+      if (match) return match;
+      if (name.length <= 3) {
+        match = text.match(new RegExp(`(?:const\\s+|let\\s+|var\\s+)?\\w*${name}\\w*\\s*=\\s*[\`"']([\\s\\S]*?)[\`"']`));
+      }
+      return match;
+    };
     let vm, fm;
     for (const name of vertexNames) {
       vm = shaderMatch(name);
@@ -101,7 +105,6 @@
       fm = shaderMatch(name);
       if (fm) break;
     }
-    
     return { vs: vm && vm[1], fs: fm && fm[1] };
   }
   function processShaderCode(code) {

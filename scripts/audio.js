@@ -95,14 +95,13 @@ class AudioReactive {
     this.modal = this.EL(
       'div', {}, {
         position:'fixed', top:0, left:0, width:'100%', height:'100%',
-        backgroundColor:'var(--d)', display:'none', zIndex:'10000',
-        backdropFilter:'blur(4px)'
+        backgroundColor:'none', display:'none', zIndex:'10000',
       }
     );
     const wrap = this.EL('div', {}, {
       position:'absolute', top:'50%', left:'50%',
       transform:'translate(-50%,-50%)',
-      backgroundColor:'var(--D)', borderRadius:'2px',
+      backgroundColor:'var(--3)', borderRadius:'2px',
       padding:'24px',
       border:'0.1px solid var(--4)', minWidth:'250px', maxWidth:'600px',
       maxHeight:'80vh', overflowY:'auto'
