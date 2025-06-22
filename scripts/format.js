@@ -96,7 +96,8 @@
                 </div>
             </div>
         `;
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        const targetElement = document.fullscreenElement || document.body;
+        targetElement.insertAdjacentHTML('beforeend', modalHTML);
         modal = document.getElementById('glslFormatterModal');
         setupEventListeners();
     }
@@ -318,7 +319,7 @@
         document.addEventListener('keydown', handleKeydown);
         document.addEventListener('fullscreenchange', () => {
             const modal  = document.getElementById('glslFormatterModal');
-            const button = document.getElementById('glslFormatterToggleButton'); // if you have a toolbar button
+            const button = document.getElementById('glslFormatterToggleButton');
             const root   = document.fullscreenElement || document.body;
             if (button) root.appendChild(button);
             if (modal)  root.appendChild(modal);
