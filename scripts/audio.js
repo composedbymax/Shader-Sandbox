@@ -224,27 +224,27 @@ class AudioReactive {
       </div>`
     ));
     const fileZone = this.EL('div', { id: 'file-drop' }, {
-  marginBottom: '20px',
-  padding: '20px',
-  background: 'var(--d)',
-  border: '2px dashed var(--4)',
-  textAlign: 'center',
-  cursor: 'pointer'
-}, `
-  <p style="color:var(--7)">
-    Drag & drop an audio file here<br>
-    or <button id="file-upload-btn" style="background:var(--5);border-radius:2px;text-decoration:none;padding:0.5rem 1rem;border:none;color:var(--7);cursor:pointer">Browse files</button>
-  </p>
-  <input id="file-input" type="file" accept="audio/*" style="display:none"/>
-  <audio id="file-audio" controls style="width:100%;display:none;margin-top:10px"></audio>
-  <button id="clear-file-btn" style="display:none;margin-top:10px;padding:6px 12px;background:var(--d);border:none;color:var(--7);cursor:pointer">Clear File</button>
-`);
-  this.settingsContent.appendChild(fileZone);
-  wrap.appendChild(header);
-  wrap.appendChild(this.settingsContent);
-  wrap.appendChild(this.infoContent);
-  this.modal.appendChild(wrap);
-  this.bindEvents();
+      marginBottom: '20px',
+      padding: '20px',
+      background: 'var(--d)',
+      border: '2px dashed var(--4)',
+      textAlign: 'center',
+      cursor: 'pointer'
+    }, `
+      <p style="color:var(--7)">
+        Drag & drop an audio file here<br>
+        or <button id="file-upload-btn" style="background:var(--5);border-radius:2px;text-decoration:none;padding:0.5rem 1rem;border:none;color:var(--7);cursor:pointer">Browse files</button>
+      </p>
+      <input id="file-input" type="file" accept="audio/*" style="display:none"/>
+      <audio id="file-audio" controls style="width:100%;display:none;margin-top:10px"></audio>
+      <button id="clear-file-btn" style="display:none;margin-top:10px;padding:6px 12px;background:var(--d);border:none;color:var(--7);cursor:pointer">Clear File</button>
+    `);
+    this.settingsContent.appendChild(fileZone);
+    wrap.appendChild(header);
+    wrap.appendChild(this.settingsContent);
+    wrap.appendChild(this.infoContent);
+    this.modal.appendChild(wrap);
+    this.bindEvents();
   }
   color(type) {
     return { bass:'#ff4444', mid:'#44ff44', treble:'#4444ff', volume:'#ffff44' }[type];
@@ -434,7 +434,7 @@ class AudioReactive {
         const data = new Uint8Array(this.analyser.frequencyBinCount);
         this.analyser.getByteFrequencyData(data);
         const sums = {
-          bass: (data.slice(0,20).reduce((a,b)=>a+b)/20) * 0.25,
+          bass: (data.slice(0,20).reduce((a,b)=>a+b)/20) * 0.4,
           mid:  data.slice(20,60).reduce((a,b)=>a+b)/40,
           treble: data.slice(60,120).reduce((a,b)=>a+b)/60,
           volume: data.reduce((a,b)=>a+b)/data.length
@@ -449,14 +449,12 @@ class AudioReactive {
     };
     requestAnimationFrame(loop);
   }
-  
   cleanupMicrophone() {
     if (this.micStream) {
       this.micStream.getTracks().forEach(track => track.stop());
       this.micStream = null;
     }
   }
-  
   stopAudio() {
     this.cleanupMicrophone();
     if (this.audioContext && this.audioContext.state !== 'closed') {
@@ -551,7 +549,7 @@ class AudioReactive {
     const calc = (from, to, sens, dampening = 1) =>
       Math.min(1, data.slice(from,to).reduce((a,b)=>a+b)/(to-from)/255 * sens * dampening);
     const vals = {
-      bass:   calc(0,20,   this.sensitivity.bass, 0.25),
+      bass:   calc(0,20,   this.sensitivity.bass, 0.4),
       mid:    calc(20,60,  this.sensitivity.mid),
       treble: calc(60,120, this.sensitivity.treble),
       volume: calc(0,data.length, this.sensitivity.volume)

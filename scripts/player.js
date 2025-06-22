@@ -14,33 +14,38 @@
   function createNotification(count) {
     const notification = document.createElement('div');
     notification.textContent = count;
+    notification.style.display = 'flex';
+    notification.style.alignItems = 'center';
+    notification.style.justifyContent = 'center';
     notification.style.position = 'fixed';
-    notification.style.top = '20px';
-    notification.style.right = '20px';
-    notification.style.background = 'var(--a)';
-    notification.style.color = 'var(--1)';
-    notification.style.padding = '10px 15px';
-    notification.style.borderRadius = '8px';
+    notification.style.top = '10px';
+    notification.style.right = '44px';
+    notification.style.background = 'var(--1)';
+    notification.style.color = 'var(--a)';
+    notification.style.border = '1px solid var(--a)';
+    notification.style.borderRadius = '0px';
     notification.style.fontSize = '16px';
     notification.style.fontWeight = 'bold';
     notification.style.zIndex = '10000';
     notification.style.boxShadow = '0 4px 12px var(--0)';
     notification.style.animation = 'countdownPulse 0.8s ease-out';
-    notification.style.minWidth = '40px';
+    notification.style.minWidth = '2rem';
+    notification.style.minHeight = '2rem';
     notification.style.textAlign = 'center';
     if (!document.getElementById('countdown-styles')) {
       const style = document.createElement('style');
       style.id = 'countdown-styles';
       style.textContent = `
         @keyframes countdownPulse {
-          0% { transform: scale(0.8); opacity: 0; }
-          50% { transform: scale(1.1); opacity: 1; }
+          0% { transform: scale(0.9); opacity: 0; }
+          50% { transform: scale(1.05); opacity: 1; }
           100% { transform: scale(1); opacity: 1; }
         }
       `;
       document.head.appendChild(style);
     }
-    document.body.appendChild(notification);
+    const container = document.fullscreenElement || document.body;
+    container.appendChild(notification);
     setTimeout(() => {
       if (notification.parentNode) {
         notification.parentNode.removeChild(notification);
