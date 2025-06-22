@@ -136,7 +136,7 @@
     function formatCode(code) {
         const lines = code.split('\n');
         const nonEmptyLines = lines.filter(line => line.trim().length > 0);
-        const avgLineLength = nonEmptyLines.reduce((sum, line) => sum + line.length, 0) / nonEmptyLines.length;
+        const avgLineLength = nonEmptyLines.reduce((sum, line) => sum + line.length, 0) / (nonEmptyLines.length || 1);
         const isMinified = avgLineLength > 100 || nonEmptyLines.length < 5;
         let processedCode;
         if (isMinified) {
@@ -150,7 +150,7 @@
                 const nextChar = i < normalized.length - 1 ? normalized[i + 1] : '';
                 if (char === '(') parenDepth++;
                 if (char === ')') parenDepth--;
-                if (char === 'f' && normalized.substr(i, 3) === 'for' && (i === 0 || /\s/.test(prevChar))) {
+                if (!inForLoop && char === 'f' && normalized.substr(i, 3) === 'for' && (i === 0 || /\s/.test(prevChar))) {
                     inForLoop = true;
                 }
                 if (inForLoop && char === ')' && parenDepth === 0) {
@@ -174,10 +174,14 @@
         const codeLines = processedCode.split('\n');
         const formattedLines = [];
         let indentLevel = 0;
-        for (let line of codeLines) {
-            const trimmed = line.trim();
+        for (let rawLine of codeLines) {
+            const trimmed = rawLine.trim();
             if (!trimmed) {
                 formattedLines.push('');
+                continue;
+            }
+            if (trimmed.startsWith('#')) {
+                formattedLines.push(trimmed);
                 continue;
             }
             if (trimmed.startsWith('}')) {
@@ -194,20 +198,13 @@
     function removeExtraLines(code) {
         const lines = code.split('\n');
         const cleanLines = [];
-        let lastWasEmpty = false;
         for (let line of lines) {
             const trimmed = line.trim();
-            if (trimmed === '') {
-                if (!lastWasEmpty) {
-                    cleanLines.push('');
-                }
-                lastWasEmpty = true;
-            } else {
+            if (trimmed !== '') {
                 cleanLines.push(line);
-                lastWasEmpty = false;
             }
         }
-        return cleanLines.join('\n').trim();
+        return cleanLines.join('\n');
     }
     function removeComments(code) {
         let result = code;
@@ -216,19 +213,80 @@
         result = result.replace(/ +$/gm, '');
         return result;
     }
-    function minifyCode(code) {
-        let minified = code;
-        minified = minified.replace(/\/\/.*$/gm, '');
-        minified = minified.replace(/\/\*[\s\S]*?\*\//g, '');
-        minified = minified.replace(/\s+/g, ' ');
-        minified = minified.replace(/\s*([{}();,=+\-*/<>!&|])\s*/g, '$1');
+    function minifyBlock(block) {
+        let text = block.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+        text = text.replace(/\s+/g, ' ').trim();
+        let result = '';
+        let inForLoop = false;
+        let parenDepth = 0;
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const prevChar = i > 0 ? text[i - 1] : '';
+            const nextChar = i < text.length - 1 ? text[i + 1] : '';
+            if (char === '(') parenDepth++;
+            if (char === ')') parenDepth--;
+            if (!inForLoop && char === 'f' && text.substr(i, 3) === 'for' && (i === 0 || /\s/.test(prevChar))) {
+                inForLoop = true;
+            }
+            if (inForLoop && char === ')' && parenDepth === 0) {
+                inForLoop = false;
+            }
+            result += char;
+            if (char === ';' && !inForLoop && parenDepth === 0) {
+                result += '\n';
+            } else if (char === '{') {
+                result += '\n';
+            } else if (char === '}') {
+                if (nextChar && nextChar !== ';' && nextChar !== '}') {
+                    result += '\n';
+                }
+            }
+        }
+        result = result.replace(/\s*([{}();,=+\-*/<>!&|])\s*/g, '$1');
         for (let keyword of glslKeywords) {
             const regex = new RegExp(`\\b${keyword}\\b`, 'g');
-            minified = minified.replace(regex, ` ${keyword} `);
+            result = result.replace(regex, ` ${keyword} `);
         }
-        minified = minified.replace(/\s+/g, ' ');
-        minified = minified.replace(/\s*([{}();,=+\-*/<>!&|])\s*/g, '$1');
-        return minified.trim();
+        result = result.replace(/\s+/g, ' ').trim();
+        result = result.replace(/\s*([{}();,=+\-*/<>!&|])\s*/g, '$1');
+        const lines = result.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        return lines.join('\n');
+    }
+    function minifyCode(code) {
+        const lines = code.split('\n');
+        const segments = [];
+        let currentBlockLines = [];
+        for (let rawLine of lines) {
+            const trimmed = rawLine.trim();
+            if (trimmed.startsWith('#')) {
+                if (currentBlockLines.length) {
+                    segments.push({ type: 'code', lines: currentBlockLines.slice() });
+                    currentBlockLines = [];
+                }
+                segments.push({ type: 'directive', content: trimmed });
+            } else {
+                currentBlockLines.push(rawLine);
+            }
+        }
+        if (currentBlockLines.length) {
+            segments.push({ type: 'code', lines: currentBlockLines.slice() });
+        }
+        const outLines = [];
+        for (let seg of segments) {
+            if (seg.type === 'directive') {
+                outLines.push(seg.content);
+            } else if (seg.type === 'code') {
+                const blockText = seg.lines.join('\n');
+                if (blockText.trim()) {
+                    const minifiedBlock = minifyBlock(blockText);
+                    const blockLines = minifiedBlock.split('\n');
+                    for (let l of blockLines) {
+                        outLines.push(l);
+                    }
+                }
+            }
+        }
+        return outLines.join('\n').trim();
     }
     function processShaderCode(code) {
         if (!code.trim()) return code;
@@ -237,7 +295,6 @@
         const removeExtraLinesSwitch = document.getElementById('glslRemoveExtraLinesSwitch');
         const formatSwitch = document.getElementById('glslFormatSwitch');
         const minifySwitch = document.getElementById('glslMinifySwitch');
-        
         if (removeCommentsSwitch.checked) {
             result = removeComments(result);
         }
@@ -318,11 +375,11 @@
         injectStyles();
         document.addEventListener('keydown', handleKeydown);
         document.addEventListener('fullscreenchange', () => {
-            const modal  = document.getElementById('glslFormatterModal');
+            const modalEl  = document.getElementById('glslFormatterModal');
             const button = document.getElementById('glslFormatterToggleButton');
             const root   = document.fullscreenElement || document.body;
             if (button) root.appendChild(button);
-            if (modal)  root.appendChild(modal);
+            if (modalEl)  root.appendChild(modalEl);
         });
         window.GLSLFormatter = {
             openModal,
