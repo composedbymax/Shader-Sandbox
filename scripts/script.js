@@ -306,6 +306,7 @@ canvas { width: 100vw; height: 100vh; display: block; }
     const canvas = document.getElementById('glcanvas');
     const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
     if (!gl) { alert('WebGL not supported'); return; }
+    const isWebGL2 = gl instanceof WebGL2RenderingContext;
     const vertexShader = \`${escapeForTemplateLiteral(vertexSource)}\`;
     const fragmentShader = \`${escapeForTemplateLiteral(fragmentSource)}\`;
     function compileShader(src, type) {
@@ -337,10 +338,10 @@ canvas { width: 100vw; height: 100vh; display: block; }
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
     let attribName = 'a_position';
-    const attribRegex = /attribute\\s+(?:vec\\d+|float|int)\\s+(\\w+)/g;
+    const attribRegex = /(attribute|in)\\s+(?:vec\\d+|float|int)\\s+(\\w+)/g;
     const matches = [...vertexShader.matchAll(attribRegex)];
     if (matches.length > 0) {
-        attribName = matches[0][1];
+        attribName = matches[0][2];
     }
     const attribLoc = gl.getAttribLocation(program, attribName);
     if (attribLoc !== -1) {
