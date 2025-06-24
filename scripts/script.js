@@ -1,3 +1,4 @@
+
 (function(){
 const $ = id => document.getElementById(id);
 const app = $('app'), 
@@ -21,6 +22,9 @@ const app = $('app'),
 const audioReactive = new AudioReactive();
 let fsClickTimestamps = [];
 let gl;
+let animationId = null;
+let isAnimationPaused = false;
+let lastActiveTime = 0;
 gl = canvas.getContext('webgl2');
 if (!gl) {
     console.warn('WebGL2 not available, falling back to WebGL1.');
@@ -54,6 +58,40 @@ gl.enable(gl.BLEND);
 gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 gl.clearColor(0.0, 0.0, 0.0, 1.0);
 gl.clear(gl.COLOR_BUFFER_BIT);
+function handleVisibilityChange() {
+    if (document.hidden || !document.hasFocus()) {
+        pauseAnimation();
+    } else {
+        resumeAnimation();
+    }
+}
+function handleWindowFocus() {
+    if (!document.hidden && document.hasFocus()) {
+        resumeAnimation();
+    }
+}
+function handleWindowBlur() {
+    pauseAnimation();
+}
+function pauseAnimation() {
+    if (animationId && !isAnimationPaused) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+        isAnimationPaused = true;
+        lastActiveTime = performance.now();
+    }
+}
+function resumeAnimation() {
+    if (isAnimationPaused) {
+        const pauseDuration = performance.now() - lastActiveTime;
+        startTime += pauseDuration;
+        isAnimationPaused = false;
+        render();
+    }
+}
+document.addEventListener('visibilitychange', handleVisibilityChange);
+window.addEventListener('focus', handleWindowFocus);
+window.addEventListener('blur', handleWindowBlur);
 function initSplit() {
     if (editorsVisible) {
         const totalH = editors.clientHeight - rowDivider.offsetHeight;
@@ -166,6 +204,7 @@ document.getElementById('copyErrorsBtn').addEventListener('click', function() {
 });
 function render() {
     if (!program) return;
+    if (isAnimationPaused) return;
     resizeCanvas();
     gl.useProgram(program);
     const time = (performance.now() - startTime) * 0.001;
@@ -184,7 +223,7 @@ function render() {
     }
     audioReactive.update();
     gl.drawArrays(gl.TRIANGLES, 0, 6);
-    requestAnimationFrame(render);
+    animationId = requestAnimationFrame(render);
 }
 function exportShader(type, content) {
     const blob = new Blob([content], { type: 'text/plain' });
