@@ -45,7 +45,9 @@ switch ($action) {
         $tokenMap = getTokenToIndexMap($shaders);
         if (isset($tokenMap[$token])) {
             $index = $tokenMap[$token];
-            echo json_encode($shaders[$index]);
+            $shader = $shaders[$index];
+            unset($shader['preview'], $shader['title'], $shader['user']);
+            echo json_encode($shader);
         } else {
             echo json_encode(['error' => 'Shader not found']);
         }
