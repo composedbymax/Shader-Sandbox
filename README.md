@@ -14,6 +14,16 @@
 
 A browser-based GLSL (OpenGL Shading Language) editor for writing, testing, recording, and exporting or loading vertex and fragment shaders, as well as standalone .html animations. Users can interactively build shaders and preview them in real time using WebGL.
 
+[Go to App](https://max.wuaze.com/glsl)
+
+---
+
+## Purpose
+
+While there are several WebGL, GLSL, and Three.js coding sandboxes available, i struggled to find audio-reactive capabilities within a web-based GLSL editor. It was also difficult to find existing tools that allow for clean WebGL animation exports in common video formats like MP4.
+
+This application was developed to address those limitations. It provides a browser-based, open-source editor intended for users who need more control when creating audio-reactive visuals, without relying on proprietary software or paid platforms.
+
 ---
 
 ## Development
@@ -29,11 +39,15 @@ This application is built entirely with native PHP, HTML5, CSS, and JavaScript. 
 - **File Support**: Load and edit `.vert`, `.frag`, `.vs`, `.fs`, and `.txt` files.  
 - **Fullscreen Preview**: Toggle fullscreen mode for a larger preview area.  
 - **Load & Export Options**: Load or export shaders as `.vert` or `.frag` files, or generate a full HTML file to run your shaders externally.  
-- **Record WebM/MP4**: Record and preview your animation as a video file for easy sharing (MP4 or WEBM) with included audio.
-- **Audio Reactive Support**: Make your animations react to mic input, internal system audio, or uploaded audio files, with adjustable levels.
+- **Record WebM/MP4**: Record and preview your animation as a video file `.MP4` or `WEBM` with included audio with adjustable dimensions and quality.
+- **Audio Reactive Support**: Make animations react to mic input, internal system audio, or uploaded audio files, with adjustable sensitivity levels.
 - **Runtime Metrics**: Monitor WebGL canvas performance by tracking FPS, memory usage, GPU details, and draw calls.
 - **Syntax Linting**: View and copy error messages for syntax issues in your shaders.  
 - **Responsive Layout**: Adjustable editor layout with drag-and-drop resizing for the panels.
+- **Generative Reports**: Generate visual flowcharts or reports (`json` or `txt`) for shader analysis.
+- **Color Adjustment**: Use modal for slider based real-time color adjustment.
+- **Theme Manager**: Customize editor colors with presets or individual variable selection.
+- **Code Formatting**: Minify or format your code.
 
 ---
 
@@ -55,16 +69,11 @@ This application requires browsers that support:
 - MediaRecorder API (for recording WebM/MP4 videos)
 - Media Capture API (navigator.mediaDevices.getUserMedia) for microphone and internal audio input
 
-**Supported browsers include:**
-
-- Chrome 47+
-- Firefox 36+
-- Edge 79+
-- Safari 13+
-
 ---
 
-## Limitations
+## Inspirations
 
-- Requires a modern WebGL-capable browser.
-- Some older/mobile browsers may not support full-screen functionality or WebGL.
+- https://glslsandbox.com/
+- https://shadertoy.com/
+- https://glsl.app/
+- https://kaleidosync.com/
