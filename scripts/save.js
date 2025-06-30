@@ -27,18 +27,18 @@
       if (!this.firstErrorTime) {
         this.firstErrorTime = now;
         this.count = 1;
-      } else if (now - this.firstErrorTime <= 5000) {
+        this.refreshTriggered = true;
+        return true;
+      }
+      if (now - this.firstErrorTime <= 5000) {
         this.count++;
       } else {
         this.firstErrorTime = now;
         this.count = 1;
       }
-      if (this.count >= 4) {
-        this.refreshTriggered = true;
-        return true;
-      }
       return false;
     }
+
   };
   function createToastContainer() {
     if (document.getElementById('toastContainer')) return;
@@ -286,7 +286,7 @@
   async function forceRefreshPublicShaders() {
     const container = $('publicShaderList');
     container.innerHTML = '<div>Refreshing shaders...</div>';
-    console.log('Force refresh - clearing cache and fetching fresh data');
+    console.log('DB FETCH');
     try {
       await shaderCache.clearCache();
       const response = await fetch('../glsl/api/fetch.php?action=list');
@@ -357,8 +357,8 @@
         if (shader.error) {
           showToast(`Error loading shader: ${shader.error}`, 'error');
           if (errorTracker.addError()) {
-            console.log('Error threshold reached - forcing cache refresh');
-            showToast('Multiple errors detected - refreshing shader list...', 'warning');
+            console.log('DB ERROR');
+            showToast('Error detected - reloading...', 'warning');
             setTimeout(() => forceRefreshPublicShaders(), 1000);
           }
           return;
@@ -370,8 +370,8 @@
       .catch(err => {
         showToast(`Error loading shader: ${err.message}`, 'error');
         if (errorTracker.addError()) {
-          console.log('Error threshold reached - forcing cache refresh');
-          showToast('Multiple errors detected - refreshing shader list...', 'warning');
+          console.log('DB ERROR');
+          showToast('Error detected - reloading...', 'warning');
           setTimeout(() => forceRefreshPublicShaders(), 1000);
         }
       });
