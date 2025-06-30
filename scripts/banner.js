@@ -97,7 +97,7 @@
       isDragging = true;
       startX = e.touches[0].clientX;
       banner.style.transition = 'none';
-    });
+    }, { passive: true });
     banner.addEventListener('touchmove', e => {
       if (!isDragging) return;
       currentX = e.touches[0].clientX;
@@ -105,7 +105,7 @@
       if (dx < 0) return;
       banner.style.transform = `translateX(${dx}px)`;
       banner.style.opacity = `${1 - Math.abs(dx) / banner.offsetWidth}`;
-    });
+    }, { passive: true });
     banner.addEventListener('touchend', () => {
       const dx = currentX - startX;
       banner.style.transition = '';
@@ -118,7 +118,7 @@
         banner.style.opacity = '1';
       }
       isDragging = false;
-    });
+    }, { passive: true });
     let mouseDown = false, mouseStartX = 0;
     banner.addEventListener('mousedown', e => {
       mouseDown = true;
