@@ -362,7 +362,7 @@
         closeModal();
     }
     function handleKeydown(e) {
-        if (e.shiftKey && e.key.toLowerCase() === 'm') {
+        if (e.altKey && e.code === 'KeyM') {
             e.preventDefault();
             if (isModalOpen) {
                 cancelChanges();

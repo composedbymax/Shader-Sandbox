@@ -521,11 +521,14 @@
     }
     function setupKeyboardListener() {
         document.addEventListener('keydown', e => {
-            if (e.shiftKey && e.key === 'V') {
+            if (e.altKey && e.code === 'KeyV') {
                 e.preventDefault();
                 const win = document.getElementById('flowchartWindow');
-                if (win.classList.contains('show')) closeFlowchartWindow();
-                else openFlowchartWindow();
+                if (win.classList.contains('show')) {
+                    closeFlowchartWindow();
+                } else {
+                    openFlowchartWindow();
+                }
             }
             if (e.key === 'Escape' && document.getElementById('flowchartWindow').classList.contains('show')) {
                 closeFlowchartWindow();
