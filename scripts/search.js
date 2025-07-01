@@ -117,9 +117,7 @@ class ShaderSearch {
     }
   }
   addCSS() {
-    if (document.getElementById('shader-search-styles')) return;
     const styles = document.createElement('style');
-    styles.id = 'shader-search-styles';
     styles.textContent = `
       .search-container{position: relative;margin: 10px 0;width: 100%;}
       .search-input{width: 100%;padding: 8px 12px;padding-right: 35px;border: 1px solid var(--4);border-radius: 2px;font-size: 14px;background-color: var(--2);color: var(--7);box-sizing: border-box;}

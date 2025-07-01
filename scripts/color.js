@@ -37,9 +37,7 @@ class ColorPicker {
         });
     }
     Styles() {
-        if (document.getElementById('glsl-color-picker-styles')) return;
         const style = document.createElement('style');
-        style.id = 'glsl-color-picker-styles';
         style.textContent = `
             .glsl-color-picker-overlay{position: fixed;top: 0;left: 0;width: 100%;height: 100%;background: transparent;z-index: 10000;display: none;pointer-events: none;}
             .glsl-color-picker{position: absolute;background: var(--2);border-radius: 8px;padding: 20px;color: var(--7);min-width: 300px;max-width: 350px;pointer-events: auto;border: 1px solid var(--4);}
