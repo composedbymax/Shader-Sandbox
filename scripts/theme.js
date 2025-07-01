@@ -162,10 +162,13 @@
       };
       button.onclick = () => this.toggleModal();
       document.addEventListener('fullscreenchange', () => {
+        const modal = document.getElementById('theme-modal');
         if (document.fullscreenElement) {
           document.fullscreenElement.appendChild(button);
+          if (modal) document.fullscreenElement.appendChild(modal);
         } else {
           document.body.appendChild(button);
+          if (modal) document.body.appendChild(modal);
         }
       });
       document.body.appendChild(button);
@@ -616,8 +619,8 @@
         font-size: 12px;
         font-weight: bold;
         background: ${backgroundColor};
-        border: 2px var(--1);
-        transform: translateY(-10%);
+        border: 2px solid var(--0);
+        transform: translateX(-20%);
         transition: all 0.4s;
       `;
       notification.textContent = message;
