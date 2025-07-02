@@ -9,7 +9,7 @@ created by Max Warren
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>CODEVANILLA</title>
+  <title>CODEVANILLA - GLSL</title>
   <meta charset="UTF-8">
   <meta name="description" content="A web app to share/store/preview GLSL shaders">
   <meta name="author" content="github.com/composedbymax">
@@ -76,7 +76,7 @@ created by Max Warren
           <button type="button" id="vertFileBtn" title="Upload a Vertex Shader (.frag,.fs,.txt)">Upload<span class="file-name" id="vertFileName"></span></button>
           <input type="file" id="vertFile" accept=".vert,.vs,.txt" />
         </div>
-        <textarea id="vertCode">
+        <textarea spellcheck="false" id="vertCode">
 attribute vec2 a_position;
 void main() {
   gl_Position = vec4(a_position, 0., 1.);
@@ -89,7 +89,7 @@ void main() {
           <button type="button" id="fragFileBtn" title="Upload a Fragment Shader (.frag,.fs,.txt)">Upload<span class="file-name" id="fragFileName"></span></button>
           <input type="file" id="fragFile" accept=".frag,.fs,.txt" />
         </div>
-        <textarea id="fragCode">
+        <textarea spellcheck="false" id="fragCode">
 //WebGL editor - Created By: Max Warren
 precision mediump float;
 uniform vec2 u_resolution;

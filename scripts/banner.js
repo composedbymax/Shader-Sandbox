@@ -1,16 +1,14 @@
 (function () {
-  const dismissedKey = 'userBannerDismissed';
-  if (localStorage.getItem(dismissedKey) === 'true') return;
   const isLoggedIn = window.userLoggedIn === true;
-  const role = window.userRole;
+  const role       = window.userRole;
   if (!isLoggedIn) {
     createBanner(
       'Want to save your progress? ',
-      createLink('/auth', 'Log in now')
+      createAuthButton('Login/Register')
     );
   } else if (role === 'basic') {
     createBanner(
-      'Upgrade to save your work publicly. ',
+      'Upgrade to save your work publicly ',
       createLink('/upgrade', 'Upgrade now')
     );
   } else {
@@ -27,35 +25,50 @@
     a.textContent = text;
     return a;
   }
+  function createAuthButton(text) {
+    const btn = document.createElement('button');
+    btn.setAttribute('data-auth-open', '');
+    btn.textContent = text;
+    Object.assign(btn.style, {
+      marginLeft: '4px',
+      background: 'var(--3)',
+      color:      'var(--7)',
+      padding:    '0.3rem 0.6rem',
+      border:     'none',
+      cursor:     'pointer',
+      fontSize:   '1rem',
+    });
+    return btn;
+  }
   function createBanner(message, actionLink) {
     const banner = document.createElement('div');
     Object.assign(banner.style, {
-        position: 'fixed',
-        top: '0',
-        left: '0',
-        right: '0',
-        background: 'var(--2)',
-        color: 'var(--7)',
-        padding: '12px 16px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        zIndex: '9999',
-        fontFamily: 'sans-serif',
-        fontSize: '16px',
-        transition: 'transform 0.3s ease, opacity 0.3s ease',
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      right: '0',
+      background: 'var(--2)',
+      color: 'var(--7)',
+      padding: '12px 16px',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      zIndex: '9999',
+      fontFamily: 'sans-serif',
+      fontSize: '16px',
+      transition: 'transform 0.3s ease, opacity 0.3s ease',
     });
     const text = document.createElement('span');
     text.textContent = message;
     text.appendChild(actionLink);
     const close = document.createElement('button');
     Object.assign(close.style, {
-        background: 'none',
-        border: 'none',
-        color: 'var(--7)',
-        fontSize: '20px',
-        cursor: 'pointer',
-        marginLeft: '20px',
+      background: 'none',
+      border: 'none',
+      color: 'var(--7)',
+      fontSize: '20px',
+      cursor: 'pointer',
+      marginLeft: '20px',
     });
     close.textContent = '✕';
     close.addEventListener('click', dismiss);
@@ -148,8 +161,12 @@
     });
     function dismiss() {
       banner.remove();
-      localStorage.setItem(dismissedKey, 'true');
       banner.removeEventListener('wheel', onWheel);
     }
   }
 })();
+document.querySelectorAll('[data-auth-open]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('authModal').style.display = 'block';
+  });
+});
