@@ -4,6 +4,14 @@
   let publicShaderList = [];
   let localShaderList = [];
   const keysPressed = new Set();
+  const publicShaderRateLimit = {
+    lastLoad: 0,
+    loadTimes: [],
+    maxPerSecond: 1,
+    maxPer30Seconds: 10,
+    window30s: 30000,
+    minInterval: 1000
+  };
   function getPublicShadersFromDOM() {
     const shaders = [];
     const container = document.getElementById('publicShaderList');
@@ -55,14 +63,46 @@
       localShaderIndex = Math.max(0, localShaderList.length - 1);
     }
   }
+  function checkPublicShaderRateLimit() {
+    const now = Date.now();
+    const rateLimitInfo = publicShaderRateLimit;
+    if (now - rateLimitInfo.lastLoad < rateLimitInfo.minInterval) {
+      const waitTime = Math.ceil((rateLimitInfo.minInterval - (now - rateLimitInfo.lastLoad)) / 1000);
+      return {
+        allowed: false,
+        message: `Slow down!`
+      };
+    }
+    rateLimitInfo.loadTimes = rateLimitInfo.loadTimes.filter(time => now - time < rateLimitInfo.window30s);
+    if (rateLimitInfo.loadTimes.length >= rateLimitInfo.maxPer30Seconds) {
+      const oldestTime = Math.min(...rateLimitInfo.loadTimes);
+      const waitTime = Math.ceil((rateLimitInfo.window30s - (now - oldestTime)) / 1000);
+      return {
+        allowed: false,
+        message: `Rate limit exceeded! You can only load ${rateLimitInfo.maxPer30Seconds} public shaders per 30 seconds. Please wait ${waitTime} second${waitTime > 1 ? 's' : ''}.`
+      };
+    }
+    return { allowed: true };
+  }
+  function recordPublicShaderLoad() {
+    const now = Date.now();
+    publicShaderRateLimit.lastLoad = now;
+    publicShaderRateLimit.loadTimes.push(now);
+  }
   function loadPublicShaderByIndex(index) {
     if (index < 0 || index >= publicShaderList.length) return false;
+    const rateLimitCheck = checkPublicShaderRateLimit();
+    if (!rateLimitCheck.allowed) {
+      showToast(rateLimitCheck.message, 'error');
+      return false;
+    }
     const shader = publicShaderList[index];
     const container = document.getElementById('publicShaderList');
     if (!container) return false;
     const button = container.querySelector(`[data-public-token="${shader.token}"]`);
     if (button) {
       button.click();
+      recordPublicShaderLoad();
       return true;
     }
     return false;
@@ -180,7 +220,12 @@
       publicIndex: publicShaderIndex,
       localIndex: localShaderIndex,
       publicList: publicShaderList,
-      localList: localShaderList
+      localList: localShaderList,
+      rateLimitStatus: {
+        lastLoad: publicShaderRateLimit.lastLoad,
+        recentLoads: publicShaderRateLimit.loadTimes.length,
+        canLoadNow: checkPublicShaderRateLimit().allowed
+      }
     })
   };
 })()
