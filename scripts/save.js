@@ -437,4 +437,5 @@
   window.savePublic = savePublic;
   window.clearPublicCache = clearPublicCache;
   window.forceRefreshPublicShaders = forceRefreshPublicShaders;
+  window.showToast = showToast;
 })();
