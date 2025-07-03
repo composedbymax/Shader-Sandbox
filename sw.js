@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v15";
+const CACHE_VERSION = "v16";
 const CACHE_NAME = `glsl-app-${CACHE_VERSION}`;
 const ASSETS = [
     "/glsl/index.php",
@@ -22,7 +22,6 @@ const ASSETS = [
     "/glsl/scripts/stay.js",
     "/glsl/scripts/theme.js",
     "/glsl/css/root.css",
-    "/glsl/css/slider.css",
     "/glsl/css/style.css",
 ];
 self.addEventListener("install", (event) => {

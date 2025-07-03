@@ -33,7 +33,6 @@ created by Max Warren
   <script src="scripts/cover.js"></script>
   <link rel="preload" href="css/style.css" as="style">
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/slider.css">
   <link rel="stylesheet" href="css/root.css">
 </head>
 <body>
