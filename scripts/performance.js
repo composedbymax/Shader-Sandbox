@@ -86,6 +86,11 @@ class GLSLPerformanceMonitor {
       this.container.appendChild(this.overlay),
       (this.canvas.parentNode.style.position = "relative"),
       this.canvas.parentNode.appendChild(this.container);
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && this.isPanelOpen) {
+          this.togglePanel();
+        }
+      });
   }
   updateContainerPosition() {
     switch (

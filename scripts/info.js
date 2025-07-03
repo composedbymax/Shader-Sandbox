@@ -68,6 +68,7 @@
       <ul style="text-align: left; padding-left: 1.2em; list-style-type: disc; margin: 0; word-wrap: break-word;">
         <li style="margin-bottom: 0.5em;"><strong>Save/Browse:</strong> Save shaders locally or publicly (premium), and explore public ones</li>
         <li style="margin-bottom: 0.5em;"><strong>Editor:</strong> Write or edit <code style="word-break: break-all; background: var(--3); padding: 2px 4px; border-radius: 3px;">.vert</code> and <code style="word-break: break-all; background: var(--3); padding: 2px 4px; border-radius: 3px;">.frag</code> code with live updates</li>
+        <li style="margin-bottom: 0.5em;"><strong>GLSL Version:</strong> Use <code style="background: var(--3); padding: 2px 4px; border-radius: 3px;">#ifdef GL_ES ... #endif</code> for GLSL 2.0, or <code style="background: var(--3); padding: 2px 4px; border-radius: 3px;">#version 300 es</code> for GLSL ES 3.00</li>
         <li style="margin-bottom: 0.5em;"><strong>Import/Export:</strong> Drag, drop, or upload <code style="word-break: break-all; background: var(--3); padding: 2px 4px; border-radius: 3px;">.vert</code>, <code style="word-break: break-all; background: var(--3); padding: 2px 4px; border-radius: 3px;">.frag</code>, <code style="word-break: break-all; background: var(--3); padding: 2px 4px; border-radius: 3px;">.vs</code>, <code style="word-break: break-all; background: var(--3); padding: 2px 4px; border-radius: 3px;">.fs</code>, <code style="word-break: break-all; background: var(--3); padding: 2px 4px; border-radius: 3px;">.txt</code>, or <code style="word-break: break-all; background: var(--3); padding: 2px 4px; border-radius: 3px;">.html</code> files</li>
         <li style="margin-bottom: 0.5em;"><strong>Audio Reactive:</strong> Use mic, system audio, or uploaded files for audio-reactive effects (documentation in modal window for usage instructions)</li>
         <li style="margin-bottom: 0.5em;"><strong>Record:</strong> Capture WebM/MP4 of canvas with included audio</li>
@@ -103,6 +104,9 @@
     closeBtn.addEventListener('mouseleave', () => {
     closeBtn.style.backgroundColor = 'var(--3)';
     });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') container.removeChild(overlay);
+    }, { once: true });
     closeBtn.addEventListener('click', () => {
     container.removeChild(overlay);
     });

@@ -109,6 +109,14 @@
   `;
   container.appendChild(settingsPanel);
   settingsPanel.appendChild(videoPreview);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      const settingsPanel = document.getElementById("recSettings");
+      if (settingsPanel) {
+        settingsPanel.style.display = "none";
+      }
+    }
+  });
   const recWidth = settingsPanel.querySelector('#recWidth');
   const recHeight = settingsPanel.querySelector('#recHeight');
   const recFPS = settingsPanel.querySelector('#recFPS');

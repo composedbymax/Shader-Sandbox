@@ -271,6 +271,11 @@ class AudioReactive {
   bindEvents() {
   this.modal.querySelector('#close-modal').onclick = () => this.hide();
   this.modal.onclick = e => { if (e.target === this.modal) this.hide(); };
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && this.modal.style.display !== 'none') {
+      this.hide();
+    }
+  }, { once: false });
   const infoBtn    = this.modal.querySelector('#info-toggle');
   const modalTitle = this.modal.querySelector('#modal-title');
   infoBtn.onclick = () => {

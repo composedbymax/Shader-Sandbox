@@ -245,13 +245,13 @@
       saveButton.onclick = () => this.saveTheme();
       deleteButton.onclick = () => this.deleteTheme();
       resetButton.onclick = () => this.resetToDefault();
-      document.addEventListener("click", (event) => {
-        if (this.isModalOpen && 
-            !modal.contains(event.target) && 
-            event.target.id !== "theme-manager-btn") {
-          this.closeModal();
-        }
-      });
+      const handleEvent = e => {
+        if (!this.isModalOpen) return;
+        if ((e.type === "click" && !modal.contains(e.target) && e.target.id !== "theme-manager-btn") || 
+            (e.type === "keydown" && e.key === "Escape")) this.closeModal();
+      };
+      document.addEventListener("click", handleEvent);
+      document.addEventListener("keydown", handleEvent);
     }
     toggleColorEditor() {
       const section = document.getElementById("color-editor-section");
@@ -267,12 +267,14 @@
         button.style.background = "var(--b)";
       }
     }
-    async loadSelectedTheme(themeName) {
+    async loadSelectedTheme(themeName, showNotification = true) {
       if (!themeName) return;
       if (this.presetThemes[themeName]) {
         this.applyThemeColors(this.presetThemes[themeName]);
         this.currentTheme = themeName;
-        this.showNotification(`"${themeName}" preset loaded!`, "success");
+        if (showNotification) {
+          this.showNotification(`"${themeName}" preset loaded!`, "success");
+        }
         return;
       }
       try {
@@ -286,10 +288,14 @@
         if (theme) {
           this.applyThemeColors(theme.colors);
           this.currentTheme = themeName;
-          this.showNotification(`"${themeName}" loaded!`, "success");
+          if (showNotification) {
+            this.showNotification(`"${themeName}" loaded!`, "success");
+          }
         }
       } catch (error) {
-        this.showNotification("Load failed!", "error");
+        if (showNotification) {
+          this.showNotification("Load failed!", "error");
+        }
         console.error("Load theme error:", error);
       }
     }
@@ -599,7 +605,7 @@
     async loadSavedTheme() {
       const savedTheme = localStorage.getItem("currentTheme");
       if (savedTheme && savedTheme !== "default") {
-        await this.loadSelectedTheme(savedTheme);
+        await this.loadSelectedTheme(savedTheme, false); // Pass false to suppress notification
       }
     }
     showNotification(message, type = "info") {
@@ -643,6 +649,11 @@
       } else {
         this.openModal();
       }
+    }
+    async openModal() {
+      document.getElementById("theme-modal").style.display = "block";
+      this.isModalOpen = true;
+      await this.updateThemesList();
     }
     async openModal() {
       document.getElementById("theme-modal").style.display = "block";
