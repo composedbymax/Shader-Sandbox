@@ -54,6 +54,7 @@ created by Max Warren
             <div id="fileName"></div>
           </div>
           <input type="text" id="shaderTitle" placeholder="Shader Title" class="saveinput"><br>
+          <button class="savebtn" onclick="saveLink()">Save Link</button>
           <button class="savebtn" onclick="saveLocally()">Save Locally</button>
           <?php if (isset($_SESSION['user_role']) && ($_SESSION['user_role'] === 'admin' || $_SESSION['user_role'] === 'premium')): ?>
           <button class="savebtn" onclick="savePublic()">Save Publicly</button>
