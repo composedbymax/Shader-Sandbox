@@ -23,7 +23,8 @@ textarea { flex: 1; background: var(--2); color: var(--6); border: none; padding
 .togbtn {flex: 1;border: none;padding: 16px 0px;cursor: pointer;white-space: normal;word-break: break-word;overflow-wrap: break-word;text-align: center;}
 .savesct {display:none; overflow:auto; height:90%;padding:10px;} 
 .closebtn {width:94%; position:absolute; bottom: 12px;background:var(--5);color:var(--7);border:none;cursor:pointer;padding:var(--pad);}
-.savebtn {background:var(--5);color:var(--7);border:none;cursor:pointer;padding:var(--pad);word-break: break-word;overflow-wrap: break-word;text-align: center;}
+.savebtn{background: var(--5);color: var(--7);border: none;cursor: pointer;padding: var(--pad);word-break: break-word;overflow-wrap: break-word;text-align: center;margin-bottom: 0.5rem;max-width:6rem;}
+.savebtn:hover{background: var(--4);}
 .upldzone {border:2px dashed var(--4);padding:20px;text-align:center;margin-bottom:10px;cursor:pointer;background:var(--3);color:var(--7);overflow-wrap: break-word;}
 .saveinput {width:100%;padding:5px;margin-bottom:10px;background:var(--3);color:var(--7);border:none;}
 .img {margin:6px 0;max-width:100%}
