@@ -51,10 +51,10 @@ created by Max Warren
             <p>Drag & Drop Image Here<br>or</p>
             <button id="chooseFileBtn" class="savebtn">Choose File</button>
             <input type="file" id="shaderImage" accept="image/*" style="display:none;">
-            <div id="fileName"></div>
+            <div id="fileName" class="ellips"></div>
           </div>
           <input type="text" id="shaderTitle" placeholder="Shader Title" class="saveinput"><br>
-          <button class="savebtn" onclick="saveLink()">Share Link</button>
+          <button class="sharebtn" onclick="saveLink()">Share Link</button>
           <button class="savebtn" onclick="saveLocally()">Save Locally</button>
           <?php if (isset($_SESSION['user_role']) && ($_SESSION['user_role'] === 'admin' || $_SESSION['user_role'] === 'premium')): ?>
           <button class="savebtn" onclick="savePublic()">Save Publicly</button>

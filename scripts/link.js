@@ -144,7 +144,7 @@ async function copyToClipboard(text) {
 }
 function initShaderLink() {
     loadShaderFromUrl();
-    const saveLinkBtn = document.querySelector('.savebtn');
+    const saveLinkBtn = document.querySelector('.savebtn2');
     if (saveLinkBtn) {
         saveLinkBtn.addEventListener('click', saveLink);
     }
