@@ -333,7 +333,7 @@
         <span style="font-size:0.85em;color:var(--5);">by ${shader.user}</span>
       </div>
       <img src="${shader.preview}" class="img"><br>
-      <button class="ldbtn" data-public-token="${shader.token}">Load</button>
+      <button class="ldbtn ellips" data-public-token="${shader.token}">Load</button>
     `;
     return div;
   }
