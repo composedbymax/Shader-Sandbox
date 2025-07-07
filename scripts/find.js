@@ -139,18 +139,17 @@
     `;
   }
   function insertCode(code) {
-    if (!currentTextarea) return alert('Please click in a textarea first');
+    if (!currentTextarea) {
+      showToast('Please click in a textarea first', 'warning');
+      return;
+    }
     const ta = currentTextarea;
     const start = ta.selectionStart, end = ta.selectionEnd;
     ta.value = ta.value.slice(0, start) + code + ta.value.slice(end);
     ta.setSelectionRange(start + code.length, start + code.length);
-    ta.focus(); closeFindModal(); showToast('Code inserted successfully!');
-  }
-  function showToast(msg) {
-    const t = document.createElement('div');
-    t.className = 'glsl-toast'; t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
+    ta.focus();
+    closeFindModal();
+    showToast('Code inserted successfully!', 'success');
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

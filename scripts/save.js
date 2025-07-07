@@ -38,9 +38,9 @@
       }
       return false;
     }
-
   };
   function createToastContainer() {
+    let parent = document.fullscreenElement || document.body;
     if (document.getElementById('toastContainer')) return;
     const container = document.createElement('div');
     container.id = 'toastContainer';
@@ -52,7 +52,7 @@
       z-index: 10000;
       pointer-events: none;
     `;
-    document.body.appendChild(container);
+    parent.appendChild(container);
   }
   function showToast(message, type = 'info') {
     createToastContainer();

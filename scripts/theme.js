@@ -273,7 +273,7 @@
         this.applyThemeColors(this.presetThemes[themeName]);
         this.currentTheme = themeName;
         if (showNotification) {
-          this.showNotification(`"${themeName}" preset loaded!`, "success");
+          this.showToast(`"${themeName}" preset loaded!`, "success");
         }
         return;
       }
@@ -289,12 +289,12 @@
           this.applyThemeColors(theme.colors);
           this.currentTheme = themeName;
           if (showNotification) {
-            this.showNotification(`"${themeName}" loaded!`, "success");
+            this.showToast(`"${themeName}" loaded!`, "success");
           }
         }
       } catch (error) {
         if (showNotification) {
-          this.showNotification("Load failed!", "error");
+          this.showToast("Load failed!", "error");
         }
         console.error("Load theme error:", error);
       }
@@ -365,15 +365,15 @@
       const select = document.getElementById("theme-select");
       const themeName = select.value;
       if (!themeName) {
-        this.showNotification("Select a theme first!", "error");
+        this.showToast("Select a theme first!", "error");
         return;
       }
       if (this.presetThemes[themeName]) {
-        this.showNotification("Cannot delete preset themes!", "error");
+        this.showToast("Cannot delete preset themes!", "error");
         return;
       }
       if (themeName === "default") {
-        this.showNotification("Cannot delete default theme!", "error");
+        this.showToast("Cannot delete default theme!", "error");
         return;
       }
       if (confirm(`Delete "${themeName}"?`)) {
@@ -386,10 +386,10 @@
             request.onerror = () => reject(request.error);
           });
           await this.updateThemesList();
-          this.showNotification(`"${themeName}" deleted!`, "success");
+          this.showToast(`"${themeName}" deleted!`, "success");
           select.value = "";
         } catch (error) {
-          this.showNotification("Delete failed!", "error");
+          this.showToast("Delete failed!", "error");
           console.error("Delete theme error:", error);
         }
       }
@@ -562,17 +562,17 @@
     }
     resetToDefault() {
       this.applyThemeColors(this.defaultColors);
-      this.showNotification("Reset to default!", "success");
+      this.showToast("Reset to default!", "success");
     }
     async saveTheme() {
       const nameInput = document.getElementById("theme-name");
       const themeName = nameInput.value.trim();
       if (!themeName) {
-        this.showNotification("Enter theme name!", "error");
+        this.showToast("Enter theme name!", "error");
         return;
       }
       if (this.presetThemes[themeName]) {
-        this.showNotification("Cannot overwrite preset themes!", "error");
+        this.showToast("Cannot overwrite preset themes!", "error");
         return;
       }
       const colors = {};
@@ -595,53 +595,25 @@
         });
         this.currentTheme = themeName;
         await this.updateThemesList();
-        this.showNotification(`"${themeName}" saved!`, "success");
+        this.showToast(`"${themeName}" saved!`, "success");
         nameInput.value = "";
       } catch (error) {
-        this.showNotification("Save failed!", "error");
+        this.showToast("Save failed!", "error");
         console.error("Save theme error:", error);
       }
     }
     async loadSavedTheme() {
       const savedTheme = localStorage.getItem("currentTheme");
       if (savedTheme && savedTheme !== "default") {
-        await this.loadSelectedTheme(savedTheme, false); // Pass false to suppress notification
+        await this.loadSelectedTheme(savedTheme, false);
       }
     }
-    showNotification(message, type = "info") {
-      const notification = document.createElement("div");
-      const backgroundColor = type === "success" 
-        ? "var(--a)" 
-        : type === "error" 
-          ? "var(--r)" 
-          : "var(--b)";
-      notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        z-index: 10002;
-        padding: 8px 12px;
-        color: white;
-        font-size: 12px;
-        font-weight: bold;
-        background: ${backgroundColor};
-        border: 2px solid var(--0);
-        transform: translateX(-20%);
-        transition: all 0.4s;
-      `;
-      notification.textContent = message;
-      document.body.appendChild(notification);
-      setTimeout(() => {
-        notification.style.transform = "translateX(0)";
-      }, 100);
-      setTimeout(() => {
-        notification.style.transform = "translateX(200%)";
-        setTimeout(() => {
-          if (document.body.contains(notification)) {
-            document.body.removeChild(notification);
-          }
-        }, 300);
-      }, 2000);
+    showToast(message, type = "info") {
+      if (typeof window.showToast === 'function') {
+        window.showToast(message, type);
+      } else {
+        console.log(`Toast: ${message} (${type})`);
+      }
     }
     toggleModal() {
       if (this.isModalOpen) {
@@ -649,11 +621,6 @@
       } else {
         this.openModal();
       }
-    }
-    async openModal() {
-      document.getElementById("theme-modal").style.display = "block";
-      this.isModalOpen = true;
-      await this.updateThemesList();
     }
     async openModal() {
       document.getElementById("theme-modal").style.display = "block";
