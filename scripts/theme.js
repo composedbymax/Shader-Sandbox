@@ -93,6 +93,7 @@
       await this.initDB();
       this.createButton();
       this.createModal();
+      this.createConfirmModal();
       await this.loadSavedTheme();
     }
     applyDefaultColors() {
@@ -163,15 +164,107 @@
       button.onclick = () => this.toggleModal();
       document.addEventListener('fullscreenchange', () => {
         const modal = document.getElementById('theme-modal');
+        const confirmModal = document.getElementById('confirm-modal');
         if (document.fullscreenElement) {
           document.fullscreenElement.appendChild(button);
           if (modal) document.fullscreenElement.appendChild(modal);
+          if (confirmModal) document.fullscreenElement.appendChild(confirmModal);
         } else {
           document.body.appendChild(button);
           if (modal) document.body.appendChild(modal);
+          if (confirmModal) document.body.appendChild(confirmModal);
         }
       });
       document.body.appendChild(button);
+    }
+    createConfirmModal() {
+      const confirmModal = document.createElement("div");
+      confirmModal.id = "confirm-modal";
+      confirmModal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--d);
+        z-index: 1010;
+        display: none;
+        justify-content: center;
+        align-items: center;
+      `;
+      confirmModal.innerHTML = `
+        <div style="
+          background: var(--2);
+          border: 1px solid var(--5);
+          border-radius: 6px;
+          padding: 20px;
+          max-width: 300px;
+          width: 90%;
+          text-align: center;
+        ">
+          <h4 style="margin: 0 0 15px 0; color: var(--6); font-size: 16px;">Delete Theme</h4>
+          <p id="confirm-message" style="margin: 0 0 20px 0; color: var(--6); font-size: 14px; line-height: 1.4;"></p>
+          <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="confirm-cancel" style="
+              padding: 8px 16px;
+              background: var(--4);
+              color: var(--6);
+              border: 1px solid var(--5);
+              border-radius: 4px;
+              cursor: pointer;
+              font-size: 12px;
+              transition: background-color 0.2s;
+            ">Cancel</button>
+            <button id="confirm-delete" style="
+              padding: 8px 16px;
+              background: var(--r);
+              color: white;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+              font-size: 12px;
+              transition: background-color 0.2s;
+            ">Delete</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(confirmModal);
+      this.setupConfirmModalEvents();
+    }
+    setupConfirmModalEvents() {
+      const confirmModal = document.getElementById("confirm-modal");
+      const cancelBtn = document.getElementById("confirm-cancel");
+      const deleteBtn = document.getElementById("confirm-delete");
+      const cancelConfirm = () => {
+        confirmModal.style.display = "none";
+        this.confirmCallback = null;
+      };
+      const confirmDelete = () => {
+        if (this.confirmCallback) {
+          this.confirmCallback();
+        }
+        confirmModal.style.display = "none";
+        this.confirmCallback = null;
+      };
+      cancelBtn.onclick = cancelConfirm;
+      deleteBtn.onclick = confirmDelete;
+      confirmModal.onclick = (e) => {
+        if (e.target === confirmModal) {
+          cancelConfirm();
+        }
+      };
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && confirmModal.style.display !== "none") {
+          cancelConfirm();
+        }
+      });
+    }
+    showCustomConfirm(message, callback) {
+      const confirmModal = document.getElementById("confirm-modal");
+      const messageElement = document.getElementById("confirm-message");
+      messageElement.textContent = message;
+      this.confirmCallback = callback;
+      confirmModal.style.display = "flex";
     }
     createModal() {
       const modal = document.createElement("div");
@@ -376,7 +469,7 @@
         this.showToast("Cannot delete default theme!", "error");
         return;
       }
-      if (confirm(`Delete "${themeName}"?`)) {
+      this.showCustomConfirm(`Are you sure you want to delete the theme "${themeName}"? This action cannot be undone.`, async () => {
         try {
           const transaction = this.db.transaction([this.storeName], "readwrite");
           const store = transaction.objectStore(this.storeName);
@@ -392,7 +485,7 @@
           this.showToast("Delete failed!", "error");
           console.error("Delete theme error:", error);
         }
-      }
+      });
     }
     updateColorRealTime(property, color, alpha = null) {
       const root = document.documentElement;
