@@ -11,7 +11,7 @@ created by Max Warren
 <head>
   <title>CODEVANILLA - GLSL</title>
   <meta charset="UTF-8">
-  <meta name="description" content="A web app to share/store/preview GLSL shaders">
+  <meta name="description" content="A browser-based GLSL editor for writing, previewing, and exporting real-time WebGL shaders with audio-reactive support, video recording, and full HTML export">
   <meta name="author" content="github.com/composedbymax">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#252525">
@@ -20,11 +20,11 @@ created by Max Warren
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="apple-touch-icon" href="/assets/img/icon-192.png">
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
-  <meta name="robots" content="noindex, nofollow">
+  <meta name="robots" content="index, nofollow">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
-  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(self), camera=(self)">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(self), camera=(), fullscreen=(self), clipboard-read=(self), clipboard-write=(self)">
   <meta http-equiv="X-XSS-Protection" content="1; mode=block">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <script>window.userLoggedIn = <?php echo isset($_SESSION['user']) ? 'true' : 'false'; ?>;window.userRole = <?php echo isset($_SESSION['user_role']) ? json_encode($_SESSION['user_role']) : 'null'; ?>;</script>

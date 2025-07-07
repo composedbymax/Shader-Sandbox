@@ -14,7 +14,7 @@
             n.innerHTML = '<div id="loader-spinner"></div>',
             document.body.appendChild(n)
         }();
-        ["scripts/link.js", "scripts/theme.js", "scripts/save.js", "scripts/audio.js", "scripts/player.js", "scripts/banner.js", "scripts/performance.js", "scripts/script.js", "scripts/recorder.js", "scripts/parse.js", "scripts/stay.js", "scripts/right.js", "scripts/info.js", "scripts/color.js", "scripts/format.js", "scripts/flowchart.js",  "scripts/search.js",  "scripts/shuffle.js", "scripts/find.js"].reduce(( (n, r) => n.then(( () => e ? Promise.reject(new Error("Aborted: debugging detected")) : new Promise(( (e, n) => {
+        ["scripts/link.js", "scripts/theme.js", "scripts/save.js", "scripts/audio.js", "scripts/player.js", "scripts/banner.js", "scripts/performance.js", "scripts/render.js", "scripts/export.js", "scripts/recorder.js", "scripts/parse.js", "scripts/stay.js", "scripts/right.js", "scripts/info.js", "scripts/color.js", "scripts/format.js", "scripts/flowchart.js",  "scripts/search.js",  "scripts/shuffle.js", "scripts/find.js"].reduce(( (n, r) => n.then(( () => e ? Promise.reject(new Error("Aborted: debugging detected")) : new Promise(( (e, n) => {
             const o = document.createElement("script");
             o.src = r,
             o.onload = e,

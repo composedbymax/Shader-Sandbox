@@ -10,9 +10,11 @@
 textarea { flex: 1; background: var(--2); color: var(--6); border: none; padding: 4px; font-size: 0.95em; line-height: 1.4; resize: none; overflow: auto; outline: none; }
 #divider { width: 12px; background: var(--3); cursor: col-resize;transition:0.5s all;}
 #preview-panel { flex: 1; position: relative; background: var(--1); display: flex; justify-content: center; align-items: center; }
-#lint{position: absolute;bottom: 0;z-index:10000;left: 0;width: 100%;max-height: 30%;background: var(--0);color: var(--r);font-size: 0.9em;overflow: auto;white-space: pre-wrap;}
-#copyErrorsBtn{position: absolute;top: 5px;right: 5px;background: var(--3);color: var(--7);border: none;padding: 4px 8px;cursor: pointer;z-index: 10001;}
+#lint{position: absolute;bottom: 0;z-index: 10000;left: 0;width: 100%;max-height: 30%;background: var(--0);color: var(--r);font-size: 0.9em;overflow: auto;white-space: pre-wrap;}
+#copyErrorsBtn{position: absolute;top: 5px;right: 40px;background: var(--3);color: var(--7);border: none;padding: 4px 8px;cursor: pointer;z-index: 10001;}
 #copyErrorsBtn:hover{background: var(--5);}
+#closeLintBtn{position: absolute;top: 5px;right: 5px;background: var(--r);border: none;color: var(--7);cursor: pointer;padding: 4px 8px;z-index: 10001;}
+#closeLintBtn:hover{background: var(--0);color:var(--r);}
 #lintContent{padding: 0 10px 0 10px;}
 #glcanvas { width: 100%; height: 100%; display: block; }
 #fsBtn { position: absolute; top: 10px; right: 10px; z-index: 10; background: var(--d); color: var(--6); border: none; padding: var(--pad); font-size: 1em; cursor: pointer;width:2rem; }
