@@ -25,12 +25,12 @@
   const uploadBtn = createEl('button', {
     id: 'uploadHTMLBtn',
     textContent: 'Upload',
-    title: 'Upload HTML or JS file'
+    title: 'Upload HTML, JS, or shader file'
   });
   const fileInput = createEl('input', {
     id: 'uploadHTMLInput',
     type: 'file',
-    accept: '.html,.js'
+    accept: '.html,.js,.frag,.vert,.vs,.fs'
   });
   const vertEditor = document.getElementById('vertCode');
   const fragEditor = document.getElementById('fragCode');
@@ -46,7 +46,12 @@
     const reader = new FileReader();
     reader.onload = e => {
       const text = e.target.result;
-      if (file.name.endsWith('.js')) {
+      const extension = file.name.split('.').pop().toLowerCase();
+      if (extension === 'frag' || extension === 'fs') {
+        injectFragmentShader(text, file.name);
+      } else if (extension === 'vert' || extension === 'vs') {
+        injectVertexShader(text, file.name);
+      } else if (extension === 'js') {
         parseJSSource(text, file.name);
       } else {
         parseHTMLorJS(text, file.name);
@@ -54,6 +59,20 @@
     };
     reader.readAsText(file);
   });
+  function injectVertexShader(shaderCode, filename) {
+    vertEditor.value = shaderCode.trim();
+    vertNameEl.textContent = `(${filename})`;
+    console.log(`Vertex shader loaded from ${filename}`);
+    if (typeof rebuildProgram === 'function') rebuildProgram();
+    if (typeof render === 'function') render();
+  }
+  function injectFragmentShader(shaderCode, filename) {
+    fragEditor.value = shaderCode.trim();
+    fragNameEl.textContent = `(${filename})`;
+    console.log(`Fragment shader loaded from ${filename}`);
+    if (typeof rebuildProgram === 'function') rebuildProgram();
+    if (typeof render === 'function') render();
+  }
   function parseHTMLorJS(text, filename) {
     const doc = new DOMParser().parseFromString(text, 'text/html');
     const vsTag = doc.querySelector('script[type="x-shader/x-vertex"]');
