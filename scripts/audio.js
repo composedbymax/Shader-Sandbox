@@ -234,7 +234,7 @@ class AudioReactive {
         Drag & drop an audio file here<br>
         or <button id="file-upload-btn" style="background:var(--5);border-radius:2px;text-decoration:none;padding:0.5rem 1rem;border:none;color:var(--7);cursor:pointer">Browse files</button>
       </p>
-      <input id="file-input" type="file" accept="audio/*" style="display:none"/>
+      <input id="file-input" type="file" accept="audio/mpeg, audio/mp3, audio/wav, audio/wave, audio/x-wav, audio/aac, audio/mp4, audio/x-m4a, audio/flac, audio/ogg, audio/opus, .mp3, .wav, .aac, .m4a, .flac, .ogg, .opus" style="display:none"/>
       <audio id="file-audio" controls style="width:100%;display:none;margin-top:10px"></audio>
       <button id="clear-file-btn" style="display:none;margin-top:10px;padding:6px 12px;background:var(--d);border:none;color:var(--7);cursor:pointer">Clear File</button>
     `);
