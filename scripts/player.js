@@ -115,7 +115,6 @@
         countdownInterval = null;
         countdownActive = false;
       }
-      
       currentPlayerWrapper.parentNode.removeChild(currentPlayerWrapper);
       currentPlayerWrapper = null;
     }
@@ -183,37 +182,166 @@
     seekBar.style.background = 'var(--4)';
     seekBar.style.outline = 'none';
     const volumeContainer = document.createElement('div');
+    volumeContainer.style.position = 'relative';
+    volumeContainer.style.flexShrink = '0';
+    volumeContainer.style.height = '2rem';
     volumeContainer.style.display = 'flex';
     volumeContainer.style.alignItems = 'center';
-    volumeContainer.style.gap = '5px';
-    volumeContainer.style.flexShrink = '0';
-    const volumeKnob = document.createElement('input');
-    volumeKnob.type = 'range';
-    volumeKnob.min = 0;
-    volumeKnob.max = 1;
-    volumeKnob.step = 0.01;
-    volumeKnob.value = audio.volume;
-    volumeKnob.style.width = '60px';
-    volumeKnob.style.appearance = 'none';
-    volumeKnob.style.height = '1.5rem';
-    volumeKnob.style.borderRadius = '5px';
-    volumeKnob.style.background = 'var(--4)';
-    volumeKnob.style.outline = 'none';
+    const volumeButton = document.createElement('button');
+    const volumeIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    const volumePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    volumeIcon.setAttribute('viewBox', '0 0 24 24');
+    volumeIcon.setAttribute('fill', 'currentColor');
+    volumeIcon.setAttribute('width', '20');
+    volumeIcon.setAttribute('height', '20');
+    volumePath.setAttribute('d', 'M3 10v4h4l5 5V5l-5 5H3zm13.5 2c0-.83-.34-1.58-.88-2.12l1.42-1.42A5.985 5.985 0 0120.5 12c0 1.66-.67 3.16-1.76 4.24l-1.42-1.42c.54-.54.88-1.29.88-2.12zm-2.12-7.88l1.42 1.42A8.963 8.963 0 0122 12a8.963 8.963 0 01-4.2 7.46l-1.42-1.42A6.978 6.978 0 0019.5 12c0-2.21-.9-4.21-2.62-5.88z');
+    volumeIcon.appendChild(volumePath);
+    volumeButton.appendChild(volumeIcon);
+    volumeButton.style.background = 'none';
+    volumeButton.style.border = 'none';
+    volumeButton.style.cursor = 'pointer';
+    volumeButton.style.fontSize = '14px';
+    volumeButton.style.color = 'var(--7)';
+    volumeButton.style.padding = '0';
+    volumeButton.style.width = '2rem';
+    volumeButton.style.height = '2rem';
+    volumeButton.style.display = 'flex';
+    volumeButton.style.alignItems = 'center';
+    volumeButton.style.justifyContent = 'center';
+    const volumePanel = document.createElement('div');
+    volumePanel.style.position = 'absolute';
+    volumePanel.style.bottom = '100%';
+    volumePanel.style.left = '50%';
+    volumePanel.style.transform = 'translateX(-50%)';
+    volumePanel.style.background = 'var(--1)';
+    volumePanel.style.border = '1px solid var(--4)';
+    volumePanel.style.borderRadius = '8px';
+    volumePanel.style.padding = '10px 8px';
+    volumePanel.style.marginBottom = '5px';
+    volumePanel.style.boxShadow = '0 4px 12px var(--0)';
+    volumePanel.style.opacity = '0';
+    volumePanel.style.visibility = 'hidden';
+    volumePanel.style.transition = 'opacity 0.2s, visibility 0.2s';
+    volumePanel.style.zIndex = '1000';
+    volumePanel.style.display = 'flex';
+    volumePanel.style.flexDirection = 'column';
+    volumePanel.style.alignItems = 'center';
+    volumePanel.style.gap = '8px';
     const volumeDisplay = document.createElement('div');
     volumeDisplay.textContent = Math.round(audio.volume * 100) + '%';
-    volumeDisplay.style.position = 'absolute';
-    volumeDisplay.style.bottom = '100%';
-    volumeDisplay.style.right = '0';
-    volumeDisplay.style.marginBottom = '5px';
-    volumeDisplay.style.padding = '4px 8px';
     volumeDisplay.style.fontSize = '11px';
     volumeDisplay.style.color = 'var(--7)';
-    volumeDisplay.style.background = 'var(--1)';
-    volumeDisplay.style.borderRadius = '4px';
-    volumeDisplay.style.opacity = '0';
-    volumeDisplay.style.visibility = 'hidden';
-    volumeDisplay.style.transition = 'opacity 0.2s, visibility 0.2s';
-    volumeDisplay.style.pointerEvents = 'none';
+    volumeDisplay.style.fontWeight = 'bold';
+    volumeDisplay.style.minWidth = '30px';
+    volumeDisplay.style.textAlign = 'center';
+    const sliderTrack = document.createElement('div');
+    sliderTrack.style.width = '4px';
+    sliderTrack.style.height = '80px';
+    sliderTrack.style.background = 'var(--4)';
+    sliderTrack.style.borderRadius = '2px';
+    sliderTrack.style.position = 'relative';
+    sliderTrack.style.cursor = 'pointer';
+    const sliderFill = document.createElement('div');
+    sliderFill.style.width = '100%';
+    sliderFill.style.background = 'var(--a)';
+    sliderFill.style.borderRadius = '2px';
+    sliderFill.style.position = 'absolute';
+    sliderFill.style.bottom = '0';
+    sliderFill.style.transition = 'height 0.1s ease';
+    const sliderHandle = document.createElement('div');
+    sliderHandle.style.width = '12px';
+    sliderHandle.style.height = '12px';
+    sliderHandle.style.background = 'var(--a)';
+    sliderHandle.style.borderRadius = '50%';
+    sliderHandle.style.position = 'absolute';
+    sliderHandle.style.left = '50%';
+    sliderHandle.style.transform = 'translateX(-50%)';
+    sliderHandle.style.cursor = 'pointer';
+    sliderHandle.style.border = '2px solid var(--1)';
+    sliderHandle.style.boxShadow = '0 2px 4px var(--0)';
+    sliderTrack.appendChild(sliderFill);
+    sliderTrack.appendChild(sliderHandle);
+    volumePanel.appendChild(volumeDisplay);
+    volumePanel.appendChild(sliderTrack);
+    function updateSlider(volume) {
+      const percentage = volume * 100;
+      sliderFill.style.height = percentage + '%';
+      sliderHandle.style.bottom = `calc(${percentage}% - 6px)`;
+      volumeDisplay.textContent = Math.round(percentage) + '%';
+      if (volume === 0) {
+        volumePath.setAttribute('d',
+          'M5 9v6h4l5 5V4l-5 5H5z M16 10l4 4m0-4l-4 4'
+        );
+      } else if (volume < 0.5) {
+        volumePath.setAttribute('d',
+          'M5 9v6h4l5 5V4l-5 5H5z M17 12a3 3 0 00-1.2-2.4l.7-.7a4 4 0 010 6.2l-.7-.7A3 3 0 0017 12z'
+        );
+      } else {
+        volumePath.setAttribute('d',
+          'M5 9v6h4l5 5V4l-5 5H5z M17 12a3 3 0 00-1.2-2.4l.7-.7a4 4 0 010 6.2l-.7-.7A3 3 0 0017 12z M20 12a5 5 0 00-2-4l.7-.7a6 6 0 010 9.4l-.7-.7a5 5 0 002-4z'
+        );
+      }
+    }
+    updateSlider(audio.volume);
+    sliderTrack.appendChild(sliderFill);
+    sliderTrack.appendChild(sliderHandle);
+    volumePanel.appendChild(volumeDisplay);
+    volumePanel.appendChild(sliderTrack);
+    volumeContainer.appendChild(volumeButton);
+    volumeContainer.appendChild(volumePanel);
+    let isDragging = false;
+    function getVolumeFromPosition(clientY) {
+      const rect = sliderTrack.getBoundingClientRect();
+      const relativeY = clientY - rect.top;
+      const percentage = Math.max(0, Math.min(1, 1 - (relativeY / rect.height)));
+      return percentage;
+    }
+    function handleVolumeChange(e) {
+      if (isDragging) {
+        const volume = getVolumeFromPosition(e.clientY);
+        audio.volume = volume;
+        updateSlider(volume);
+      }
+    }
+    sliderTrack.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      const volume = getVolumeFromPosition(e.clientY);
+      audio.volume = volume;
+      updateSlider(volume);
+      document.addEventListener('mousemove', handleVolumeChange);
+      document.addEventListener('mouseup', () => {
+        isDragging = false;
+        document.removeEventListener('mousemove', handleVolumeChange);
+      });
+    });
+    let volumeTimeout;
+    function showVolumePanel() {
+      clearTimeout(volumeTimeout);
+      volumePanel.style.opacity = '1';
+      volumePanel.style.visibility = 'visible';
+    }
+    function hideVolumePanel() {
+      volumeTimeout = setTimeout(() => {
+        if (!isDragging) {
+          volumePanel.style.opacity = '0';
+          volumePanel.style.visibility = 'hidden';
+        }
+      }, 500);
+    }
+    volumeButton.addEventListener('mouseenter', showVolumePanel);
+    volumeContainer.addEventListener('mouseleave', hideVolumePanel);
+    volumePanel.addEventListener('mouseenter', () => clearTimeout(volumeTimeout));
+    volumePanel.addEventListener('mouseleave', hideVolumePanel);
+    let previousVolume = audio.volume;
+    volumeButton.addEventListener('click', () => {
+      if (audio.volume > 0) {
+        previousVolume = audio.volume;
+        audio.volume = 0;
+      } else {
+        audio.volume = previousVolume || 0.5;
+      }
+      updateSlider(audio.volume);
+    });
     const countdownToggle = document.createElement('button');
     countdownToggle.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"/>
@@ -233,8 +361,6 @@
     countdownToggle.style.display = 'flex';
     countdownToggle.style.alignItems = 'center';
     countdownToggle.style.justifyContent = 'center';
-    volumeContainer.appendChild(volumeKnob);
-    volumeContainer.appendChild(volumeDisplay);
     controlsRow.appendChild(playPause);
     controlsRow.appendChild(seekBar);
     controlsRow.appendChild(countdownToggle);
@@ -294,29 +420,8 @@
         audio.currentTime = (seekBar.value / 100) * audio.duration;
       }
     });
-    volumeKnob.addEventListener('input', () => {
-      audio.volume = volumeKnob.value;
-      volumeDisplay.textContent = Math.round(volumeKnob.value * 100) + '%';
-    });
-    volumeKnob.addEventListener('mousedown', () => {
-      volumeDisplay.style.opacity = '1';
-      volumeDisplay.style.visibility = 'visible';
-    });
-    volumeKnob.addEventListener('mouseup', () => {
-      setTimeout(() => {
-        volumeDisplay.style.opacity = '0';
-        volumeDisplay.style.visibility = 'hidden';
-      }, 1000);
-    });
-    volumeKnob.addEventListener('focus', () => {
-      volumeDisplay.style.opacity = '1';
-      volumeDisplay.style.visibility = 'visible';
-    });
-    volumeKnob.addEventListener('blur', () => {
-      setTimeout(() => {
-        volumeDisplay.style.opacity = '0';
-        volumeDisplay.style.visibility = 'hidden';
-      }, 500);
+    audio.addEventListener('volumechange', () => {
+      updateSlider(audio.volume);
     });
   }
   const observer = new MutationObserver((mutations) => {
