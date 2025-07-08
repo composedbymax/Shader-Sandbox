@@ -5,6 +5,7 @@
   let countdownActive = false;
   let countdownInterval = null;
   let originalAudioSrc = null;
+  let currentAudio = null;
   function formatTime(seconds) {
     if (isNaN(seconds) || !isFinite(seconds)) return '0:00';
     const mins = Math.floor(seconds / 60);
@@ -83,6 +84,19 @@
     audioContext.close();
     return new Blob([arrayBuffer], { type: 'audio/wav' });
   }
+  function cleanupCountdown() {
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
+    countdownActive = false;
+    const notifications = document.querySelectorAll('[style*="position: fixed"][style*="top: 10px"][style*="right: 44px"]');
+    notifications.forEach(notification => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    });
+  }
   function startCountdown(audio, originalSrc) {
     if (countdownActive) return;
     countdownActive = true;
@@ -93,12 +107,12 @@
       if (count > 0) {
         createNotification(count);
       } else {
-        clearInterval(countdownInterval);
-        countdownInterval = null;
-        countdownActive = false;
-        audio.src = originalSrc;
-        audio.load();
-        audio.play();
+        cleanupCountdown();
+        if (audio === currentAudio) {
+          audio.src = originalSrc;
+          audio.load();
+          audio.play();
+        }
       }
     }, 1000);
   }
@@ -110,14 +124,12 @@
         oldAudio.src = '';
         oldAudio.load();
       }
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-        countdownInterval = null;
-        countdownActive = false;
-      }
+      cleanupCountdown();
       currentPlayerWrapper.parentNode.removeChild(currentPlayerWrapper);
       currentPlayerWrapper = null;
     }
+    currentAudio = null;
+    originalAudioSrc = null;
   }
   function initCustomPlayer(audio) {
     if (processedAudioElements.has(audio)) {
@@ -125,6 +137,7 @@
     }
     processedAudioElements.add(audio);
     removeOldPlayer();
+    currentAudio = audio;
     originalAudioSrc = audio.src;
     audio.controls = false;
     const wrapper = document.createElement('div');
@@ -283,10 +296,6 @@
       }
     }
     updateSlider(audio.volume);
-    sliderTrack.appendChild(sliderFill);
-    sliderTrack.appendChild(sliderHandle);
-    volumePanel.appendChild(volumeDisplay);
-    volumePanel.appendChild(sliderTrack);
     volumeContainer.appendChild(volumeButton);
     volumeContainer.appendChild(volumePanel);
     let isDragging = false;
@@ -389,11 +398,7 @@
         }
       } else {
         audio.pause();
-        if (countdownInterval) {
-          clearInterval(countdownInterval);
-          countdownInterval = null;
-          countdownActive = false;
-        }
+        cleanupCountdown();
       }
     });
     audio.addEventListener('play', () => {
