@@ -22,6 +22,12 @@ created by Max Warren
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <meta name="robots" content="index, nofollow">
   <meta name="referrer" content="no-referrer">
+  <meta property="og:title" content="GLSL Editor Application" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://max.wuaze.com/glsl" />
+  <meta property="og:image" content="https://max.wuaze.com/assets/img/glsl.jpeg" />
+  <meta property="og:description" content="An interactive GLSL editor for experimenting with shaders directly in your browser." />
+  <meta property="og:site_name" content="GLSL Editor by Max Wuaze" />
   <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(self), camera=(), fullscreen=(self), clipboard-read=(self), clipboard-write=(self)">
@@ -165,6 +171,7 @@ void main() {
         <button id="fsBtn">⛶</button>
         <div id="lint">
           <button id="copyErrorsBtn" style="display: none;">Copy All Errors</button>
+          <button id="closeLintBtn" style="display: none;">✕</button>
           <div id="lintContent"></div>
         </div>
       </div>
