@@ -136,19 +136,16 @@ function rebuildProgram() {
     const lintContent = document.getElementById('lintContent');
     const copyBtn = document.getElementById('copyErrorsBtn');
     const closeBtn = document.getElementById('closeLintBtn');
-    
     const showError = (errorText) => {
         lintContent.textContent = errorText;
         copyBtn.style.display = 'block';
         closeBtn.style.display = 'block';
         lintDiv.style.display = 'block';
     };
-    
     lintContent.textContent = '';
     copyBtn.style.display = 'none';
     closeBtn.style.display = 'none';
     lintDiv.style.display = 'none';
-    
     if (program) gl.deleteProgram(program);
     const errors = [];
     const vs = compileShader(vertTA.value, gl.VERTEX_SHADER);
@@ -171,9 +168,26 @@ function rebuildProgram() {
     program = p;
     audioReactive.setGLContext(gl, program);
     gl.useProgram(program);
-    attribLoc = gl.getAttribLocation(program, 'a_position');
-    gl.enableVertexAttribArray(attribLoc);
-    gl.vertexAttribPointer(attribLoc, 2, gl.FLOAT, false, 0, 0);
+    const possibleAttrNames = ['a_position', 'position', 'aPosition', 'a_pos'];
+    attribLoc = -1;
+    for (const name of possibleAttrNames) {
+        attribLoc = gl.getAttribLocation(program, name);
+        if (attribLoc !== -1) {
+            console.log(`Found attribute '${name}' at location ${attribLoc}`);
+            break;
+        }
+    }
+    if (attribLoc !== -1) {
+        gl.enableVertexAttribArray(attribLoc);
+        gl.vertexAttribPointer(attribLoc, 2, gl.FLOAT, false, 0, 0);
+    } else {
+        console.warn('No position attribute found in shader. Available attributes:');
+        const numAttribs = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
+        for (let i = 0; i < numAttribs; i++) {
+            const info = gl.getActiveAttrib(program, i);
+            console.warn(`  ${info.name} (location: ${gl.getAttribLocation(program, info.name)})`);
+        }
+    }
     uniforms = {};
     const numUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
     for (let i = 0; i < numUniforms; i++) {
