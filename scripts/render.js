@@ -173,7 +173,6 @@ function rebuildProgram() {
     for (const name of possibleAttrNames) {
         attribLoc = gl.getAttribLocation(program, name);
         if (attribLoc !== -1) {
-            console.log(`Found attribute '${name}' at location ${attribLoc}`);
             break;
         }
     }
@@ -221,7 +220,6 @@ document.getElementById('closeLintBtn').addEventListener('click', function() {
     const lintDiv = document.getElementById('lint');
     const copyBtn = document.getElementById('copyErrorsBtn');
     const closeBtn = document.getElementById('closeLintBtn');
-    
     lintDiv.style.display = 'none';
     copyBtn.style.display = 'none';
     closeBtn.style.display = 'none';
