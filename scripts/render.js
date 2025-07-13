@@ -20,6 +20,14 @@ let gl;
 let animationId = null;
 let isAnimationPaused = false;
 let lastActiveTime = 0;
+let mouse = {
+    x: 0,
+    y: 0,
+    clickX: 0,
+    clickY: 0,
+    isPressed: false,
+    lastClickTime: 0
+};
 gl = canvas.getContext('webgl2');
 if (!gl) {
     console.warn('WebGL2 not available, falling back to WebGL1.');
@@ -53,6 +61,68 @@ gl.enable(gl.BLEND);
 gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 gl.clearColor(0.0, 0.0, 0.0, 1.0);
 gl.clear(gl.COLOR_BUFFER_BIT);
+function getMousePos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = rect.height - (e.clientY - rect.top);
+    return { x, y };
+}
+function handleMouseMove(e) {
+    if (drag.type) return;
+    const pos = getMousePos(e);
+    mouse.x = pos.x;
+    mouse.y = pos.y;
+}
+function handleMouseDown(e) {
+    if (drag.type) return;
+    const pos = getMousePos(e);
+    mouse.isPressed = true;
+    mouse.clickX = pos.x;
+    mouse.clickY = pos.y;
+    mouse.lastClickTime = performance.now();
+}
+function handleMouseUp(e) {
+    if (drag.type) return;
+    mouse.isPressed = false;
+}
+function handleMouseLeave(e) {
+    mouse.isPressed = false;
+}
+canvas.addEventListener('mousemove', handleMouseMove);
+canvas.addEventListener('mousedown', handleMouseDown);
+canvas.addEventListener('mouseup', handleMouseUp);
+canvas.addEventListener('mouseleave', handleMouseLeave);
+function getTouchPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0] || e.changedTouches[0];
+    const x = touch.clientX - rect.left;
+    const y = rect.height - (touch.clientY - rect.top);
+    return { x, y };
+}
+function handleTouchMove(e) {
+    if (drag.type) return;
+    const pos = getTouchPos(e);
+    mouse.x = pos.x;
+    mouse.y = pos.y;
+    e.preventDefault();
+}
+function handleTouchStart(e) {
+    if (drag.type) return;
+    const pos = getTouchPos(e);
+    mouse.isPressed = true;
+    mouse.clickX = pos.x;
+    mouse.clickY = pos.y;
+    mouse.lastClickTime = performance.now();
+    e.preventDefault();
+}
+function handleTouchEnd(e) {
+    if (drag.type) return;
+    mouse.isPressed = false;
+    e.preventDefault();
+}
+canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 function handleVisibilityChange() {
     if (document.hidden || !document.hasFocus()) {
         pauseAnimation();
@@ -239,6 +309,36 @@ function render() {
         gl.uniform2f(uniforms.u_resolution.loc, canvas.width, canvas.height);
     } else if (uniforms.uResolution) {
         gl.uniform2f(uniforms.uResolution.loc, canvas.width, canvas.height);
+    }
+    if (uniforms.u_mouse) {
+        gl.uniform2f(uniforms.u_mouse.loc, mouse.x / canvas.width, mouse.y / canvas.height);
+    } else if (uniforms.uMouse) {
+        gl.uniform2f(uniforms.uMouse.loc, mouse.x / canvas.width, mouse.y / canvas.height);
+    }
+    if (uniforms.u_mouse_pixel) {
+        gl.uniform2f(uniforms.u_mouse_pixel.loc, mouse.x, mouse.y);
+    } else if (uniforms.uMousePixel) {
+        gl.uniform2f(uniforms.uMousePixel.loc, mouse.x, mouse.y);
+    }
+    if (uniforms.u_mouse_click) {
+        gl.uniform2f(uniforms.u_mouse_click.loc, mouse.clickX / canvas.width, mouse.clickY / canvas.height);
+    } else if (uniforms.uMouseClick) {
+        gl.uniform2f(uniforms.uMouseClick.loc, mouse.clickX / canvas.width, mouse.clickY / canvas.height);
+    }
+    if (uniforms.u_mouse_click_pixel) {
+        gl.uniform2f(uniforms.u_mouse_click_pixel.loc, mouse.clickX, mouse.clickY);
+    } else if (uniforms.uMouseClickPixel) {
+        gl.uniform2f(uniforms.uMouseClickPixel.loc, mouse.clickX, mouse.clickY);
+    }
+    if (uniforms.u_mouse_pressed) {
+        gl.uniform1i(uniforms.u_mouse_pressed.loc, mouse.isPressed ? 1 : 0);
+    } else if (uniforms.uMousePressed) {
+        gl.uniform1i(uniforms.uMousePressed.loc, mouse.isPressed ? 1 : 0);
+    }
+    if (uniforms.u_mouse_click_time) {
+        gl.uniform1f(uniforms.u_mouse_click_time.loc, (performance.now() - mouse.lastClickTime) * 0.001);
+    } else if (uniforms.uMouseClickTime) {
+        gl.uniform1f(uniforms.uMouseClickTime.loc, (performance.now() - mouse.lastClickTime) * 0.001);
     }
     if (uniforms.uColor) {
         gl.uniform3f(uniforms.uColor.loc, 1.0, 1.0, 1.0);
