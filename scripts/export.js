@@ -161,32 +161,55 @@ canvas { width: 100vw; height: 100vh; display: block; }
             gl.viewport(0, 0, w, h);
         }
     }
+    const mouse = {
+        x: 0,
+        y: 0,
+        clickX: 0,
+        clickY: 0,
+        lastClickTime: 0,
+        isPressed: false
+    };
+    canvas.addEventListener('mousemove', e => {
+        const rect = canvas.getBoundingClientRect();
+        mouse.x = e.clientX - rect.left;
+        mouse.y = rect.height - (e.clientY - rect.top);
+    });
+    canvas.addEventListener('mousedown', e => {
+        const rect = canvas.getBoundingClientRect();
+        mouse.clickX = e.clientX - rect.left;
+        mouse.clickY = rect.height - (e.clientY - rect.top);
+        mouse.lastClickTime = performance.now() * 0.001;
+        mouse.isPressed = true;
+    });
+    canvas.addEventListener('mouseup', () => {
+        mouse.isPressed = false;
+    });
+    canvas.addEventListener('mouseleave', () => {
+        mouse.isPressed = false;
+    });
+    const mouseUniforms = ['mouse', 'u_mouse', 'uMouse', 'iMouse'];
+    const mouseDownUniforms = ['u_mouseDown', 'uMouseDown'];
+    const mouseClickUniforms = ['u_mouseClick', 'uMouseClick'];
+    const mouseTimeUniforms = ['u_mouseTime', 'uMouseTime'];
     function render() {
         resize();
         gl.useProgram(program);
         const time = (performance.now() - startTime) * 0.001;
-        const timeUniforms = ['time', 'u_time', 'uTime', 'iTime'];
-        for (const timeUniform of timeUniforms) {
-            if (uniforms[timeUniform]) {
-                gl.uniform1f(uniforms[timeUniform], time);
-                break;
+        const setUniform = (names, fn, ...args) => {
+            for (const name of names) {
+                if (uniforms[name]) {
+                    fn(uniforms[name], ...args);
+                    break;
+                }
             }
-        }
-        const resolutionUniforms = ['resolution', 'u_resolution', 'uResolution', 'iResolution'];
-        for (const resUniform of resolutionUniforms) {
-            if (uniforms[resUniform]) {
-                gl.uniform2f(uniforms[resUniform], canvas.width, canvas.height);
-                break;
-            }
-        }
-        if (uniforms.uColor || uniforms.u_color || uniforms.color) {
-            const colorUniform = uniforms.uColor || uniforms.u_color || uniforms.color;
-            gl.uniform3f(colorUniform, 1.0, 1.0, 1.0);
-        }
-        if (uniforms.mouse || uniforms.u_mouse || uniforms.uMouse || uniforms.iMouse) {
-            const mouseUniform = uniforms.mouse || uniforms.u_mouse || uniforms.uMouse || uniforms.iMouse;
-            gl.uniform2f(mouseUniform, 0.0, 0.0);
-        }
+        };
+        setUniform(['time', 'u_time', 'uTime', 'iTime'], gl.uniform1f.bind(gl), time);
+        setUniform(['resolution', 'u_resolution', 'uResolution', 'iResolution'], gl.uniform2f.bind(gl), canvas.width, canvas.height);
+        setUniform(['uColor', 'u_color', 'color'], gl.uniform3f.bind(gl), 1.0, 1.0, 1.0);
+        setUniform(mouseUniforms, gl.uniform2f.bind(gl), mouse.x, mouse.y);
+        setUniform(mouseDownUniforms, gl.uniform1i.bind(gl), mouse.isPressed ? 1 : 0);
+        setUniform(mouseClickUniforms, gl.uniform2f.bind(gl), mouse.clickX, mouse.clickY);
+        setUniform(mouseTimeUniforms, gl.uniform1f.bind(gl), mouse.lastClickTime);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
         requestAnimationFrame(render);
     }
