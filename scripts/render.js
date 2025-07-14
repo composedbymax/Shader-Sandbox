@@ -83,7 +83,6 @@ const updateMouse = (e, isTouch = false, type) => {
     } else if (type === 'up') {
         mouse.isPressed = false;
     }
-
     if (isTouch) e.preventDefault();
 };
 canvas.addEventListener('mousemove', e => updateMouse(e, false, 'move'));

@@ -2,7 +2,7 @@
   'use strict';
   const style = document.createElement('style');
   style.textContent = `
-    #findBtn{position: fixed;top: 10px;right: 74px;z-index: 1;width: 2rem;height: 2rem;background: var(--d);color: var(--6);border: none;font-size: 16px;cursor: pointer;display: flex;align-items: center;justify-content: center;transition: background 0.3s ease;}
+    #findBtn{position: absolute;top: 10px;right: 74px;z-index: 1;width: 2rem;height: 2rem;background: var(--d);color: var(--6);border: none;font-size: 16px;cursor: pointer;display: flex;align-items: center;justify-content: center;transition: background 0.3s ease;}
     #findBtn:hover{background: var(--5);}
     #findModal{display: none;position: fixed;inset: 0;background: rgba(0,0,0,0.7);backdrop-filter: blur(10px);z-index: 10000;overflow-y: auto;}
     #findModal .modal-content2{position: relative;margin: 2rem auto;width: 90vw;height: 90vh;background: var(--3);border-radius: 8px;padding: 20px;box-shadow: 0 10px 30px var(--0);display: flex;flex-direction: column;overflow-y: auto;box-sizing: border-box;}
