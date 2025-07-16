@@ -66,7 +66,7 @@
     modalContent.innerHTML = `
       <h2 style="color: var(--6); margin-bottom: 1rem; word-wrap: break-word;">GLSL Editor – Guide</h2>
       <ul style="text-align: left; padding-left: 1.2em; list-style-type: disc; margin: 0; word-wrap: break-word;">
-        <li style="margin-bottom: 0.5em;"><strong>Save/Browse:</strong> Save shaders locally or publicly (premium), and explore public ones</li>
+        <li style="margin-bottom: 0.5em;"><strong>Save/Browse:</strong> Save shaders locally, by share link or publicly (premium), and explore public gallery</li>
         <li style="margin-bottom: 0.5em;"><strong>Editor:</strong> Write or edit <code style="word-break: break-all; background: var(--3); padding: 2px 4px; border-radius: 3px;">.vert</code> and <code style="word-break: break-all; background: var(--3); padding: 2px 4px; border-radius: 3px;">.frag</code> code with live updates</li>
         <li style="margin-bottom: 0.5em;"><strong>GLSL Version:</strong> Use <code style="background: var(--3); padding: 2px 4px; border-radius: 3px;">#ifdef GL_ES ... #endif</code> for GLSL 2.0, or <code style="background: var(--3); padding: 2px 4px; border-radius: 3px;">#version 300 es</code> for GLSL ES 3.00</li>
         <li style="margin-bottom: 0.5em;"><strong>Import/Export:</strong> Drag, drop, or upload <code style="word-break: break-all; background: var(--3); padding: 2px 4px; border-radius: 3px;">.vert</code>, <code style="word-break: break-all; background: var(--3); padding: 2px 4px; border-radius: 3px;">.frag</code>, <code style="word-break: break-all; background: var(--3); padding: 2px 4px; border-radius: 3px;">.vs</code>, <code style="word-break: break-all; background: var(--3); padding: 2px 4px; border-radius: 3px;">.fs</code>, <code style="word-break: break-all; background: var(--3); padding: 2px 4px; border-radius: 3px;">.txt</code>, or <code style="word-break: break-all; background: var(--3); padding: 2px 4px; border-radius: 3px;">.html</code> files</li>
@@ -74,10 +74,11 @@
         <li style="margin-bottom: 0.5em;"><strong>Record:</strong> Capture WebM/MP4 of canvas with included audio</li>
         <li style="margin-bottom: 0.5em;"><strong>Performance:</strong> Monitor FPS, memory, draw calls</li>
         <li style="margin-bottom: 0.5em;"><strong>Linting:</strong> Get instant syntax feedback</li>
-        <li style="margin-bottom: 0.5em;"><strong>Layout:</strong> Resize or hide panels to customize your workspace</li>
+        <li style="margin-bottom: 0.5em;"><strong>Customize:</strong> Resize or hide panels to customize your workspace, and use the theme editor to change the colors of the interface to suit your preferences.</li>
         <li style="margin-bottom: 0.5em;"><strong>Color:</strong> Press on a color vector such as <code style="word-break: break-all; background: var(--3); padding: 2px 4px; border-radius: 3px;">vec3(0, 0.5, 1.0)</code> to initialize color picker modal</li>
-        <li style="margin-bottom: 0.5em;"><strong>Format:</strong> Use Shift + M to open code formatting modal</li>
-        <li style="margin-bottom: 0.5em;"><strong>Visualize Code:</strong> Use Shift + V to open flowchart modal</li>
+        <li style="margin-bottom: 0.5em;"><strong>Format:</strong> Use Shift + M to open code formatting modal to minify, remove extra lines, remove comments, and minify code</li>
+        <li style="margin-bottom: 0.5em;"><strong>Visualize Code:</strong> Use Option + V to open flowchart modal to visualize and analyze code</li>
+        <li style="margin-bottom: 0.5em;"><strong>Insert GLSL Snippets:</strong> Place your cursor where you'd like the code to be inserted, then press Control + V to open the GLSL code snippet library</li>
         <li style="margin-bottom: 0.5em;"><strong>Support:</strong> Contact: <span style="word-break: break-all;">compositionsbymax@gmail.com</span></li>
       </ul>
     `;
