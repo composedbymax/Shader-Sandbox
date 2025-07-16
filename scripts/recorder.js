@@ -57,8 +57,10 @@
     </div>
     <div class="info" id="videoInfo"></div>
   `;
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const ua = navigator.userAgent;
+  const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+  const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+  const isFirefox = /firefox/i.test(ua);
   const settingsPanel = document.createElement('div');
   settingsPanel.id = 'recSettings';
   settingsPanel.innerHTML = `
@@ -77,13 +79,18 @@
     </label>
     <label>Codec: 
       <select id="recCodec">
-        <option value="h264" selected>H.264 (MP4)</option>
-        ${isSafari || isIOS ? `
+        ${isFirefox ? `
+          <option value="h264" disabled>H.264 (Not supported in Firefox)</option>
+          <option value="vp9" disabled>VP9 (Not supported in Firefox)</option>
+          <option value="vp8" selected>VP8 (WebM)</option>
+        ` : isSafari || isIOS ? `
+          <option value="h264" selected>H.264 (MP4)</option>
           <option value="vp9" disabled>VP9 (Not supported in Safari)</option>
-           <option value="vp8" disabled>VP8 (Not supported in Safari)</option> 
+          <option value="vp8" disabled>VP8 (Not supported in Safari)</option>
         ` : `
+          <option value="h264" selected>H.264 (MP4)</option>
           <option value="vp9">VP9 (WebM)</option>
-           <option value="vp8">VP8 (WebM)</option>
+          <option value="vp8">VP8 (WebM)</option>
         `}
       </select>
     </label>
@@ -236,21 +243,21 @@
     downloadLink.style.display = 'none';
     recStats.style.display = 'none';
   });
-  function checkCodecSupport(codec) {
-    const codecOptions = {
-      'vp9': [
-        'video/webm; codecs=vp9',
-        'video/webm;codecs=vp9',
-        'video/webm; codecs="vp9"',
-        'video/webm;codecs="vp9"'
-      ],
-      'vp8': [
+  const checkCodecSupport = (codec, withAudio) => {
+    const bases = {
+      vp8: [
         'video/webm; codecs=vp8',
         'video/webm;codecs=vp8',
         'video/webm; codecs="vp8"',
         'video/webm;codecs="vp8"'
       ],
-      'h264': [
+      vp9: [
+        'video/webm; codecs=vp9',
+        'video/webm;codecs=vp9',
+        'video/webm; codecs="vp9"',
+        'video/webm;codecs="vp9"'
+      ],
+      h264: [
         'video/mp4; codecs=avc1.42E01E',
         'video/mp4;codecs=avc1.42E01E',
         'video/mp4; codecs="avc1.42E01E"',
@@ -258,65 +265,37 @@
         'video/webm; codecs=h264',
         'video/webm;codecs=h264'
       ]
-    };
-    const types = codecOptions[codec] || [];
-    for (const type of types) {
-      if (MediaRecorder.isTypeSupported(type)) {
-        return type;
-      }
-    }
-    return null;
-  }
+    }[codec] || [];
+    const suffixes = withAudio ? [',opus', ', opus'] : [''];
+    return suffixes
+      .flatMap(s => bases.map(b =>
+        b.endsWith('"') ? b.replace(/"$/, `${s}"`) : b + s
+      ))
+      .find(type => MediaRecorder.isTypeSupported(type)) || null;
+  };
   startRec.addEventListener('click', () => {
-    downloadLink.style.display = 'none';
-    recStats.style.display = 'none';
+    downloadLink.style.display = recStats.style.display = 'none';
     recStats.textContent = '';
-    const w = +recWidth.value;
-    const h = +recHeight.value;
-    const fps = +recFPS.value;
-    const dpr = window.devicePixelRatio || 1;
-    hiddenCanvas = document.createElement('canvas');
-    hiddenCanvas.width = w;
-    hiddenCanvas.height = h;
+    const w = +recWidth.value, h = +recHeight.value, fps = +recFPS.value;
+    hiddenCanvas = Object.assign(document.createElement('canvas'), { width: w, height: h });
     hiddenCtx = hiddenCanvas.getContext('2d', { alpha: false });
     const videoStream = hiddenCanvas.captureStream(fps);
-    let finalStream = videoStream;
-    if (includeAudio.checked) {
-      const audioStream = getAudioStream();
-      if (audioStream && audioStream.getAudioTracks().length > 0) {
-        finalStream = new MediaStream([
-          ...videoStream.getVideoTracks(),
-          ...audioStream.getAudioTracks()
-        ]);
-        console.log('Recording with audio tracks:', audioStream.getAudioTracks().length);
-      } else {
-        console.log('No audio stream available, recording video only');
-      }
-    }
+    let audioStream = includeAudio.checked && getAudioStream();
+    if (audioStream && !audioStream.getAudioTracks().length) audioStream = null;
+    const finalStream = audioStream
+      ? new MediaStream([...videoStream.getVideoTracks(), ...audioStream.getAudioTracks()])
+      : videoStream;
     const bits = recQuality.value * 1000;
-    const selectedCodec = recCodec.value;
-    const mimeType = checkCodecSupport(selectedCodec);
-    if (!mimeType) {
-      const fallbackCodecs = ['h264', 'vp9', 'vp8'];
-      let fallbackMimeType = null;
-      let fallbackCodec = null;
-      for (const codec of fallbackCodecs) {
-        fallbackMimeType = checkCodecSupport(codec);
-        if (fallbackMimeType) {
-          fallbackCodec = codec;
-          break;
-        }
-      }
-      if (fallbackMimeType) {
-        alert(`Your browser doesn't support ${selectedCodec} codec. Falling back to ${fallbackCodec}.`);
-        recCodec.value = fallbackCodec;
-        startRecording(finalStream, fallbackMimeType, bits, w, h, fallbackCodec);
-      } else {
-        alert(`Your browser doesn't support any of the available video codecs. Recording is not possible.`);
-      }
-    } else {
-      startRecording(finalStream, mimeType, bits, w, h, selectedCodec);
+    const want = recCodec.value;
+    const mime = checkCodecSupport(want, !!audioStream)
+      || ['h264','vp9','vp8'].reduce((found, c) => found || checkCodecSupport(c, !!audioStream) && (recCodec.value = c, checkCodecSupport(c, !!audioStream)), null);
+    if (!mime) {
+      return alert('No supported codecs for your config.');
     }
+    if (mime && mime !== checkCodecSupport(want, !!audioStream)) {
+      alert(`Falling back to ${recCodec.value} (+audio: ${!!audioStream}).`);
+    }
+    startRecording(finalStream, mime, bits, w, h, recCodec.value);
   });
   function startRecording(stream, mimeType, bits, w, h, selectedCodec) {
     const options = {
