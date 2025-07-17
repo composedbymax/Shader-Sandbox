@@ -150,6 +150,9 @@
     ta.focus();
     closeFindModal();
     showToast('Code inserted successfully!', 'success');
+    if (typeof window.rebuildProgram === 'function') {
+      window.rebuildProgram();
+    }
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
