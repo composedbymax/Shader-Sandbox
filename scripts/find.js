@@ -1,4 +1,4 @@
-(function() {
+!function() {
   'use strict';
   const style = document.createElement('style');
   style.textContent = `
@@ -154,4 +154,4 @@
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else init();
-})();
+}();

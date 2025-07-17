@@ -214,16 +214,22 @@ class GLSLPerformanceMonitor {
   }
   collectGPUInfo() {
     if (this.gl) {
-      const t = this.gl.getExtension("WEBGL_debug_renderer_info");
-      t
-        ? ((this.metrics.gpuInfo.vendor =
-            this.gl.getParameter(t.UNMASKED_VENDOR_WEBGL) || "Unknown"),
-          (this.metrics.gpuInfo.renderer =
-            this.gl.getParameter(t.UNMASKED_RENDERER_WEBGL) || "Unknown"))
-        : ((this.metrics.gpuInfo.vendor =
-            this.gl.getParameter(this.gl.VENDOR) || "Unknown"),
-          (this.metrics.gpuInfo.renderer =
-            this.gl.getParameter(this.gl.RENDERER) || "Unknown"));
+      const isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+      if (isFirefox) {
+        this.metrics.gpuInfo.vendor = this.gl.getParameter(this.gl.VENDOR) || "Unknown";
+        this.metrics.gpuInfo.renderer = this.gl.getParameter(this.gl.RENDERER) || "Unknown";
+      } else {
+        const debugInfo = this.gl.getExtension("WEBGL_debug_renderer_info");
+        if (debugInfo) {
+          this.metrics.gpuInfo.vendor = 
+            this.gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) || "Unknown";
+          this.metrics.gpuInfo.renderer = 
+            this.gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || "Unknown";
+        } else {
+          this.metrics.gpuInfo.vendor = this.gl.getParameter(this.gl.VENDOR) || "Unknown";
+          this.metrics.gpuInfo.renderer = this.gl.getParameter(this.gl.RENDERER) || "Unknown";
+        }
+      }
     }
   }
   instrumentGLDrawCalls() {
