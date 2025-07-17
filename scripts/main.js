@@ -15,6 +15,7 @@
             document.body.appendChild(n)
         }();
         const build = [
+            "scripts/image.js", 
             "scripts/link.js", 
             "scripts/theme.js", 
             "scripts/save.js", 
