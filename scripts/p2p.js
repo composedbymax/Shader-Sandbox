@@ -4,6 +4,7 @@
   let vertEditor, fragEditor;
   let isReceivingUpdate = false;
   let modalVisible = false;
+  let isIntentionalDisconnect = false;
   const css = `
     .webrtc-toggle-btn{z-index: 10;cursor: pointer;position: absolute;top: 42px;right: 42px;background: var(--d);color: var(--6);border: none;width: 2rem;height: 2rem;padding: 0.25rem;display: flex;align-items: center;justify-content: center;}
     .webrtc-toggle-btn:hover{background: var(--5);}
@@ -14,6 +15,8 @@
     .webrtc-title{font-weight: bold;font-size: 18px;color: var(--a);}
     .webrtc-close-btn{background: none;border: none;color: var(--5);cursor: pointer;font-size: 18px;padding: 0;width: 20px;height: 20px;}
     .webrtc-button{width: 100%;padding: 10px;margin-bottom: 8px;background: var(--1);color: var(--a);border: none;border-radius: 6px;cursor: pointer;}
+    .webrtc-disconnect-btn{width: 100%;padding: 10px;margin-bottom: 8px;background: var(--r);color: white;border: none;border-radius: 6px;cursor: pointer;}
+    .webrtc-disconnect-btn:hover{background: var(--rh);color:var(--1)}
     .webrtc-or{text-align: center;margin-bottom: 8px;color: var(--5);}
     .webrtc-input{width: 100%;padding: 10px;margin-bottom: 8px;background: var(--0);color: var(--7);border: 1px solid var(--4);border-radius: 6px;font-family: monospace;}
     .webrtc-room-info{display: none;margin-bottom: 12px;padding: 10px;background: var(--0);border-radius: 6px;}
@@ -23,6 +26,7 @@
     .webrtc-sync-info{display: none;margin-bottom: 12px;padding: 8px;background: var(--0);border-radius: 6px;font-size: 12px;}
     .webrtc-sync-info-title{color: var(--a);font-weight: bold;}
     .webrtc-sync-info-desc{color: var(--5);}
+    .webrtc-connection-controls{display: none;margin-bottom: 12px;}
     .webrtc-log{margin-top: 10px;max-height: 140px;overflow-y: auto;background: var(--0);padding: 10px;border-radius: 6px;font-size: 13px;color: var(--6);white-space: pre-wrap;}
   `;
   const styleEl = document.createElement('style');
@@ -59,6 +63,9 @@
       <div id="waitingMessage" class="webrtc-waiting">Waiting for peer to join...</div>
     </div>
     <div id="connectionStatus" class="webrtc-status">Status: Disconnected</div>
+    <div id="connectionControls" class="webrtc-connection-controls">
+      <button id="disconnectBtn" class="webrtc-disconnect-btn">Disconnect</button>
+    </div>
     <div id="syncInfo" class="webrtc-sync-info">
       <div class="webrtc-sync-info-title">Shader Sync Active</div>
       <div class="webrtc-sync-info-desc">Vertex & Fragment shaders synced</div>
@@ -89,7 +96,7 @@
     }
   };
   toggleButton.addEventListener('click', toggleModal);
-  const els = Object.fromEntries(['joinCodeSection', 'roomInfo', 'roomCodeDisplay', 'waitingMessage', 'createRoomBtn', 'joinRoomBtn', 'joinCodeInput', 'connectionStatus', 'syncInfo', 'messagesLog', 'closeBtn'].map(id => [id, container.querySelector(`#${id}`)]));
+  const els = Object.fromEntries(['joinCodeSection', 'roomInfo', 'roomCodeDisplay', 'waitingMessage', 'createRoomBtn', 'joinRoomBtn', 'joinCodeInput', 'connectionStatus', 'syncInfo', 'messagesLog', 'closeBtn', 'connectionControls', 'disconnectBtn'].map(id => [id, container.querySelector(`#${id}`)]));
   els.closeBtn.addEventListener('click', hideModal);
   const log = (msg, isLocal = false) => {
     const div = document.createElement('div');
@@ -125,6 +132,29 @@
     } catch (error) {
       console.error('Error cleaning up room:', error);
     }
+  };
+  const resetUI = () => {
+    els.joinCodeSection.style.display = 'block';
+    els.roomInfo.style.display = 'none';
+    els.connectionControls.style.display = 'none';
+    els.syncInfo.style.display = 'none';
+    els.connectionStatus.textContent = 'Status: Disconnected';
+    els.joinCodeInput.value = '';
+    els.waitingMessage.style.display = 'block';
+  };
+  const disconnect = async () => {
+    log("Disconnecting...", true);
+    isIntentionalDisconnect = true;
+    if (pollInterval) clearInterval(pollInterval), pollInterval = null;
+    if (dc) dc.close(), dc = null;
+    if (pc) pc.close(), pc = null;
+    if (joinCode) await cleanupRoom();
+    connectionEstablished = false;
+    joinCode = null;
+    isHost = false;
+    isIntentionalDisconnect = false;
+    resetUI();
+    log("Disconnected successfully", true);
   };
   const initializeShaderEditors = () => {
     vertEditor = document.getElementById('vertCode');
@@ -250,6 +280,7 @@
     channel.onopen = () => {
       els.connectionStatus.textContent = 'Status: Connected';
       els.syncInfo.style.display = 'block';
+      els.connectionControls.style.display = 'block';
       if (!vertEditor || !fragEditor) {
         initializeShaderEditors();
       }
@@ -264,7 +295,10 @@
     channel.onclose = () => {
       els.connectionStatus.textContent = 'Status: Closed';
       els.syncInfo.style.display = 'none';
-      logError('Shader sync connection closed');
+      els.connectionControls.style.display = 'none';
+      if (!isIntentionalDisconnect) {
+        logError('Shader sync connection closed');
+      }
     };
     channel.onerror = (e) => logError('DataChannel error: ' + e.message);
     channel.onmessage = (e) => {
@@ -286,9 +320,12 @@
           }
         }
       } else if (['disconnected', 'failed', 'closed'].includes(state)) {
-        logError(`Connection ${state}`);
+        if (!isIntentionalDisconnect) {
+          logError(`Connection ${state}`);
+        }
         connectionEstablished = false;
         els.syncInfo.style.display = 'none';
+        els.connectionControls.style.display = 'none';
       }
     };
     pc.onicecandidate = (event) => event.candidate && console.debug('ICE candidate gathered:', event.candidate);
@@ -406,6 +443,7 @@
   };
   els.createRoomBtn.onclick = createRoom;
   els.joinRoomBtn.onclick = joinRoom;
+  els.disconnectBtn.onclick = disconnect;
   els.joinCodeInput.addEventListener('keypress', (e) => e.key === 'Enter' && joinRoom());
   window.WebRTCShaderSync = {
     sendShaderUpdate: (shader, content) => {
@@ -421,6 +459,7 @@
     },
     isConnected: () => dc && dc.readyState === 'open',
     getConnectionStatus: () => connectionEstablished,
+    disconnect: disconnect,
     showModal: showModal,
     hideModal: hideModal,
     toggleModal: toggleModal
