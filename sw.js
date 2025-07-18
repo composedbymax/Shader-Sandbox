@@ -24,6 +24,7 @@ const ASSETS = [
     "/glsl/scripts/right.js",
     "/glsl/scripts/save.js",
     "/glsl/scripts/search.js",
+    "/glsl/scripts/show.js",
     "/glsl/scripts/shuffle.js",
     "/glsl/scripts/stay.js",
     "/glsl/scripts/theme.js",

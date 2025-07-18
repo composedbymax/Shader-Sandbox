@@ -35,6 +35,7 @@
             "scripts/flowchart.js", 
             "scripts/search.js", 
             "scripts/shuffle.js", 
+            "scripts/show.js", 
             ...(window.userLoggedIn ? ["scripts/find.js"] : []),
             ...(window.userLoggedIn ? ["scripts/p2p.js"] : []),
         ];
