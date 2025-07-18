@@ -6,7 +6,7 @@
   let modalVisible = false;
   let isIntentionalDisconnect = false;
   const css = `
-    .webrtc-toggle-btn{z-index: 10;cursor: pointer;position: absolute;top: 42px;right: 42px;background: var(--d);color: var(--6);border: none;width: 2rem;height: 2rem;padding: 0.25rem;display: flex;align-items: center;justify-content: center;}
+    .webrtc-toggle-btn{z-index: 1;cursor: pointer;position: absolute;top: 42px;right: 42px;background: var(--d);color: var(--6);border: none;width: 2rem;height: 2rem;padding: 0.25rem;display: flex;align-items: center;justify-content: center;}
     .webrtc-toggle-btn:hover{background: var(--5);}
     .webrtc-toggle-btn.active {background: var(--a);color: var(--D);}
     .webrtc-container{position: fixed;bottom: 20px;right: 20px;width: 350px;background: var(--2);color: var(--6);font-family: monospace;font-size: 14px;border-radius: 10px;padding: 15px;z-index: 99999;box-shadow: 0 0 15px var(--0);display: none;transform: translateY(20px);opacity: 0;transition: all 0.3s ease;}
@@ -15,7 +15,7 @@
     .webrtc-title{font-weight: bold;font-size: 18px;color: var(--a);}
     .webrtc-close-btn{background: none;border: none;color: var(--5);cursor: pointer;font-size: 18px;padding: 0;width: 20px;height: 20px;}
     .webrtc-button{width: 100%;padding: 10px;margin-bottom: 8px;background: var(--1);color: var(--a);border: none;border-radius: 6px;cursor: pointer;}
-    .webrtc-disconnect-btn{width: 100%;padding: 10px;margin-bottom: 8px;background: var(--r);color: white;border: none;border-radius: 6px;cursor: pointer;}
+    .webrtc-disconnect-btn{width: 100%;padding: 10px;margin-bottom: 8px;background: var(--r);color: var(--7);border: none;border-radius: 6px;cursor: pointer;}
     .webrtc-disconnect-btn:hover{background: var(--rh);color:var(--1)}
     .webrtc-or{text-align: center;margin-bottom: 8px;color: var(--5);}
     .webrtc-input{width: 100%;padding: 10px;margin-bottom: 8px;background: var(--0);color: var(--7);border: 1px solid var(--4);border-radius: 6px;font-family: monospace;}
@@ -96,6 +96,15 @@
     }
   };
   toggleButton.addEventListener('click', toggleModal);
+  ['mousedown', 'keydown'].forEach(type => document.addEventListener(type, (e) => {
+    if (!modalVisible) return;
+    if (
+      (e.type === 'mousedown' && !container.contains(e.target) && !toggleButton.contains(e.target)) ||
+      (e.type === 'keydown' && e.key === 'Escape')
+    ) {
+      hideModal();
+    }})
+  );
   const els = Object.fromEntries(['joinCodeSection', 'roomInfo', 'roomCodeDisplay', 'waitingMessage', 'createRoomBtn', 'joinRoomBtn', 'joinCodeInput', 'connectionStatus', 'syncInfo', 'messagesLog', 'closeBtn', 'connectionControls', 'disconnectBtn'].map(id => [id, container.querySelector(`#${id}`)]));
   els.closeBtn.addEventListener('click', hideModal);
   const log = (msg, isLocal = false) => {
