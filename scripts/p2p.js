@@ -3,30 +3,94 @@
   let pc, dc, joinCode, isHost = false, pollInterval, connectionEstablished = false;
   let vertEditor, fragEditor;
   let isReceivingUpdate = false;
+  let modalVisible = false;
+  const css = `
+    .webrtc-toggle-btn{z-index: 10;cursor: pointer;position: absolute;top: 42px;right: 42px;background: var(--d);color: var(--6);border: none;width: 2rem;height: 2rem;padding: 0.25rem;display: flex;align-items: center;justify-content: center;}
+    .webrtc-toggle-btn:hover{background: var(--5);}
+    .webrtc-container{position: fixed;bottom: 20px;right: 20px;width: 350px;background: var(--2);color: var(--6);font-family: monospace;font-size: 14px;border-radius: 10px;padding: 15px;z-index: 99999;box-shadow: 0 0 15px var(--0);display: none;transform: translateY(20px);opacity: 0;transition: all 0.3s ease;}
+    .webrtc-container.show{display: block;transform: translateY(0);opacity: 1;}
+    .webrtc-header{display: flex;justify-content: space-between;align-items: center;margin-bottom: 12px;}
+    .webrtc-title{font-weight: bold;font-size: 18px;color: var(--a);}
+    .webrtc-close-btn{background: none;border: none;color: var(--5);cursor: pointer;font-size: 18px;padding: 0;width: 20px;height: 20px;}
+    .webrtc-button{width: 100%;padding: 10px;margin-bottom: 8px;background: var(--1);color: var(--a);border: none;border-radius: 6px;cursor: pointer;}
+    .webrtc-or{text-align: center;margin-bottom: 8px;color: var(--5);}
+    .webrtc-input{width: 100%;padding: 10px;margin-bottom: 8px;background: var(--0);color: var(--7);border: 1px solid var(--4);border-radius: 6px;font-family: monospace;}
+    .webrtc-room-info{display: none;margin-bottom: 12px;padding: 10px;background: var(--0);border-radius: 6px;}
+    .webrtc-room-code{font-size: 24px;font-weight: bold;color: var(--a);text-align: center;letter-spacing: 2px;margin-bottom: 8px;}
+    .webrtc-waiting{text-align: center;color: var(--ah);}
+    .webrtc-status{margin-bottom: 12px;font-weight: bold;min-height: 24px;color: var(--ah);}
+    .webrtc-sync-info{display: none;margin-bottom: 12px;padding: 8px;background: var(--0);border-radius: 6px;font-size: 12px;}
+    .webrtc-sync-info-title{color: var(--a);font-weight: bold;}
+    .webrtc-sync-info-desc{color: var(--5);}
+    .webrtc-log{margin-top: 10px;max-height: 140px;overflow-y: auto;background: var(--0);padding: 10px;border-radius: 6px;font-size: 13px;color: var(--6);white-space: pre-wrap;}
+  `;
+  const styleEl = document.createElement('style');
+    styleEl.textContent = css;
+    document.head.appendChild(styleEl);
+    const toggleButton = document.createElement('button');
+    toggleButton.classList.add('webrtc-toggle-btn');
+    toggleButton.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" 
+        viewBox="0 0 24 24" 
+        width="20" height="20" 
+        fill="currentColor">
+        <path d="M6.62 10.79a15.053 15.053 0 0 0 6.59 6.59l2.2-2.2a1.003 1.003 0 0 1 1.11-.21c1.21.49 2.53.76 3.88.76a1 1 0 0 1 1 1v3.5a1 1 0 0 1-1 1C10.42 22.5 1.5 13.58 1.5 2a1 1 0 0 1 1-1H6a1 1 0 0 1 1 1c0 1.35.26 2.67.76 3.88a1 1 0 0 1-.21 1.11l-2.2 2.2z"/>
+    </svg>
+    `;
+    toggleButton.title = 'WebRTC Shader Sync';
+  document.body.appendChild(toggleButton);
   const container = document.createElement('div');
-  container.style.cssText = `position: fixed; bottom: 20px; right: 20px; width: 350px; background: #1e1e1e; color: #ccc; font-family: monospace; font-size: 14px; border-radius: 10px; padding: 15px; z-index: 99999; box-shadow: 0 0 15px #000; user-select: none;`;
+  container.classList.add('webrtc-container');
   container.innerHTML = `
-    <div style="font-weight:bold; font-size:18px; margin-bottom:12px; color:#61dafb;">WebRTC Shader Sync</div>
+    <div class="webrtc-header">
+      <div class="webrtc-title">WebRTC Shader Sync</div>
+      <button id="closeBtn" class="webrtc-close-btn">×</button>
+    </div>
     <div id="joinCodeSection">
-      <button id="createRoomBtn" style="width:100%; padding:10px; margin-bottom:8px; background:#282c34; color:#61dafb; border:none; border-radius:6px; cursor:pointer;">Create Room</button>
-      <div style="text-align:center; margin-bottom:8px; color:#888;">OR</div>
-      <input id="joinCodeInput" placeholder="Enter join code..." style="width:100%; padding:10px; margin-bottom:8px; background:#111; color:#eee; border:1px solid #333; border-radius:6px; font-family: monospace;" />
-      <button id="joinRoomBtn" style="width:100%; padding:10px; margin-bottom:12px; background:#282c34; color:#61dafb; border:none; border-radius:6px; cursor:pointer;">Join Room</button>
+      <button id="createRoomBtn" class="webrtc-button">Create Room</button>
+      <div class="webrtc-or">OR</div>
+      <input id="joinCodeInput" class="webrtc-input" placeholder="Enter join code..." />
+      <button id="joinRoomBtn" class="webrtc-button">Join Room</button>
     </div>
-    <div id="roomInfo" style="display:none; margin-bottom:12px; padding:10px; background:#111; border-radius:6px;">
+    <div id="roomInfo" class="webrtc-room-info">
       <div style="font-weight:bold; margin-bottom:8px;">Room Code:</div>
-      <div id="roomCodeDisplay" style="font-size:24px; font-weight:bold; color:#61dafb; text-align:center; letter-spacing:2px; margin-bottom:8px;"></div>
-      <div id="waitingMessage" style="text-align:center; color:#ffcc00;">Waiting for peer to join...</div>
+      <div id="roomCodeDisplay" class="webrtc-room-code"></div>
+      <div id="waitingMessage" class="webrtc-waiting">Waiting for peer to join...</div>
     </div>
-    <div id="connectionStatus" style="margin-bottom:12px; font-weight:bold; min-height:24px; color:#ffcc00;">Status: Disconnected</div>
-    <div id="syncInfo" style="display:none; margin-bottom:12px; padding:8px; background:#111; border-radius:6px; font-size:12px;">
-      <div style="color:#61dafb; font-weight:bold;">Shader Sync Active</div>
-      <div style="color:#888;">Vertex & Fragment shaders synced</div>
+    <div id="connectionStatus" class="webrtc-status">Status: Disconnected</div>
+    <div id="syncInfo" class="webrtc-sync-info">
+      <div class="webrtc-sync-info-title">Shader Sync Active</div>
+      <div class="webrtc-sync-info-desc">Vertex & Fragment shaders synced</div>
     </div>
-    <div id="messagesLog" style="margin-top:10px; max-height:140px; overflow-y:auto; background:#111; padding:10px; border-radius:6px; font-size:13px; color:#ddd; white-space: pre-wrap;"></div>
+    <div id="messagesLog" class="webrtc-log"></div>
   `;
   document.body.appendChild(container);
-  const els = Object.fromEntries(['joinCodeSection', 'roomInfo', 'roomCodeDisplay', 'waitingMessage', 'createRoomBtn', 'joinRoomBtn', 'joinCodeInput', 'connectionStatus', 'syncInfo', 'messagesLog'].map(id => [id, container.querySelector(`#${id}`)]));
+  const showModal = () => {
+    modalVisible = true;
+    container.classList.add('show');
+    toggleButton.style.background = 'var(--a)';
+    toggleButton.style.color = 'var(--D)';
+  };
+  const hideModal = () => {
+    modalVisible = false;
+    container.style.transform = 'translateY(20px)';
+    container.style.opacity = '0';
+    setTimeout(() => {
+      container.style.display = 'none';
+    }, 300);
+    toggleButton.style.background = '#282c34';
+    toggleButton.style.color = '#61dafb';
+  };
+  const toggleModal = () => {
+    if (modalVisible) {
+      hideModal();
+    } else {
+      showModal();
+    }
+  };
+  toggleButton.addEventListener('click', toggleModal);
+  const els = Object.fromEntries(['joinCodeSection', 'roomInfo', 'roomCodeDisplay', 'waitingMessage', 'createRoomBtn', 'joinRoomBtn', 'joinCodeInput', 'connectionStatus', 'syncInfo', 'messagesLog', 'closeBtn'].map(id => [id, container.querySelector(`#${id}`)]));
+  els.closeBtn.addEventListener('click', hideModal);
   const log = (msg, isLocal = false) => {
     const div = document.createElement('div');
     div.style.color = isLocal ? '#8f8' : '#f88';
@@ -348,8 +412,15 @@
       }
     },
     isConnected: () => dc && dc.readyState === 'open',
-    getConnectionStatus: () => connectionEstablished
+    getConnectionStatus: () => connectionEstablished,
+    showModal: showModal,
+    hideModal: hideModal,
+    toggleModal: toggleModal
   };
+  document.addEventListener('fullscreenchange', () => {
+    const parent = document.fullscreenElement || document.body;
+    [toggleButton, container].forEach(el => parent.appendChild(el));
+  });
   window.addEventListener('beforeunload', () => {
     if (pollInterval) clearInterval(pollInterval);
     if (pc) pc.close();
