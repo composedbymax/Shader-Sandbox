@@ -2,6 +2,10 @@
   const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
   let pc = null;
   let dc = null;
+  let joinCode = null;
+  let isHost = false;
+  let pollInterval = null;
+  let connectionEstablished = false;
   const container = document.createElement('div');
   container.style.cssText = `
     position: fixed; bottom: 20px; right: 20px; width: 350px;
@@ -10,37 +14,42 @@
     user-select: none;
   `;
   container.innerHTML = `
-    <div style="font-weight:bold; font-size:18px; margin-bottom:12px; color:#61dafb;">WebRTC Shader Sync</div>
-    <button id="createOfferBtn" style="width:100%; padding:10px; margin-bottom:12px; background:#282c34; color:#61dafb; border:none; border-radius:6px; cursor:pointer;">Create Connection (Offer)</button>
-    <label for="offerOutput" style="display:block; margin-bottom:4px;">Your Offer / Answer:</label>
-    <textarea id="offerOutput" placeholder="Offer/Answer code will appear here..." readonly style="width:100%; height:100px; margin-bottom:12px; background:#111; color:#afa; border-radius:6px; padding:8px; font-family: monospace;"></textarea>
-    <label for="remoteInput" style="display:block; margin-bottom:4px;">Paste Remote Offer/Answer:</label>
-    <textarea id="remoteInput" placeholder="Paste remote offer or answer here..." style="width:100%; height:100px; margin-bottom:12px; background:#111; color:#eee; border-radius:6px; padding:8px; font-family: monospace;"></textarea>
-    <button id="acceptRemoteBtn" style="width:100%; padding:10px; margin-bottom:12px; background:#282c34; color:#61dafb; border:none; border-radius:6px; cursor:pointer;">Accept Remote Code</button>
+    <div style="font-weight:bold; font-size:18px; margin-bottom:12px; color:#61dafb;">WebRTC Join Code</div>
+    <div id="joinCodeSection">
+      <button id="createRoomBtn" style="width:100%; padding:10px; margin-bottom:8px; background:#282c34; color:#61dafb; border:none; border-radius:6px; cursor:pointer;">Create Room</button>
+      <div style="text-align:center; margin-bottom:8px; color:#888;">OR</div>
+      <input id="joinCodeInput" placeholder="Enter join code..." style="width:100%; padding:10px; margin-bottom:8px; background:#111; color:#eee; border:1px solid #333; border-radius:6px; font-family: monospace;" />
+      <button id="joinRoomBtn" style="width:100%; padding:10px; margin-bottom:12px; background:#282c34; color:#61dafb; border:none; border-radius:6px; cursor:pointer;">Join Room</button>
+    </div>
+    <div id="roomInfo" style="display:none; margin-bottom:12px; padding:10px; background:#111; border-radius:6px;">
+      <div style="font-weight:bold; margin-bottom:8px;">Room Code:</div>
+      <div id="roomCodeDisplay" style="font-size:24px; font-weight:bold; color:#61dafb; text-align:center; letter-spacing:2px; margin-bottom:8px;"></div>
+      <div id="waitingMessage" style="text-align:center; color:#ffcc00;">Waiting for peer to join...</div>
+    </div>
     <div id="connectionStatus" style="margin-bottom:12px; font-weight:bold; min-height:24px; color:#ffcc00;">Status: Disconnected</div>
-    <label for="messageInput" style="display:block; margin-bottom:4px;">Send Message:</label>
-    <textarea id="messageInput" placeholder="Type message here..." style="width:100%; height:60px; margin-bottom:12px; background:#111; color:#eee; border-radius:6px; padding:8px; font-family: monospace;" disabled></textarea>
-    <button id="sendMessageBtn" style="width:100%; padding:10px; background:#61dafb; color:#000; border:none; border-radius:6px; cursor:pointer;" disabled>Send Message</button>
+    <div id="messagingSection" style="display:none;">
+      <label for="messageInput" style="display:block; margin-bottom:4px;">Send Message:</label>
+      <textarea id="messageInput" placeholder="Type message here..." style="width:100%; height:60px; margin-bottom:12px; background:#111; color:#eee; border-radius:6px; padding:8px; font-family: monospace;"></textarea>
+      <button id="sendMessageBtn" style="width:100%; padding:10px; background:#61dafb; color:#000; border:none; border-radius:6px; cursor:pointer;">Send Message</button>
+    </div>
     <div id="messagesLog" style="margin-top:10px; max-height:140px; overflow-y:auto; background:#111; padding:10px; border-radius:6px; font-size:13px; color:#ddd; white-space: pre-wrap;"></div>
   `;
   document.body.appendChild(container);
-  const offerOutput = container.querySelector('#offerOutput');
-  const remoteInput = container.querySelector('#remoteInput');
-  const createOfferBtn = container.querySelector('#createOfferBtn');
-  const acceptRemoteBtn = container.querySelector('#acceptRemoteBtn');
+  const joinCodeSection = container.querySelector('#joinCodeSection');
+  const roomInfo = container.querySelector('#roomInfo');
+  const roomCodeDisplay = container.querySelector('#roomCodeDisplay');
+  const waitingMessage = container.querySelector('#waitingMessage');
+  const createRoomBtn = container.querySelector('#createRoomBtn');
+  const joinRoomBtn = container.querySelector('#joinRoomBtn');
+  const joinCodeInput = container.querySelector('#joinCodeInput');
   const connectionStatus = container.querySelector('#connectionStatus');
+  const messagingSection = container.querySelector('#messagingSection');
   const messageInput = container.querySelector('#messageInput');
   const sendMessageBtn = container.querySelector('#sendMessageBtn');
   const messagesLog = container.querySelector('#messagesLog');
-  const encode = (obj) => btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
-  const decode = (str) => {
-    try {
-      return JSON.parse(decodeURIComponent(escape(atob(str))));
-    } catch (err) {
-      logError('Decode error: ' + err.message);
-      return null;
-    }
-  };
+  function generateJoinCode() {
+    return Math.random().toString(36).substr(2, 6).toUpperCase();
+  }
   function logMessage(msg, isLocal = false) {
     const prefix = isLocal ? '→ ' : '← ';
     const color = isLocal ? '#8f8' : '#f88';
@@ -59,22 +68,83 @@
     messagesLog.scrollTop = messagesLog.scrollHeight;
     console.error('[ERROR]', msg);
   }
-  function enableMessaging() {
-    messageInput.disabled = false;
-    sendMessageBtn.disabled = false;
+  function showMessaging() {
+    messagingSection.style.display = 'block';
   }
-  function disableMessaging() {
-    messageInput.disabled = true;
-    sendMessageBtn.disabled = true;
+  function hideJoinSection() {
+    joinCodeSection.style.display = 'none';
+  }
+  function showRoomInfo() {
+    roomInfo.style.display = 'block';
+  }
+  function hideWaitingMessage() {
+    waitingMessage.style.display = 'none';
+  }
+  async function sendToServer(endpoint, data) {
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      logError('Server communication failed: ' + error.message);
+      return null;
+    }
+  }
+  async function getFromServer(endpoint) {
+    try {
+      const response = await fetch(endpoint);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      logError('Server fetch failed: ' + error.message);
+      return null;
+    }
+  }
+  async function cleanupRoom() {
+    if (!joinCode) return;
+    try {
+      const result = await sendToServer('api/connect.php', {
+        action: 'connection_established',
+        joinCode: joinCode
+      });
+      if (result && result.success) {
+        logMessage('Room cleaned up successfully', true);
+      } else {
+        console.warn('Failed to cleanup room:', result?.error || 'Unknown error');
+      }
+    } catch (error) {
+      console.error('Error cleaning up room:', error);
+    }
   }
   function setupConnection(isOfferer) {
     pc = new RTCPeerConnection(config);
     pc.oniceconnectionstatechange = () => {
       const state = pc.iceConnectionState;
       connectionStatus.textContent = `Status: ${state}`;
-      if (['disconnected', 'failed', 'closed'].includes(state)) {
-        disableMessaging();
+      if (state === 'connected' || state === 'completed') {
+        if (!connectionEstablished) {
+          connectionEstablished = true;
+          hideWaitingMessage();
+          showMessaging();
+          
+          if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+          }
+        }
+      } else if (['disconnected', 'failed', 'closed'].includes(state)) {
         logError(`Connection ${state}`);
+        connectionEstablished = false;
       }
     };
     pc.onicecandidate = (event) => {
@@ -96,12 +166,11 @@
   function setupDataChannel(channel) {
     channel.onopen = () => {
       connectionStatus.textContent = 'Status: Connected';
-      enableMessaging();
       logMessage('DataChannel opened', true);
+      cleanupRoom();
     };
     channel.onclose = () => {
       connectionStatus.textContent = 'Status: Closed';
-      disableMessaging();
       logError('DataChannel closed');
     };
     channel.onerror = (e) => {
@@ -112,59 +181,6 @@
       if (window.onShaderSyncMessage) window.onShaderSyncMessage(e.data);
     };
   }
-  createOfferBtn.onclick = async () => {
-    try {
-      pc = setupConnection(true);
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      await waitForIceGatheringComplete(pc);
-      offerOutput.value = encode(pc.localDescription);
-      logMessage('Offer created', true);
-    } catch (err) {
-      logError('Failed to create offer: ' + err.message);
-    }
-  };
-  acceptRemoteBtn.onclick = async () => {
-    try {
-      const remoteCode = remoteInput.value.trim();
-      if (!remoteCode) return alert('Please paste remote offer/answer code.');
-      const signal = decode(remoteCode);
-      if (!signal || !signal.type) return alert('Invalid remote code.');
-      if (!pc) {
-        if (signal.type === 'offer') {
-          pc = setupConnection(false);
-          await pc.setRemoteDescription(signal);
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          await waitForIceGatheringComplete(pc);
-          offerOutput.value = encode(pc.localDescription);
-          logMessage('Answer created', true);
-        } else {
-          alert('No connection started, expected offer code!');
-        }
-      } else {
-        if (signal.type === 'answer') {
-          await pc.setRemoteDescription(signal);
-          logMessage('Answer accepted', true);
-        } else {
-          alert('Unexpected remote code received.');
-        }
-      }
-    } catch (err) {
-      logError('Failed to accept remote code: ' + err.message);
-    }
-  };
-  sendMessageBtn.onclick = () => {
-    try {
-      const msg = messageInput.value.trim();
-      if (!msg || !dc || dc.readyState !== 'open') return;
-      dc.send(msg);
-      logMessage(msg, true);
-      messageInput.value = '';
-    } catch (err) {
-      logError('Failed to send message: ' + err.message);
-    }
-  };
   function waitForIceGatheringComplete(peerConnection) {
     return new Promise((resolve) => {
       if (peerConnection.iceGatheringState === 'complete') {
@@ -180,6 +196,116 @@
       }
     });
   }
+  async function createRoom() {
+    joinCode = generateJoinCode();
+    isHost = true;
+    try {
+      pc = setupConnection(true);
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      await waitForIceGatheringComplete(pc);
+      const result = await sendToServer('api/connect.php', {
+        action: 'create_room',
+        joinCode: joinCode,
+        sdp: btoa(JSON.stringify(pc.localDescription))
+      });
+      if (result && result.success) {
+        hideJoinSection();
+        showRoomInfo();
+        roomCodeDisplay.textContent = joinCode;
+        connectionStatus.textContent = 'Status: Waiting for peer...';
+        startPollingForPeer();
+        logMessage('Room created: ' + joinCode, true);
+      } else {
+        logError('Failed to create room');
+      }
+    } catch (error) {
+      logError('Failed to create room: ' + error.message);
+    }
+  }
+  async function joinRoom() {
+    const code = joinCodeInput.value.trim().toUpperCase();
+    if (!code) {
+      alert('Please enter a join code');
+      return;
+    }
+    joinCode = code;
+    isHost = false;
+    try {
+      const roomData = await getFromServer(`api/connect.php?action=get_room&joinCode=${joinCode}`);
+      if (!roomData || !roomData.success) {
+        alert('Room not found or invalid join code');
+        return;
+      }
+      const offerSDP = JSON.parse(atob(roomData.offer));
+      pc = setupConnection(false);
+      await pc.setRemoteDescription(offerSDP);
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      await waitForIceGatheringComplete(pc);
+      const result = await sendToServer('api/connect.php', {
+        action: 'join_room',
+        joinCode: joinCode,
+        sdp: btoa(JSON.stringify(pc.localDescription))
+      });
+      if (result && result.success) {
+        hideJoinSection();
+        showRoomInfo();
+        roomCodeDisplay.textContent = joinCode;
+        connectionStatus.textContent = 'Status: Connecting...';
+        logMessage('Joined room: ' + joinCode, true);
+      } else {
+        logError('Failed to join room');
+      }
+    } catch (error) {
+      logError('Failed to join room: ' + error.message);
+    }
+  }
+  async function startPollingForPeer() {
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = setInterval(async () => {
+      if (connectionEstablished) {
+        clearInterval(pollInterval);
+        return;
+      }
+      try {
+        const roomData = await getFromServer(`api/connect.php?action=get_room&joinCode=${joinCode}`);
+        if (roomData && roomData.success && roomData.answer && !connectionEstablished) {
+          const answerSDP = JSON.parse(atob(roomData.answer));
+          await pc.setRemoteDescription(answerSDP);
+          logMessage('Peer joined, establishing connection...', true);
+          clearInterval(pollInterval);
+          pollInterval = null;
+        }
+      } catch (error) {
+        console.error('Polling error:', error);
+      }
+    }, 10000);
+  }
+  createRoomBtn.onclick = createRoom;
+  joinRoomBtn.onclick = joinRoom;
+  joinCodeInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      joinRoom();
+    }
+  });
+  sendMessageBtn.onclick = () => {
+    try {
+      const msg = messageInput.value.trim();
+      if (!msg || !dc || dc.readyState !== 'open') return;
+      dc.send(msg);
+      logMessage(msg, true);
+      messageInput.value = '';
+    } catch (err) {
+      logError('Failed to send message: ' + err.message);
+    }
+  };
+  messageInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessageBtn.click();
+    }
+  });
   window.WebRTCShaderSyncUI = {
     sendMessage: (msg) => {
       if (dc && dc.readyState === 'open') {
@@ -188,4 +314,14 @@
       }
     }
   };
+  window.addEventListener('beforeunload', () => {
+    if (pollInterval) clearInterval(pollInterval);
+    if (pc) pc.close();
+    if (joinCode && !connectionEstablished) {
+      navigator.sendBeacon('api/connect.php', JSON.stringify({
+        action: 'connection_established',
+        joinCode: joinCode
+      }));
+    }
+  });
 })();
