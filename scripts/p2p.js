@@ -1,18 +1,8 @@
 (() => {
   const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-  let pc = null;
-  let dc = null;
-  let joinCode = null;
-  let isHost = false;
-  let pollInterval = null;
-  let connectionEstablished = false;
+  let pc, dc, joinCode, isHost = false, pollInterval, connectionEstablished = false;
   const container = document.createElement('div');
-  container.style.cssText = `
-    position: fixed; bottom: 20px; right: 20px; width: 350px;
-    background: #1e1e1e; color: #ccc; font-family: monospace; font-size: 14px;
-    border-radius: 10px; padding: 15px; z-index: 99999; box-shadow: 0 0 15px #000;
-    user-select: none;
-  `;
+  container.style.cssText = `position: fixed; bottom: 20px; right: 20px; width: 350px; background: #1e1e1e; color: #ccc; font-family: monospace; font-size: 14px; border-radius: 10px; padding: 15px; z-index: 99999; box-shadow: 0 0 15px #000; user-select: none;`;
   container.innerHTML = `
     <div style="font-weight:bold; font-size:18px; margin-bottom:12px; color:#61dafb;">WebRTC Join Code</div>
     <div id="joinCodeSection">
@@ -35,123 +25,76 @@
     <div id="messagesLog" style="margin-top:10px; max-height:140px; overflow-y:auto; background:#111; padding:10px; border-radius:6px; font-size:13px; color:#ddd; white-space: pre-wrap;"></div>
   `;
   document.body.appendChild(container);
-  const joinCodeSection = container.querySelector('#joinCodeSection');
-  const roomInfo = container.querySelector('#roomInfo');
-  const roomCodeDisplay = container.querySelector('#roomCodeDisplay');
-  const waitingMessage = container.querySelector('#waitingMessage');
-  const createRoomBtn = container.querySelector('#createRoomBtn');
-  const joinRoomBtn = container.querySelector('#joinRoomBtn');
-  const joinCodeInput = container.querySelector('#joinCodeInput');
-  const connectionStatus = container.querySelector('#connectionStatus');
-  const messagingSection = container.querySelector('#messagingSection');
-  const messageInput = container.querySelector('#messageInput');
-  const sendMessageBtn = container.querySelector('#sendMessageBtn');
-  const messagesLog = container.querySelector('#messagesLog');
-  function generateJoinCode() {
-    return Math.random().toString(36).substr(2, 6).toUpperCase();
-  }
-  function logMessage(msg, isLocal = false) {
-    const prefix = isLocal ? '→ ' : '← ';
-    const color = isLocal ? '#8f8' : '#f88';
+  const els = Object.fromEntries(['joinCodeSection', 'roomInfo', 'roomCodeDisplay', 'waitingMessage', 'createRoomBtn', 'joinRoomBtn', 'joinCodeInput', 'connectionStatus', 'messagingSection', 'messageInput', 'sendMessageBtn', 'messagesLog'].map(id => [id, container.querySelector(`#${id}`)]));
+  const log = (msg, isLocal = false) => {
     const div = document.createElement('div');
-    div.style.color = color;
-    div.textContent = prefix + msg;
-    messagesLog.appendChild(div);
-    messagesLog.scrollTop = messagesLog.scrollHeight;
+    div.style.color = isLocal ? '#8f8' : '#f88';
+    div.textContent = (isLocal ? '→ ' : '← ') + msg;
+    els.messagesLog.appendChild(div);
+    els.messagesLog.scrollTop = els.messagesLog.scrollHeight;
     console.log((isLocal ? '[LOCAL]' : '[REMOTE]') + ' ' + msg);
-  }
-  function logError(msg) {
+  };
+  const logError = (msg) => {
     const div = document.createElement('div');
     div.style.color = '#f44';
     div.textContent = '⚠ ERROR: ' + msg;
-    messagesLog.appendChild(div);
-    messagesLog.scrollTop = messagesLog.scrollHeight;
+    els.messagesLog.appendChild(div);
+    els.messagesLog.scrollTop = els.messagesLog.scrollHeight;
     console.error('[ERROR]', msg);
-  }
-  function showMessaging() {
-    messagingSection.style.display = 'block';
-  }
-  function hideJoinSection() {
-    joinCodeSection.style.display = 'none';
-  }
-  function showRoomInfo() {
-    roomInfo.style.display = 'block';
-  }
-  function hideWaitingMessage() {
-    waitingMessage.style.display = 'none';
-  }
-  async function sendToServer(endpoint, data) {
+  };
+  const api = async (endpoint, data) => {
     try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      const response = await fetch(endpoint, data ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) } : {});
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       return await response.json();
     } catch (error) {
       logError('Server communication failed: ' + error.message);
       return null;
     }
-  }
-  async function getFromServer(endpoint) {
-    try {
-      const response = await fetch(endpoint);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return await response.json();
-    } catch (error) {
-      logError('Server fetch failed: ' + error.message);
-      return null;
-    }
-  }
-  async function cleanupRoom() {
+  };
+  const cleanupRoom = async () => {
     if (!joinCode) return;
     try {
-      const result = await sendToServer('api/connect.php', {
-        action: 'connection_established',
-        joinCode: joinCode
-      });
-      if (result && result.success) {
-        logMessage('Room cleaned up successfully', true);
-      } else {
-        console.warn('Failed to cleanup room:', result?.error || 'Unknown error');
-      }
+      const result = await api('api/connect.php', { action: 'connection_established', joinCode });
+      if (result?.success) log('Room cleaned up successfully', true);
     } catch (error) {
       console.error('Error cleaning up room:', error);
     }
-  }
-  function setupConnection(isOfferer) {
+  };
+  const setupDataChannel = (channel) => {
+    channel.onopen = () => {
+      els.connectionStatus.textContent = 'Status: Connected';
+      log('DataChannel opened', true);
+      cleanupRoom();
+    };
+    channel.onclose = () => {
+      els.connectionStatus.textContent = 'Status: Closed';
+      logError('DataChannel closed');
+    };
+    channel.onerror = (e) => logError('DataChannel error: ' + e.message);
+    channel.onmessage = (e) => {
+      log(e.data, false);
+      if (window.onShaderSyncMessage) window.onShaderSyncMessage(e.data);
+    };
+  };
+  const setupConnection = (isOfferer) => {
     pc = new RTCPeerConnection(config);
     pc.oniceconnectionstatechange = () => {
       const state = pc.iceConnectionState;
-      connectionStatus.textContent = `Status: ${state}`;
+      els.connectionStatus.textContent = `Status: ${state}`;
       if (state === 'connected' || state === 'completed') {
         if (!connectionEstablished) {
           connectionEstablished = true;
-          hideWaitingMessage();
-          showMessaging();
-          
-          if (pollInterval) {
-            clearInterval(pollInterval);
-            pollInterval = null;
-          }
+          els.waitingMessage.style.display = 'none';
+          els.messagingSection.style.display = 'block';
+          if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
         }
       } else if (['disconnected', 'failed', 'closed'].includes(state)) {
         logError(`Connection ${state}`);
         connectionEstablished = false;
       }
     };
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        console.debug('ICE candidate gathered:', event.candidate);
-      }
-    };
+    pc.onicecandidate = (event) => event.candidate && console.debug('ICE candidate gathered:', event.candidate);
     if (isOfferer) {
       dc = pc.createDataChannel('shaderSync');
       setupDataChannel(dc);
@@ -162,118 +105,81 @@
       };
     }
     return pc;
-  }
-  function setupDataChannel(channel) {
-    channel.onopen = () => {
-      connectionStatus.textContent = 'Status: Connected';
-      logMessage('DataChannel opened', true);
-      cleanupRoom();
-    };
-    channel.onclose = () => {
-      connectionStatus.textContent = 'Status: Closed';
-      logError('DataChannel closed');
-    };
-    channel.onerror = (e) => {
-      logError('DataChannel error: ' + e.message);
-    };
-    channel.onmessage = (e) => {
-      logMessage(e.data, false);
-      if (window.onShaderSyncMessage) window.onShaderSyncMessage(e.data);
-    };
-  }
-  function waitForIceGatheringComplete(peerConnection) {
-    return new Promise((resolve) => {
-      if (peerConnection.iceGatheringState === 'complete') {
-        resolve();
-      } else {
-        function checkState() {
-          if (peerConnection.iceGatheringState === 'complete') {
-            peerConnection.removeEventListener('icegatheringstatechange', checkState);
-            resolve();
-          }
+  };
+  const waitForIceGatheringComplete = (peerConnection) => new Promise((resolve) => {
+    if (peerConnection.iceGatheringState === 'complete') {
+      resolve();
+    } else {
+      const checkState = () => {
+        if (peerConnection.iceGatheringState === 'complete') {
+          peerConnection.removeEventListener('icegatheringstatechange', checkState);
+          resolve();
         }
-        peerConnection.addEventListener('icegatheringstatechange', checkState);
-      }
-    });
-  }
-  async function createRoom() {
-    joinCode = generateJoinCode();
+      };
+      peerConnection.addEventListener('icegatheringstatechange', checkState);
+    }
+  });
+  const createRoom = async () => {
+    joinCode = Math.random().toString(36).substr(2, 6).toUpperCase();
     isHost = true;
     try {
       pc = setupConnection(true);
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       await waitForIceGatheringComplete(pc);
-      const result = await sendToServer('api/connect.php', {
-        action: 'create_room',
-        joinCode: joinCode,
-        sdp: btoa(JSON.stringify(pc.localDescription))
-      });
-      if (result && result.success) {
-        hideJoinSection();
-        showRoomInfo();
-        roomCodeDisplay.textContent = joinCode;
-        connectionStatus.textContent = 'Status: Waiting for peer...';
+      const result = await api('api/connect.php', { action: 'create_room', joinCode, sdp: btoa(JSON.stringify(pc.localDescription)) });
+      if (result?.success) {
+        els.joinCodeSection.style.display = 'none';
+        els.roomInfo.style.display = 'block';
+        els.roomCodeDisplay.textContent = joinCode;
+        els.connectionStatus.textContent = 'Status: Waiting for peer...';
         startPollingForPeer();
-        logMessage('Room created: ' + joinCode, true);
+        log('Room created: ' + joinCode, true);
       } else {
         logError('Failed to create room');
       }
     } catch (error) {
       logError('Failed to create room: ' + error.message);
     }
-  }
-  async function joinRoom() {
-    const code = joinCodeInput.value.trim().toUpperCase();
-    if (!code) {
-      alert('Please enter a join code');
-      return;
-    }
+  };
+  const joinRoom = async () => {
+    const code = els.joinCodeInput.value.trim().toUpperCase();
+    if (!code) { alert('Please enter a join code'); return; }
     joinCode = code;
     isHost = false;
     try {
-      const roomData = await getFromServer(`api/connect.php?action=get_room&joinCode=${joinCode}`);
-      if (!roomData || !roomData.success) {
-        alert('Room not found or invalid join code');
-        return;
-      }
+      const roomData = await api(`api/connect.php?action=get_room&joinCode=${joinCode}`);
+      if (!roomData?.success) { alert('Room not found or invalid join code'); return; }
       const offerSDP = JSON.parse(atob(roomData.offer));
       pc = setupConnection(false);
       await pc.setRemoteDescription(offerSDP);
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       await waitForIceGatheringComplete(pc);
-      const result = await sendToServer('api/connect.php', {
-        action: 'join_room',
-        joinCode: joinCode,
-        sdp: btoa(JSON.stringify(pc.localDescription))
-      });
-      if (result && result.success) {
-        hideJoinSection();
-        showRoomInfo();
-        roomCodeDisplay.textContent = joinCode;
-        connectionStatus.textContent = 'Status: Connecting...';
-        logMessage('Joined room: ' + joinCode, true);
+      const result = await api('api/connect.php', { action: 'join_room', joinCode, sdp: btoa(JSON.stringify(pc.localDescription)) });
+      if (result?.success) {
+        els.joinCodeSection.style.display = 'none';
+        els.roomInfo.style.display = 'block';
+        els.roomCodeDisplay.textContent = joinCode;
+        els.connectionStatus.textContent = 'Status: Connecting...';
+        log('Joined room: ' + joinCode, true);
       } else {
         logError('Failed to join room');
       }
     } catch (error) {
       logError('Failed to join room: ' + error.message);
     }
-  }
-  async function startPollingForPeer() {
+  };
+  const startPollingForPeer = async () => {
     if (pollInterval) clearInterval(pollInterval);
     pollInterval = setInterval(async () => {
-      if (connectionEstablished) {
-        clearInterval(pollInterval);
-        return;
-      }
+      if (connectionEstablished) { clearInterval(pollInterval); return; }
       try {
-        const roomData = await getFromServer(`api/connect.php?action=get_room&joinCode=${joinCode}`);
-        if (roomData && roomData.success && roomData.answer && !connectionEstablished) {
+        const roomData = await api(`api/connect.php?action=get_room&joinCode=${joinCode}`);
+        if (roomData?.success && roomData.answer && !connectionEstablished) {
           const answerSDP = JSON.parse(atob(roomData.answer));
           await pc.setRemoteDescription(answerSDP);
-          logMessage('Peer joined, establishing connection...', true);
+          log('Peer joined, establishing connection...', true);
           clearInterval(pollInterval);
           pollInterval = null;
         }
@@ -281,36 +187,32 @@
         console.error('Polling error:', error);
       }
     }, 10000);
-  }
-  createRoomBtn.onclick = createRoom;
-  joinRoomBtn.onclick = joinRoom;
-  joinCodeInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      joinRoom();
-    }
-  });
-  sendMessageBtn.onclick = () => {
+  };
+  els.createRoomBtn.onclick = createRoom;
+  els.joinRoomBtn.onclick = joinRoom;
+  els.joinCodeInput.addEventListener('keypress', (e) => e.key === 'Enter' && joinRoom());
+  els.sendMessageBtn.onclick = () => {
     try {
-      const msg = messageInput.value.trim();
+      const msg = els.messageInput.value.trim();
       if (!msg || !dc || dc.readyState !== 'open') return;
       dc.send(msg);
-      logMessage(msg, true);
-      messageInput.value = '';
+      log(msg, true);
+      els.messageInput.value = '';
     } catch (err) {
       logError('Failed to send message: ' + err.message);
     }
   };
-  messageInput.addEventListener('keypress', (e) => {
+  els.messageInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      sendMessageBtn.click();
+      els.sendMessageBtn.click();
     }
   });
   window.WebRTCShaderSyncUI = {
     sendMessage: (msg) => {
       if (dc && dc.readyState === 'open') {
         dc.send(msg);
-        logMessage(msg, true);
+        log(msg, true);
       }
     }
   };

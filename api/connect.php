@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
@@ -32,6 +32,13 @@ function loadRoom($joinCode) {
 function saveRoom($joinCode, $roomData) {
     $filePath = getRoomFilePath($joinCode);
     return file_put_contents($filePath, json_encode($roomData, JSON_PRETTY_PRINT));
+}
+function deleteRoom($joinCode) {
+    $filePath = getRoomFilePath($joinCode);
+    if (file_exists($filePath)) {
+        return unlink($filePath);
+    }
+    return false;
 }
 function sendResponse($success, $data = [], $error = null) {
     $response = ['success' => $success];
@@ -98,8 +105,29 @@ try {
                     sendResponse(false, [], 'Failed to update room file');
                 }
                 break;
+            case 'connection_established':
+                $roomData = loadRoom($joinCode);
+                if (!$roomData) {
+                    sendResponse(false, [], 'Room not found');
+                }
+                if (deleteRoom($joinCode)) {
+                    sendResponse(true, ['message' => 'Room cleaned up successfully']);
+                } else {
+                    sendResponse(false, [], 'Failed to delete room file');
+                }
+                break;
             default:
                 sendResponse(false, [], 'Unknown action');
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+        $joinCode = isset($_GET['joinCode']) ? strtoupper(trim($_GET['joinCode'])) : '';
+        if (!validateJoinCode($joinCode)) {
+            sendResponse(false, [], 'Invalid join code format');
+        }
+        if (deleteRoom($joinCode)) {
+            sendResponse(true, ['message' => 'Room deleted successfully']);
+        } else {
+            sendResponse(false, [], 'Room not found or failed to delete');
         }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $action = isset($_GET['action']) ? $_GET['action'] : '';
