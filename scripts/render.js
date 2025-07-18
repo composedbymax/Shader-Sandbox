@@ -45,6 +45,7 @@ let program = null,
     startTime = performance.now(),
     drag = { type: null, startPos: 0, startSize: 0 },
     editorsVisible = true;
+    pauseOnBlurEnabled = true;
 const quadVerts = new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]);
 const buf = gl.createBuffer();
 const performanceMonitor = new GLSLPerformanceMonitor(canvas, {
@@ -92,40 +93,35 @@ canvas.addEventListener('mouseleave', () => { mouse.isPressed = false; });
 canvas.addEventListener('touchmove', e => updateMouse(e, true, 'move'), { passive: false });
 canvas.addEventListener('touchstart', e => updateMouse(e, true, 'down'), { passive: false });
 canvas.addEventListener('touchend', e => updateMouse(e, true, 'up'), { passive: false });
-function handleVisibilityChange() {
-    if (document.hidden || !document.hasFocus()) {
-        pauseAnimation();
-    } else {
-        resumeAnimation();
-    }
-}
-function handleWindowFocus() {
-    if (!document.hidden && document.hasFocus()) {
-        resumeAnimation();
-    }
-}
-function handleWindowBlur() {
-    pauseAnimation();
-}
-function pauseAnimation() {
+const togglePauseState = () => {
+    const shouldPause = document.hidden || !document.hasFocus();
+    pauseOnBlurEnabled && (shouldPause ? pauseAnimation() : resumeAnimation());
+};
+const pauseAnimation = () => {
     if (animationId && !isAnimationPaused) {
         cancelAnimationFrame(animationId);
         animationId = null;
         isAnimationPaused = true;
         lastActiveTime = performance.now();
     }
-}
-function resumeAnimation() {
+};
+const resumeAnimation = () => {
     if (isAnimationPaused) {
-        const pauseDuration = performance.now() - lastActiveTime;
-        startTime += pauseDuration;
+        startTime += performance.now() - lastActiveTime;
         isAnimationPaused = false;
         render();
     }
-}
-document.addEventListener('visibilitychange', handleVisibilityChange);
-window.addEventListener('focus', handleWindowFocus);
-window.addEventListener('blur', handleWindowBlur);
+};
+document.addEventListener('visibilitychange', togglePauseState);
+window.addEventListener('focus', togglePauseState);
+window.addEventListener('blur', () => pauseOnBlurEnabled && pauseAnimation());
+document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        pauseOnBlurEnabled = !pauseOnBlurEnabled;
+        showToast(`Window Focus ${pauseOnBlurEnabled ? 'enabled' : 'disabled'}`);
+    }
+});
 function initSplit() {
     if (editorsVisible) {
         const totalH = editors.clientHeight - rowDivider.offsetHeight;
