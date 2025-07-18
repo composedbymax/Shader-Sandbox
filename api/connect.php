@@ -77,7 +77,6 @@ try {
                     'offer' => $input['sdp'],
                     'answer' => null,
                     'created_at' => time(),
-                    'host_ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
                 ];
                 if (saveRoom($joinCode, $roomData)) {
                     sendResponse(true, ['joinCode' => $joinCode]);
@@ -97,7 +96,6 @@ try {
                     sendResponse(false, [], 'Room is full');
                 }
                 $roomData['answer'] = $input['sdp'];
-                $roomData['peer_ip'] = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
                 $roomData['joined_at'] = time();
                 if (saveRoom($joinCode, $roomData)) {
                     sendResponse(true, ['joinCode' => $joinCode]);

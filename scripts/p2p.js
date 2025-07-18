@@ -280,7 +280,6 @@
     channel.onopen = () => {
       els.connectionStatus.textContent = 'Status: Connected';
       els.syncInfo.style.display = 'block';
-      els.connectionControls.style.display = 'block';
       if (!vertEditor || !fragEditor) {
         initializeShaderEditors();
       }
@@ -295,7 +294,6 @@
     channel.onclose = () => {
       els.connectionStatus.textContent = 'Status: Closed';
       els.syncInfo.style.display = 'none';
-      els.connectionControls.style.display = 'none';
       if (!isIntentionalDisconnect) {
         logError('Shader sync connection closed');
       }
@@ -325,7 +323,6 @@
         }
         connectionEstablished = false;
         els.syncInfo.style.display = 'none';
-        els.connectionControls.style.display = 'none';
       }
     };
     pc.onicecandidate = (event) => event.candidate && console.debug('ICE candidate gathered:', event.candidate);
@@ -369,6 +366,7 @@
       if (result?.success) {
         els.joinCodeSection.style.display = 'none';
         els.roomInfo.style.display = 'block';
+        els.connectionControls.style.display = 'block';
         els.roomCodeDisplay.textContent = joinCode;
         els.connectionStatus.textContent = 'Status: Waiting for peer...';
         initializeShaderEditors();
@@ -409,6 +407,7 @@
       if (result?.success) {
         els.joinCodeSection.style.display = 'none';
         els.roomInfo.style.display = 'block';
+        els.connectionControls.style.display = 'block';
         els.roomCodeDisplay.textContent = joinCode;
         els.connectionStatus.textContent = 'Status: Connecting...';
         initializeShaderEditors();
