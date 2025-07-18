@@ -46,27 +46,24 @@
             canvas.style.left = '0';
             canvas.style.width = '100vw';
             canvas.style.height = '100vh';
-            canvas.style.zIndex = '9999';
+            canvas.style.zIndex = '999999';
             previewPanel.style.position = 'fixed';
             previewPanel.style.top = '0';
             previewPanel.style.left = '0';
             previewPanel.style.width = '100vw';
             previewPanel.style.height = '100vh';
-            previewPanel.style.zIndex = '9998';
+            previewPanel.style.zIndex = '999998';
             app.style.overflow = 'hidden';
             document.body.style.overflow = 'hidden';
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             window.dispatchEvent(new Event('resize'));
         }
-        
         isPerformanceMode = true;
     }
     function exitPerformanceMode() {
         originalStyles.forEach((originalDisplay, element) => {
-            if (typeof element === 'string') {
-                return;
-            }
+            if (typeof element === 'string') return;
             element.style.display = originalDisplay;
         });
         const canvas = document.getElementById('glcanvas');
@@ -74,31 +71,27 @@
         const app = document.getElementById('app');
         if (canvas && originalStyles.has('canvas')) {
             const canvasStyles = originalStyles.get('canvas');
-            canvas.style.width = canvasStyles.width;
-            canvas.style.height = canvasStyles.height;
-            canvas.style.position = canvasStyles.position;
-            canvas.style.top = canvasStyles.top;
-            canvas.style.left = canvasStyles.left;
-            canvas.style.zIndex = canvasStyles.zIndex;
+            Object.assign(canvas.style, canvasStyles);
         }
         if (previewPanel && originalStyles.has('previewPanel')) {
             const previewStyles = originalStyles.get('previewPanel');
-            previewPanel.style.width = previewStyles.width;
-            previewPanel.style.height = previewStyles.height;
-            previewPanel.style.position = previewStyles.position;
-            previewPanel.style.top = previewStyles.top;
-            previewPanel.style.left = previewStyles.left;
-            previewPanel.style.zIndex = previewStyles.zIndex;
+            Object.assign(previewPanel.style, previewStyles);
         }
         if (app && originalStyles.has('app')) {
-            const appStyles = originalStyles.get('app');
-            app.style.overflow = appStyles.overflow;
+            app.style.overflow = originalStyles.get('app').overflow;
         }
         document.body.style.overflow = '';
         window.dispatchEvent(new Event('resize'));
         isPerformanceMode = false;
     }
     function togglePerformanceMode() {
+        const editors = document.getElementById('editors');
+            if (editors && editors.style.display !== 'none') {
+            if (typeof window.showToast === 'function') {
+                window.showToast('Please close the text editor window to enter performance mode.');
+            }
+            return;
+        }
         if (isPerformanceMode) {
             exitPerformanceMode();
         } else {

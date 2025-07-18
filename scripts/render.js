@@ -354,4 +354,5 @@ render();
 window.rebuildProgram = rebuildProgram;
 window.$ = id => document.getElementById(id);
 window.render = render;
+window.editorsVisible = true;
 })();
