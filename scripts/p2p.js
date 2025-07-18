@@ -5,6 +5,8 @@
   let isReceivingUpdate = false;
   let modalVisible = false;
   let isIntentionalDisconnect = false;
+  let pollingStartTime = null;
+  let pollTimeout = null;
   const css = `
     .webrtc-toggle-btn{z-index: 1;cursor: pointer;position: absolute;top: 42px;right: 42px;background: var(--d);color: var(--6);border: none;width: 2rem;height: 2rem;padding: 0.25rem;display: flex;align-items: center;justify-content: center;}
     .webrtc-toggle-btn:hover{background: var(--5);}
@@ -154,7 +156,8 @@
   const disconnect = async () => {
     log("Disconnecting...", true);
     isIntentionalDisconnect = true;
-    if (pollInterval) clearInterval(pollInterval), pollInterval = null;
+    if (pollInterval) {clearInterval(pollInterval);pollInterval = null;}
+    if (pollTimeout) {clearTimeout(pollTimeout);pollTimeout = null;}
     if (dc) dc.close(), dc = null;
     if (pc) pc.close(), pc = null;
     if (joinCode) await cleanupRoom();
@@ -428,26 +431,45 @@
       logError('Failed to join room: ' + error.message);
     }
   };
-  const startPollingForPeer = async () => {
-    if (pollInterval) clearInterval(pollInterval);
-    pollInterval = setInterval(async () => {
-      if (connectionEstablished) { 
-        clearInterval(pollInterval); 
-        return; 
+  const startPollingForPeer = () => {
+    if (pollInterval) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+    }
+    if (pollTimeout) {
+      clearTimeout(pollTimeout);
+      pollTimeout = null;
+    }
+    pollingStartTime = Date.now();
+    const poll = async () => {
+      const elapsed = Date.now() - pollingStartTime;
+      if (elapsed >= 5 * 60 * 1000) {
+        logError('Peer did not join within 5 minutes — timing out');
+        disconnect();
+        return;
       }
-      try {
-        const roomData = await api(`api/connect.php?action=get_room&joinCode=${joinCode}`);
-        if (roomData?.success && roomData.answer && !connectionEstablished) {
-          const answerSDP = JSON.parse(atob(roomData.answer));
-          await pc.setRemoteDescription(answerSDP);
-          log('Peer joined, establishing connection...', true);
-          clearInterval(pollInterval);
-          pollInterval = null;
+      if (!connectionEstablished) {
+        try {
+          const roomData = await api(
+            `api/connect.php?action=get_room&joinCode=${joinCode}`
+          );
+          if (roomData?.success && roomData.answer) {
+            const answerSDP = JSON.parse(atob(roomData.answer));
+            await pc.setRemoteDescription(answerSDP);
+            log('Peer joined, establishing connection...', true);
+            return;
+          }
+        } catch (err) {
+          console.error('Polling error:', err);
         }
-      } catch (error) {
-        console.error('Polling error:', error);
+      } else {
+        return;
       }
-    }, 10000);
+      const nextDelay =
+        elapsed < 2 * 60 * 1000 ? 10 * 1000 : 30 * 1000;
+      pollTimeout = setTimeout(poll, nextDelay);
+    };
+    pollTimeout = setTimeout(poll, 10 * 1000);
   };
   els.createRoomBtn.onclick = createRoom;
   els.joinRoomBtn.onclick = joinRoom;
@@ -458,8 +480,8 @@
       if (dc && dc.readyState === 'open') {
         const message = JSON.stringify({
           type: 'shader_update',
-          shader: shader,
-          content: content
+          shader,
+          content
         });
         dc.send(message);
         log(`${shader} shader synced`, true);
@@ -467,10 +489,10 @@
     },
     isConnected: () => dc && dc.readyState === 'open',
     getConnectionStatus: () => connectionEstablished,
-    disconnect: disconnect,
-    showModal: showModal,
-    hideModal: hideModal,
-    toggleModal: toggleModal
+    disconnect,
+    showModal,
+    hideModal,
+    toggleModal
   };
   document.addEventListener('fullscreenchange', () => {
     const parent = document.fullscreenElement || document.body;
