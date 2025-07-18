@@ -501,4 +501,8 @@ void main() {
     }
   });
   populateEffectsGrid();
+  document.addEventListener('fullscreenchange', () => {
+    const parent = document.fullscreenElement || document.body;
+    [uploadBtn, modal, dragOverlay].forEach(el => parent.appendChild(el));
+  });
 })();

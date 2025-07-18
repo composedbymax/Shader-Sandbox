@@ -36,6 +36,7 @@
             "scripts/search.js", 
             "scripts/shuffle.js", 
             ...(window.userLoggedIn ? ["scripts/find.js"] : []),
+            ...(window.userLoggedIn ? ["scripts/p2p.js"] : []),
         ];
         build.reduce(((n, r) => n.then(() => new Promise((e, n) => {
             const o = document.createElement("script");

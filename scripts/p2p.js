@@ -7,6 +7,7 @@
   const css = `
     .webrtc-toggle-btn{z-index: 10;cursor: pointer;position: absolute;top: 42px;right: 42px;background: var(--d);color: var(--6);border: none;width: 2rem;height: 2rem;padding: 0.25rem;display: flex;align-items: center;justify-content: center;}
     .webrtc-toggle-btn:hover{background: var(--5);}
+    .webrtc-toggle-btn.active {background: var(--a);color: var(--D);}
     .webrtc-container{position: fixed;bottom: 20px;right: 20px;width: 350px;background: var(--2);color: var(--6);font-family: monospace;font-size: 14px;border-radius: 10px;padding: 15px;z-index: 99999;box-shadow: 0 0 15px var(--0);display: none;transform: translateY(20px);opacity: 0;transition: all 0.3s ease;}
     .webrtc-container.show{display: block;transform: translateY(0);opacity: 1;}
     .webrtc-header{display: flex;justify-content: space-between;align-items: center;margin-bottom: 12px;}
@@ -32,7 +33,7 @@
     toggleButton.innerHTML = `
     <svg xmlns="http://www.w3.org/2000/svg" 
         viewBox="0 0 24 24" 
-        width="20" height="20" 
+        width="16" height="16" 
         fill="currentColor">
         <path d="M6.62 10.79a15.053 15.053 0 0 0 6.59 6.59l2.2-2.2a1.003 1.003 0 0 1 1.11-.21c1.21.49 2.53.76 3.88.76a1 1 0 0 1 1 1v3.5a1 1 0 0 1-1 1C10.42 22.5 1.5 13.58 1.5 2a1 1 0 0 1 1-1H6a1 1 0 0 1 1 1c0 1.35.26 2.67.76 3.88a1 1 0 0 1-.21 1.11l-2.2 2.2z"/>
     </svg>
@@ -67,19 +68,18 @@
   document.body.appendChild(container);
   const showModal = () => {
     modalVisible = true;
+    container.style.display = 'block';
+    void container.offsetWidth;
     container.classList.add('show');
-    toggleButton.style.background = 'var(--a)';
-    toggleButton.style.color = 'var(--D)';
+    toggleButton.classList.add('active');
   };
-  const hideModal = () => {
+    const hideModal = () => {
     modalVisible = false;
-    container.style.transform = 'translateY(20px)';
-    container.style.opacity = '0';
+    container.classList.remove('show');
     setTimeout(() => {
-      container.style.display = 'none';
+        container.style.display = 'none';
     }, 300);
-    toggleButton.style.background = '#282c34';
-    toggleButton.style.color = '#61dafb';
+    toggleButton.classList.remove('active');
   };
   const toggleModal = () => {
     if (modalVisible) {
@@ -175,7 +175,6 @@
         dc.send(message);
       }
     });
-    log('Shader editors initialized for sync', true);
     return true;
   };
   const handleShaderMessage = (data) => {
