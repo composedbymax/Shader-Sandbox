@@ -192,6 +192,9 @@
               vertEditor.setSelectionRange(cursorPos, cursorPos);
             }
             log(`Vertex shader updated (${message.content.length} chars)`, false);
+            if (typeof window.rebuildProgram === 'function') {
+              window.rebuildProgram();
+            }
           } else if (message.shader === 'fragment' && fragEditor) {
             const cursorPos = fragEditor.selectionStart;
             fragEditor.value = message.content;
@@ -201,6 +204,9 @@
               fragEditor.setSelectionRange(cursorPos, cursorPos);
             }
             log(`Fragment shader updated (${message.content.length} chars)`, false);
+            if (typeof window.rebuildProgram === 'function') {
+              window.rebuildProgram();
+            }
           }
           break;
         case 'cursor_update':
@@ -226,15 +232,18 @@
             vertEditor.value = message.vertex;
             fragEditor.value = message.fragment;
             log('Received full shader sync', false);
+            if (typeof window.rebuildProgram === 'function') {
+              window.rebuildProgram();
+            }
           }
           break;
       }
+    } catch (error) {
+      logError('Error handling shader message: ' + error.message);
+    } finally {
       setTimeout(() => {
         isReceivingUpdate = false;
       }, 100);
-    } catch (error) {
-      logError('Error handling shader message: ' + error.message);
-      isReceivingUpdate = false;
     }
   };
   const setupDataChannel = (channel) => {
