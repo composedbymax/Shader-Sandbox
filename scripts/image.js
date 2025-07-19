@@ -58,16 +58,17 @@
         { name: 'strength', label: 'Strength', type: 'range', min: 0, max: 2, step: 0.1 }
       ],
       shader: `
-        vec4 blur(vec2 uv, float strength) {
-          vec4 color = vec4(0.0);
-          float offset = strength * 0.01;
-          for(int i = -2; i <= 2; i++) {
-            for(int j = -2; j <= 2; j++) {
-              color += texture2D(u_image, uv + vec2(float(i), float(j)) * offset);
-            }
-          }
-          return color / 25.0;
-        }
+vec4 blur(vec4 color, vec2 uv, float strength) {
+  vec4 sum = vec4(0.0);
+  float off = strength * 0.01;
+  for (int i = -2; i <= 2; i++) {
+    for (int j = -2; j <= 2; j++) {
+      sum += texture2D(u_image, uv + vec2(float(i), float(j)) * off);
+    }
+  }
+  vec4 blurred = sum / 25.0;
+  return mix(color, blurred, strength);
+}
       `
     },
     sepia: {
@@ -78,11 +79,11 @@
         { name: 'intensity', label: 'Intensity', type: 'range', min: 0, max: 1, step: 0.1 }
       ],
       shader: `
-        vec4 sepia(vec4 color, float intensity) {
-          float gray = dot(color.rgb, vec3(0.299, 0.587, 0.114));
-          vec3 sepiaColor = vec3(gray) * vec3(1.2, 1.0, 0.8);
-          return vec4(mix(color.rgb, sepiaColor, intensity), color.a);
-        }
+vec4 sepia(vec4 color, float intensity) {
+  float gray = dot(color.rgb, vec3(0.299, 0.587, 0.114));
+  vec3 sep = vec3(gray) * vec3(1.2, 1.0, 0.8);
+  return vec4(mix(color.rgb, sep, intensity), color.a);
+}
       `
     },
     vignette: {
@@ -91,14 +92,14 @@
       params: { intensity: 0.5, radius: 0.8 },
       controls: [
         { name: 'intensity', label: 'Intensity', type: 'range', min: 0, max: 1, step: 0.1 },
-        { name: 'radius', label: 'Radius', type: 'range', min: 0.1, max: 1, step: 0.1 }
+        { name: 'radius',    label: 'Radius',    type: 'range', min: 0.1, max: 1, step: 0.1 }
       ],
       shader: `
-        vec4 vignette(vec4 color, vec2 uv, float intensity, float radius) {
-          float dist = distance(uv, vec2(0.5));
-          float vig = smoothstep(radius, radius - 0.1, dist);
-          return vec4(color.rgb * mix(1.0, vig, intensity), color.a);
-        }
+vec4 vignette(vec4 color, vec2 uv, float intensity, float radius) {
+  float d = distance(uv, vec2(0.5));
+  float vig = smoothstep(radius, radius - 0.1, d);
+  return vec4(color.rgb * mix(1.0, vig, intensity), color.a);
+}
       `
     },
     chromatic: {
@@ -106,16 +107,17 @@
       description: 'Separates color channels for a glitch effect',
       params: { strength: 0.01 },
       controls: [
-        { name: 'strength', label: 'Strength', type: 'range', min: 0, max: 0.05, step: 0.001 }
+        { name: 'strength', label: 'Strength', type: 'range', min: 0, max: 0.5, step: 0.01 }
       ],
       shader: `
-        vec4 chromatic(vec2 uv, float strength) {
-          vec2 offset = vec2(strength, 0.0);
-          float r = texture2D(u_image, uv - offset).r;
-          float g = texture2D(u_image, uv).g;
-          float b = texture2D(u_image, uv + offset).b;
-          return vec4(r, g, b, 1.0);
-        }
+vec4 chromatic(vec4 color, vec2 uv, float strength) {
+  vec2 off = vec2(strength, 0.0);
+  vec3 ca;
+  ca.r = texture2D(u_image, uv - off).r;
+  ca.g = texture2D(u_image, uv).g;
+  ca.b = texture2D(u_image, uv + off).b;
+  return vec4(mix(color.rgb, ca, strength), color.a);
+}
       `
     },
     pixelate: {
@@ -126,10 +128,11 @@
         { name: 'size', label: 'Size', type: 'range', min: 8, max: 256, step: 8 }
       ],
       shader: `
-        vec4 pixelateEffect(vec2 uv, float pixelSize) {
-        vec2 gridUV = floor(uv * pixelSize) / pixelSize;
-        return texture2D(u_image, gridUV);
-        }
+vec4 pixelate(vec4 color, vec2 uv, float pixelSize) {
+  vec2 gridUV = floor(uv * pixelSize) / pixelSize;
+  vec4 p = texture2D(u_image, gridUV);
+  return p;
+}
       `
     },
     contrast: {
@@ -140,69 +143,72 @@
         { name: 'amount', label: 'Amount', type: 'range', min: 0.5, max: 2, step: 0.1 }
       ],
       shader: `
-        vec4 contrast(vec4 color, float amount) {
-          return vec4(((color.rgb - 0.5) * amount) + 0.5, color.a);
-        }
+vec4 contrast(vec4 color, float amount) {
+  vec3 c = ((color.rgb - 0.5) * amount) + 0.5;
+  return vec4(c, color.a);
+}
       `
     }
   };
-  const baseVertexShader = `attribute vec2 a_position;
-varying vec2 v_uv;
+  const baseVertexShader = `
+attribute vec2 a_position;
+varying   vec2 v_uv;
 void main() {
-  v_uv = a_position * 0.5 + 0.5;
+  v_uv       = a_position * 0.5 + 0.5;
   gl_Position = vec4(a_position, 0.0, 1.0);
 }`;
-  const baseFragmentShader = `precision mediump float;
+  const baseFragmentShader = `
+precision mediump float;
 uniform sampler2D u_image;
-varying vec2 v_uv;
+varying   vec2      v_uv;
 void main() {
   vec4 color = texture2D(u_image, v_uv);
   gl_FragColor = color;
 }`;
   function generateEffectShader() {
-    if (activeEffects.length === 0) return baseFragmentShader;
-    let shader = `precision mediump float;
+    if (activeEffects.length === 0) {
+      return baseFragmentShader;
+    }
+    let src = `
+precision mediump float;
 uniform sampler2D u_image;
-varying vec2 v_uv;
-`;
-    activeEffects.forEach(effect => {
-      shader += effects[effect.type].shader + '\n';
+varying   vec2      v_uv;
+  `;
+    activeEffects.forEach(e => {
+      src += effects[e.type].shader + "\n";
     });
-    shader += `
+    src += `
 void main() {
-  vec4 color = texture2D(u_image, v_uv);
-  vec2 uv = v_uv;
-`;
-    activeEffects.forEach(effect => {
-      const params = effects[effect.type].params;
-      const paramValues = { ...params, ...effect.params };
-      switch(effect.type) {
+  vec2 uv    = v_uv;
+  vec4 color = texture2D(u_image, uv);
+  `;
+    activeEffects.forEach(e => {
+      const p = { ...effects[e.type].params, ...e.params };
+      switch (e.type) {
         case 'blur':
-          shader += `  color = blur(uv, ${paramValues.strength});\n`;
+          src += `  color = blur(color, uv, ${p.strength});\n`;
           break;
         case 'sepia':
-          shader += `  color = sepia(color, ${paramValues.intensity});\n`;
+          src += `  color = sepia(color, ${p.intensity});\n`;
           break;
         case 'vignette':
-          shader += `  color = vignette(color, uv, ${paramValues.intensity}, ${paramValues.radius});\n`;
+          src += `  color = vignette(color, uv, ${p.intensity}, ${p.radius});\n`;
           break;
         case 'chromatic':
-          shader += `  color = chromatic(uv, ${paramValues.strength});\n`;
+          src += `  color = chromatic(color, uv, ${p.strength});\n`;
           break;
         case 'pixelate':
-          const size = paramValues.size;
-          const sizeLiteral = Number.isInteger(size) ? size.toFixed(1) : size;
-          shader += `  color = pixelateEffect(uv, ${sizeLiteral});\n`;
+          src += `  color = pixelate(color, uv, ${p.size.toFixed(1)});\n`;
           break;
         case 'contrast':
-          shader += `  color = contrast(color, ${paramValues.amount});\n`;
+          src += `  color = contrast(color, ${p.amount});\n`;
           break;
       }
     });
-    shader += `
-  gl_FragColor = color;
-}`;
-    return shader;
+    src += `
+    gl_FragColor = color;
+  }`;
+    return src;
   }
   function updateShaderCode() {
     const vertTA = document.getElementById('vertCode');
