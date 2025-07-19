@@ -12,6 +12,8 @@
     let webgpuCanvas = null;
     let originalCanvas = null;
     let resizeObserver = null;
+    let originalVertexCode = null;
+    let originalFragmentCode = null;
     const createWebGPUToggle = () => {
         const toggleBtn = Object.assign(document.createElement('button'), {
             id: 'webgpuToggle',
@@ -54,12 +56,21 @@
         }
     `;
     document.head.appendChild(style);
+    const storeOriginalCode = () => {
+        const vertCode = document.getElementById('vertCode');
+        const fragCode = document.getElementById('fragCode');
+        if (vertCode && fragCode && originalVertexCode === null && originalFragmentCode === null) {
+            originalVertexCode = vertCode.value;
+            originalFragmentCode = fragCode.value;
+        }
+    };
     const updateShaderEditors = (isWebGPU) => {
         const vertCode = document.getElementById('vertCode');
         const fragCode = document.getElementById('fragCode');
         const vertPanel = document.getElementById('vertPanel');
         const fragPanel = document.getElementById('fragPanel');
         if (isWebGPU) {
+            storeOriginalCode();
             if (vertPanel && vertPanel.querySelector('.panel-header span')) {
                 vertPanel.querySelector('.panel-header span').textContent = 'Vertex Shader (WGSL)';
             }
@@ -112,25 +123,8 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             const fragFile = document.getElementById('fragFile');
             if (vertFile) vertFile.accept = '.vert,.vs,.txt';
             if (fragFile) fragFile.accept = '.frag,.fs,.txt';
-            if (vertCode) {
-                vertCode.value = `attribute vec2 a_position;
-void main() {
-  gl_Position = vec4(a_position, 0., 1.);
-}`;
-            }
-            if (fragCode) {
-                fragCode.value = `//WebGL editor - Created By: Max Warren
-precision mediump float;
-uniform vec2 u_resolution;
-uniform float u_time;
-uniform vec2 u_mouse;
-
-void main() {
-    vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-    vec3 color = vec3(uv, sin(u_time));
-    gl_FragColor = vec4(color, 1.0);
-}`;
-            }
+            if (vertCode && originalVertexCode !== null) {vertCode.value = originalVertexCode;}
+            if (fragCode && originalFragmentCode !== null) {fragCode.value = originalFragmentCode;}
         }
     };
     const setupCanvasResizing = () => {
