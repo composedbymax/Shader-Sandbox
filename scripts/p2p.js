@@ -8,7 +8,7 @@
   let pollingStartTime = null;
   let pollTimeout = null;
   const css = `
-    .webrtc-toggle-btn{z-index: 1;cursor: pointer;position: absolute;top: 42px;right: 42px;background: var(--d);color: var(--6);border: none;width: 2rem;height: 2rem;padding: 0.25rem;display: flex;align-items: center;justify-content: center;}
+    .webrtc-toggle-btn{z-index: 1;cursor: pointer;position: absolute;top: 74px;right: 10px;background: var(--d);color: var(--6);border: none;width: 2rem;height: 2rem;padding: 0.25rem;display: flex;align-items: center;justify-content: center;}
     .webrtc-toggle-btn:hover{background: var(--5);}
     .webrtc-toggle-btn.active {background: var(--a);color: var(--D);}
     .webrtc-container{position: fixed;bottom: 20px;right: 20px;width: 350px;background: var(--2);color: var(--6);font-family: monospace;font-size: 14px;border-radius: 10px;padding: 15px;z-index: 99999;box-shadow: 0 0 15px var(--0);display: none;transform: translateY(20px);opacity: 0;transition: all 0.3s ease;}
