@@ -10,6 +10,7 @@ const ASSETS = [
     "/glsl/scripts/find.js",
     "/glsl/scripts/flowchart.js",
     "/glsl/scripts/format.js",
+    "/glsl/scripts/gpu.js",
     "/glsl/scripts/hidev.js",
     "/glsl/scripts/info.js",
     "/glsl/scripts/image.js",

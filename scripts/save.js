@@ -40,8 +40,16 @@
     }
   };
   function createToastContainer() {
-    if (document.getElementById('toastContainer')) return;
-    const container = document.createElement('div');
+    const fullscreenRoot = document.fullscreenElement || document.documentElement;
+    let container = document.getElementById('toastContainer');
+    if (container) {
+      if (container.parentNode !== fullscreenRoot) {
+        container.remove();
+        fullscreenRoot.appendChild(container);
+      }
+      return;
+    }
+    container = document.createElement('div');
     container.id = 'toastContainer';
     container.style.cssText = `
       position: fixed;
@@ -51,7 +59,7 @@
       z-index: 10000;
       pointer-events: none;
     `;
-    (document.fullscreenElement || document.documentElement || document.body)?.appendChild(container);
+    fullscreenRoot.appendChild(container);
   }
   function showToast(message, type = 'info') {
     createToastContainer();
