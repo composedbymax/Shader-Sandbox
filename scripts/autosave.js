@@ -6,110 +6,115 @@
     let worker = null;
     function createWorker() {
         const workerScript = `
-            let db = null;
-            const DB_NAME = 'ShaderEditorDB';
-            const STORE_NAME = 'shaders';
-            const KEY = 'autosave_data';
-            function initWorkerDB() {
-                return new Promise((resolve, reject) => {
-                    if ('indexedDB' in self) {
-                        const request = indexedDB.open(DB_NAME, 1);
-                        request.onupgradeneeded = function(e) {
-                            db = e.target.result;
-                            if (!db.objectStoreNames.contains(STORE_NAME)) {
-                                db.createObjectStore(STORE_NAME);
-                            }
-                        };
-                        request.onsuccess = function(e) {
-                            db = e.target.result;
-                            resolve(db);
-                        };
-                        request.onerror = function() {
-                            reject('IndexedDB error in worker');
-                        };
-                    } else {
-                        reject('IndexedDB not supported in worker');
-                    }
-                });
-            }
-            async function saveDataInWorker(data) {
-                try {
-                    if (db) {
-                        const tx = db.transaction(STORE_NAME, 'readwrite');
-                        const store = tx.objectStore(STORE_NAME);
-                        const saveData = { ...data, timestamp: Date.now() };
-                        return new Promise((resolve, reject) => {
-                            const request = store.put(saveData, KEY);
-                            request.onsuccess = () => {
-                                self.postMessage({ type: 'save_success', timestamp: saveData.timestamp });
-                                resolve();
-                            };
-                            request.onerror = () => {
-                                reject('IndexedDB save failed');
-                            };
-                        });
-                    } else {
-                        throw new Error('Database not initialized');
-                    }
-                } catch (error) {
-                    self.postMessage({ type: 'save_error', error: error.message });
-                    throw error;
-                }
-            }
-            async function loadDataInWorker() {
-                try {
-                    if (db) {
-                        const tx = db.transaction(STORE_NAME, 'readonly');
-                        const store = tx.objectStore(STORE_NAME);
-                        return new Promise((resolve, reject) => {
-                            const request = store.get(KEY);
-                            request.onsuccess = function(e) {
-                                const data = e.target.result;
-                                self.postMessage({ type: 'load_success', data });
-                                resolve(data);
-                            };
-                            request.onerror = function() {
-                                reject('IndexedDB load failed');
-                            };
-                        });
-                    } else {
-                        throw new Error('Database not initialized');
-                    }
-                } catch (error) {
-                    self.postMessage({ type: 'load_error', error: error.message });
-                    throw error;
-                }
-            }
-            self.onmessage = async function(e) {
-                const { type, data } = e.data;
-                try {
-                    switch (type) {
-                        case 'init':
-                            await initWorkerDB();
-                            self.postMessage({ type: 'init_success' });
-                            break;
-                        case 'save':
-                            await saveDataInWorker(data);
-                            break;
-                        case 'load':
-                            await loadDataInWorker();
-                            break;
-                        case 'autosave':
-                            await saveDataInWorker(data);
-                            break;
-                        default:
-                            self.postMessage({ type: 'error', error: 'Unknown message type' });
-                    }
-                } catch (error) {
-                    self.postMessage({ type: 'error', error: error.message });
+let db = null;
+const DB_NAME = 'ShaderEditorDB';
+const STORE_NAME = 'shaders';
+const KEY = 'autosave_data';
+function initWorkerDB() {
+    return new Promise((resolve, reject) => {
+        if ('indexedDB' in self) {
+            const request = indexedDB.open(DB_NAME, 1);
+            request.onupgradeneeded = function(e) {
+                db = e.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    db.createObjectStore(STORE_NAME);
                 }
             };
+            request.onsuccess = function(e) {
+                db = e.target.result;
+                resolve(db);
+            };
+            request.onerror = function() {
+                reject('IndexedDB error in worker');
+            };
+        } else {
+            reject('IndexedDB not supported in worker');
+        }
+    });
+}
+async function saveDataInWorker(data) {
+    try {
+        if (db) {
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            const saveData = { ...data, timestamp: Date.now() };
+            return new Promise((resolve, reject) => {
+                const request = store.put(saveData, KEY);
+                request.onsuccess = () => {
+                    self.postMessage({ type: 'save_success', timestamp: saveData.timestamp });
+                    resolve();
+                };
+                request.onerror = () => {
+                    reject('IndexedDB save failed');
+                };
+            });
+        } else {
+            throw new Error('Database not initialized');
+        }
+    } catch (error) {
+        self.postMessage({ type: 'save_error', error: error.message });
+        throw error;
+    }
+}
+async function loadDataInWorker() {
+    try {
+        if (db) {
+            const tx = db.transaction(STORE_NAME, 'readonly');
+            const store = tx.objectStore(STORE_NAME);
+            return new Promise((resolve, reject) => {
+                const request = store.get(KEY);
+                request.onsuccess = function(e) {
+                    const data = e.target.result;
+                    self.postMessage({ type: 'load_success', data });
+                    resolve(data);
+                };
+                request.onerror = function() {
+                    reject('IndexedDB load failed');
+                };
+            });
+        } else {
+            throw new Error('Database not initialized');
+        }
+    } catch (error) {
+        self.postMessage({ type: 'load_error', error: error.message });
+        throw error;
+    }
+}
+self.onmessage = async function(e) {
+    const { type, data } = e.data;
+    try {
+        switch (type) {
+            case 'init':
+                await initWorkerDB();
+                self.postMessage({ type: 'init_success' });
+                break;
+            case 'save':
+                await saveDataInWorker(data);
+                break;
+            case 'load':
+                await loadDataInWorker();
+                break;
+            case 'autosave':
+                await saveDataInWorker(data);
+                break;
+            default:
+                self.postMessage({ type: 'error', error: 'Unknown message type' });
+        }
+    } catch (error) {
+        self.postMessage({ type: 'error', error: error.message });
+    }
+};
         `;
         const blob = new Blob([workerScript], { type: 'application/javascript' });
         const workerUrl = URL.createObjectURL(blob);
         worker = new Worker(workerUrl);
-        URL.revokeObjectURL(workerUrl);
-        return worker;
+        worker.addEventListener('message', function handleInit(e) {
+            if (e.data.type === 'init_success' || e.data.type === 'error') {
+                URL.revokeObjectURL(workerUrl);
+                worker.removeEventListener('message', handleInit);
+            }
+        });
+return worker;
     }
     function initDB() {
         worker = createWorker();
@@ -117,14 +122,13 @@
             const { type, data, error, timestamp } = e.data;
             switch (type) {
                 case 'init_success':
-                    console.log('Worker DB initialized successfully');
                     checkForSavedData();
                     break;
                 case 'load_success':
                     handleSavedData(data);
                     break;
                 case 'save_success':
-                    console.log('Autosave completed at:', new Date(timestamp).toLocaleTimeString());
+                    console.log('Autosave:', new Date(timestamp).toLocaleTimeString());
                     break;
                 case 'save_error':
                 case 'load_error':
@@ -307,14 +311,10 @@
                 } catch (error) {
                     console.error('Beforeunload save failed:', error);
                 }
+                worker.terminate();
             }
         });
     }
-    window.addEventListener('beforeunload', () => {
-        if (worker) {
-            worker.terminate();
-        }
-    });
     window.addEventListener('DOMContentLoaded', function() {
         initDB();
         setupAutoSave();
