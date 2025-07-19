@@ -1,6 +1,3 @@
-/**
- * Highly experimental WebGL (GLSL) -> to WebGPU (WGSL) script
- */
 (function() {
     'use strict';
     let isWebGPUMode = false;
@@ -14,6 +11,7 @@
     let webglAnimationId = null;
     let webgpuCanvas = null;
     let originalCanvas = null;
+    let resizeObserver = null;
     const createWebGPUToggle = () => {
         const toggleBtn = Object.assign(document.createElement('button'), {
             id: 'webgpuToggle',
@@ -48,6 +46,11 @@
         }
         .editor-panel .panel-header span {
             font-weight: bold;
+        }
+        #webgpu-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
         }
     `;
     document.head.appendChild(style);
@@ -130,6 +133,41 @@ void main() {
             }
         }
     };
+    const setupCanvasResizing = () => {
+        if (!webgpuCanvas) return;
+        if (resizeObserver) {
+            resizeObserver.disconnect();
+            resizeObserver = null;
+        }
+        const updateCanvasSize = () => {
+            if (!webgpuCanvas || !webgpuContext) return;
+            const container = webgpuCanvas.parentElement;
+            if (!container) return;
+            const containerRect = container.getBoundingClientRect();
+            const newWidth = Math.floor(containerRect.width);
+            const newHeight = Math.floor(containerRect.height);
+            if (webgpuCanvas.width !== newWidth || webgpuCanvas.height !== newHeight) {
+                webgpuCanvas.width = newWidth;
+                webgpuCanvas.height = newHeight;
+                if (isWebGPUMode && webgpuPipeline) {
+                    const startTime = performance.now() - (window.startTime || 0);
+                    const time = startTime * 0.001;
+                    renderWebGPU(time);
+                }
+            }
+        };
+        if (window.ResizeObserver) {
+            resizeObserver = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    updateCanvasSize();
+                }
+            });
+            resizeObserver.observe(webgpuCanvas.parentElement);
+        } else {
+            window.addEventListener('resize', updateCanvasSize);
+        }
+        updateCanvasSize();
+    };
     const initWebGPU = async () => {
         if (!navigator.gpu) {
             console.error('WebGPU not supported');
@@ -150,9 +188,8 @@ void main() {
             originalCanvas = document.getElementById('glcanvas');
             webgpuCanvas = document.createElement('canvas');
             webgpuCanvas.id = 'webgpu-canvas';
-            webgpuCanvas.width = originalCanvas.width;
-            webgpuCanvas.height = originalCanvas.height;
             webgpuCanvas.style.cssText = originalCanvas.style.cssText;
+            webgpuCanvas.className = originalCanvas.className;
             originalCanvas.style.display = 'none';
             originalCanvas.parentNode.insertBefore(webgpuCanvas, originalCanvas);
             webgpuContext = webgpuCanvas.getContext('webgpu');
@@ -166,6 +203,7 @@ void main() {
                 format: canvasFormat,
                 alphaMode: 'premultiplied',
             });
+            setupCanvasResizing();
             return true;
         } catch (error) {
             console.error('WebGPU initialization failed:', error);
@@ -224,15 +262,6 @@ void main() {
     };
     const renderWebGPU = (time) => {
         if (!webgpuPipeline || !webgpuContext || !webgpuDevice || !webgpuCanvas) return;
-        const previewPanel = document.getElementById('preview-panel');
-        if (previewPanel) {
-            const w = previewPanel.clientWidth;
-            const h = previewPanel.clientHeight;
-            if (webgpuCanvas.width !== w || webgpuCanvas.height !== h) {
-                webgpuCanvas.width = w;
-                webgpuCanvas.height = h;
-            }
-        }
         const mouse = window.mouse || { x: 0, y: 0 };
         const uniformData = new Float32Array([
             webgpuCanvas.width, webgpuCanvas.height,
@@ -367,6 +396,10 @@ void main() {
             }
         } else {
             cleanupAnimation();
+            if (resizeObserver) {
+                resizeObserver.disconnect();
+                resizeObserver = null;
+            }
             webgpuVertexBuffer = destroyBuffer(webgpuVertexBuffer);
             webgpuUniformBuffer = destroyBuffer(webgpuUniformBuffer);
             if (webgpuDevice) {
