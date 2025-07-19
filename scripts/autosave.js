@@ -3,69 +3,194 @@
     const STORE_NAME = 'shaders';
     const KEY = 'autosave_data';
     let db = null;
-    function initDB() {
-        if ('indexedDB' in window) {
-            const request = indexedDB.open(DB_NAME, 1);
-            request.onupgradeneeded = function(e) {
-                db = e.target.result;
-                if (!db.objectStoreNames.contains(STORE_NAME)) {
-                    db.createObjectStore(STORE_NAME);
+    let worker = null;
+    function createWorker() {
+        const workerScript = `
+            let db = null;
+            const DB_NAME = 'ShaderEditorDB';
+            const STORE_NAME = 'shaders';
+            const KEY = 'autosave_data';
+            function initWorkerDB() {
+                return new Promise((resolve, reject) => {
+                    if ('indexedDB' in self) {
+                        const request = indexedDB.open(DB_NAME, 1);
+                        request.onupgradeneeded = function(e) {
+                            db = e.target.result;
+                            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                                db.createObjectStore(STORE_NAME);
+                            }
+                        };
+                        request.onsuccess = function(e) {
+                            db = e.target.result;
+                            resolve(db);
+                        };
+                        request.onerror = function() {
+                            reject('IndexedDB error in worker');
+                        };
+                    } else {
+                        reject('IndexedDB not supported in worker');
+                    }
+                });
+            }
+            async function saveDataInWorker(data) {
+                try {
+                    if (db) {
+                        const tx = db.transaction(STORE_NAME, 'readwrite');
+                        const store = tx.objectStore(STORE_NAME);
+                        const saveData = { ...data, timestamp: Date.now() };
+                        return new Promise((resolve, reject) => {
+                            const request = store.put(saveData, KEY);
+                            request.onsuccess = () => {
+                                self.postMessage({ type: 'save_success', timestamp: saveData.timestamp });
+                                resolve();
+                            };
+                            request.onerror = () => {
+                                reject('IndexedDB save failed');
+                            };
+                        });
+                    } else {
+                        throw new Error('Database not initialized');
+                    }
+                } catch (error) {
+                    self.postMessage({ type: 'save_error', error: error.message });
+                    throw error;
+                }
+            }
+            async function loadDataInWorker() {
+                try {
+                    if (db) {
+                        const tx = db.transaction(STORE_NAME, 'readonly');
+                        const store = tx.objectStore(STORE_NAME);
+                        return new Promise((resolve, reject) => {
+                            const request = store.get(KEY);
+                            request.onsuccess = function(e) {
+                                const data = e.target.result;
+                                self.postMessage({ type: 'load_success', data });
+                                resolve(data);
+                            };
+                            request.onerror = function() {
+                                reject('IndexedDB load failed');
+                            };
+                        });
+                    } else {
+                        throw new Error('Database not initialized');
+                    }
+                } catch (error) {
+                    self.postMessage({ type: 'load_error', error: error.message });
+                    throw error;
+                }
+            }
+            self.onmessage = async function(e) {
+                const { type, data } = e.data;
+                try {
+                    switch (type) {
+                        case 'init':
+                            await initWorkerDB();
+                            self.postMessage({ type: 'init_success' });
+                            break;
+                        case 'save':
+                            await saveDataInWorker(data);
+                            break;
+                        case 'load':
+                            await loadDataInWorker();
+                            break;
+                        case 'autosave':
+                            await saveDataInWorker(data);
+                            break;
+                        default:
+                            self.postMessage({ type: 'error', error: 'Unknown message type' });
+                    }
+                } catch (error) {
+                    self.postMessage({ type: 'error', error: error.message });
                 }
             };
-            request.onsuccess = function(e) {
-                db = e.target.result;
-                checkForSavedData();
-            };
-            request.onerror = function() {
-                console.log('IndexedDB error. Using localStorage fallback');
-                checkForSavedData();
-            };
-        } else {
-            console.log('IndexedDB not supported. Using localStorage');
-            checkForSavedData();
+        `;
+        const blob = new Blob([workerScript], { type: 'application/javascript' });
+        const workerUrl = URL.createObjectURL(blob);
+        worker = new Worker(workerUrl);
+        URL.revokeObjectURL(workerUrl);
+        return worker;
+    }
+    function initDB() {
+        worker = createWorker();
+        worker.onmessage = function(e) {
+            const { type, data, error, timestamp } = e.data;
+            switch (type) {
+                case 'init_success':
+                    console.log('Worker DB initialized successfully');
+                    checkForSavedData();
+                    break;
+                case 'load_success':
+                    handleSavedData(data);
+                    break;
+                case 'save_success':
+                    console.log('Autosave completed at:', new Date(timestamp).toLocaleTimeString());
+                    break;
+                case 'save_error':
+                case 'load_error':
+                case 'error':
+                    console.error('Worker error:', error);
+                    fallbackToLocalStorage();
+                    break;
+            }
+        };
+        worker.onerror = function(error) {
+            console.error('Worker error:', error);
+            fallbackToLocalStorage();
+        };
+        worker.postMessage({ type: 'init' });
+    }
+    function fallbackToLocalStorage() {
+        console.log('Falling back to localStorage');
+        if (worker) {
+            worker.terminate();
+            worker = null;
         }
+        checkForSavedDataLocalStorage();
     }
     async function saveData() {
-        const vertCode = document.getElementById('vertCode').value;
-        const fragCode = document.getElementById('fragCode').value;
-        const data = { vertCode, fragCode, timestamp: Date.now() };
+        const vertCodeEl = document.getElementById('vertCode');
+        const fragCodeEl = document.getElementById('fragCode');
+        if (!vertCodeEl || !fragCodeEl) {
+            console.warn('Editor elements not found for autosave');
+            return;
+        }
+        const vertCode = vertCodeEl.value;
+        const fragCode = fragCodeEl.value;
+        const data = { vertCode, fragCode };
         try {
-            if (db) {
-                const tx = db.transaction(STORE_NAME, 'readwrite');
-                const store = tx.objectStore(STORE_NAME);
-                store.put(data, KEY);
+            if (worker) {
+                worker.postMessage({ type: 'save', data });
             } else {
-                localStorage.setItem(KEY, JSON.stringify(data));
+                const saveData = { ...data, timestamp: Date.now() };
+                localStorage.setItem(KEY, JSON.stringify(saveData));
+                console.log('Saved to localStorage fallback');
             }
-            console.log('save');
         } catch (error) {
             console.error('Save failed:', error);
+            try {
+                const saveData = { ...data, timestamp: Date.now() };
+                localStorage.setItem(KEY, JSON.stringify(saveData));
+                console.log('Saved to localStorage (last resort)');
+            } catch (lsError) {
+                console.error('All save methods failed:', lsError);
+            }
         }
     }
     async function checkForSavedData() {
+        if (worker) {
+            worker.postMessage({ type: 'load' });
+        } else {
+            checkForSavedDataLocalStorage();
+        }
+    }
+    function checkForSavedDataLocalStorage() {
         try {
-            if (db) {
-                const tx = db.transaction(STORE_NAME, 'readonly');
-                const store = tx.objectStore(STORE_NAME);
-                const request = store.get(KEY);
-                
-                request.onsuccess = function(e) {
-                    const data = e.target.result;
-                    handleSavedData(data);
-                };
-                request.onerror = function(e) {
-                    console.error('IndexedDB get error:', e);
-                    const stored = localStorage.getItem(KEY);
-                    const data = stored ? JSON.parse(stored) : null;
-                    handleSavedData(data);
-                };
-            } else {
-                const stored = localStorage.getItem(KEY);
-                const data = stored ? JSON.parse(stored) : null;
-                handleSavedData(data);
-            }
+            const stored = localStorage.getItem(KEY);
+            const data = stored ? JSON.parse(stored) : null;
+            handleSavedData(data);
         } catch (error) {
-            console.error('Load check failed:', error);
+            console.error('LocalStorage load failed:', error);
         }
     }
     function handleSavedData(data) {
@@ -171,8 +296,25 @@
     function setupAutoSave() {
         setTimeout(saveData, 30000);
         setInterval(saveData, 30000);
-        window.addEventListener('beforeunload', saveData);
+        window.addEventListener('beforeunload', () => {
+            saveData();
+            if (worker) {
+                try {
+                    const vertCode = document.getElementById('vertCode')?.value || '';
+                    const fragCode = document.getElementById('fragCode')?.value || '';
+                    const data = { vertCode, fragCode, timestamp: Date.now() };
+                    localStorage.setItem(KEY, JSON.stringify(data));
+                } catch (error) {
+                    console.error('Beforeunload save failed:', error);
+                }
+            }
+        });
     }
+    window.addEventListener('beforeunload', () => {
+        if (worker) {
+            worker.terminate();
+        }
+    });
     window.addEventListener('DOMContentLoaded', function() {
         initDB();
         setupAutoSave();
