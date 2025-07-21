@@ -14,11 +14,14 @@
     let resizeObserver = null;
     let originalVertexCode = null;
     let originalFragmentCode = null;
+    let originalRebuildProgram = null;
+    let originalRender = null;
+    let webgpuInputHandlers = new Map();
     const createWebGPUToggle = () => {
         const toggleBtn = Object.assign(document.createElement('button'), {
             id: 'webgpuToggle',
             className: 'lbtn webgpu-toggle',
-            textContent: 'WEBGPU',
+            textContent: 'WebGPU',
             title: 'Toggle between WebGL and WebGPU rendering',
         });
         document.body.appendChild(toggleBtn);
@@ -62,6 +65,41 @@
         if (vertCode && fragCode && originalVertexCode === null && originalFragmentCode === null) {
             originalVertexCode = vertCode.value;
             originalFragmentCode = fragCode.value;
+            console.log('Stored original GLSL code');
+        }
+    };
+    const addWebGPUEventListeners = () => {
+        const vertTA = document.getElementById('vertCode');
+        const fragTA = document.getElementById('fragCode');
+        if (vertTA && fragTA) {
+            const webgpuHandler = () => {
+                if (isWebGPUMode) {
+                    rebuildWebGPUProgram();
+                }
+            };
+            webgpuInputHandlers.set(vertTA, webgpuHandler);
+            webgpuInputHandlers.set(fragTA, webgpuHandler);
+            vertTA.addEventListener('input', webgpuHandler);
+            fragTA.addEventListener('input', webgpuHandler);
+            console.log('Added WebGPU event listeners');
+        }
+    };
+    const removeWebGPUEventListeners = () => {
+        const vertTA = document.getElementById('vertCode');
+        const fragTA = document.getElementById('fragCode');
+        webgpuInputHandlers.forEach((handler, element) => {
+            element.removeEventListener('input', handler);
+        });
+        webgpuInputHandlers.clear();
+        console.log('Removed WebGPU event listeners');
+    };
+    const restoreWebGLEventListeners = () => {
+        const vertTA = document.getElementById('vertCode');
+        const fragTA = document.getElementById('fragCode');
+        if (vertTA && fragTA && originalRebuildProgram) {
+            vertTA.addEventListener('input', originalRebuildProgram);
+            fragTA.addEventListener('input', originalRebuildProgram);
+            console.log('Restored WebGL event listeners');
         }
     };
     const updateShaderEditors = (isWebGPU) => {
@@ -71,12 +109,10 @@
         const fragPanel = document.getElementById('fragPanel');
         if (isWebGPU) {
             storeOriginalCode();
-            if (vertPanel && vertPanel.querySelector('.panel-header span')) {
-                vertPanel.querySelector('.panel-header span').textContent = 'Vertex Shader (WGSL)';
-            }
-            if (fragPanel && fragPanel.querySelector('.panel-header span')) {
-                fragPanel.querySelector('.panel-header span').textContent = 'Fragment Shader (WGSL)';
-            }
+            const vertHeader = vertPanel?.querySelector('.panel-header span');
+            const fragHeader = fragPanel?.querySelector('.panel-header span');
+            if (vertHeader) vertHeader.textContent = 'Vertex Shader (WGSL)';
+            if (fragHeader) fragHeader.textContent = 'Fragment Shader (WGSL)';
             const vertFile = document.getElementById('vertFile');
             const fragFile = document.getElementById('fragFile');
             if (vertFile) vertFile.accept = '.wgsl,.txt';
@@ -113,18 +149,22 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
 }`;
             }
         } else {
-            if (vertPanel && vertPanel.querySelector('.panel-header span')) {
-                vertPanel.querySelector('.panel-header span').textContent = 'Vertex Shader';
-            }
-            if (fragPanel && fragPanel.querySelector('.panel-header span')) {
-                fragPanel.querySelector('.panel-header span').textContent = 'Fragment Shader';
-            }
+            const vertHeader = vertPanel?.querySelector('.panel-header span');
+            const fragHeader = fragPanel?.querySelector('.panel-header span');
+            if (vertHeader) vertHeader.textContent = 'Vertex Shader';
+            if (fragHeader) fragHeader.textContent = 'Fragment Shader';
             const vertFile = document.getElementById('vertFile');
             const fragFile = document.getElementById('fragFile');
             if (vertFile) vertFile.accept = '.vert,.vs,.txt';
             if (fragFile) fragFile.accept = '.frag,.fs,.txt';
-            if (vertCode && originalVertexCode !== null) {vertCode.value = originalVertexCode;}
-            if (fragCode && originalFragmentCode !== null) {fragCode.value = originalFragmentCode;}
+            if (vertCode && originalVertexCode !== null) {
+                vertCode.value = originalVertexCode;
+                console.log('Restored vertex shader code');
+            }
+            if (fragCode && originalFragmentCode !== null) {
+                fragCode.value = originalFragmentCode;
+                console.log('Restored fragment shader code');
+            }
         }
     };
     const setupCanvasResizing = () => {
@@ -223,9 +263,15 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             });
             webgpuDevice.queue.writeBuffer(webgpuVertexBuffer, 0, vertices);
             const bindGroupLayout = webgpuDevice.createBindGroupLayout({
-                entries: [{ binding: 0, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } }]
+                entries: [{
+                    binding: 0,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    buffer: { type: 'uniform' }
+                }]
             });
-            const pipelineLayout = webgpuDevice.createPipelineLayout({ bindGroupLayouts: [bindGroupLayout] });
+            const pipelineLayout = webgpuDevice.createPipelineLayout({
+                bindGroupLayouts: [bindGroupLayout]
+            });
             webgpuPipeline = webgpuDevice.createRenderPipeline({
                 layout: pipelineLayout,
                 vertex: {
@@ -233,19 +279,30 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
                     entryPoint: 'vs_main',
                     buffers: [{
                         arrayStride: 8,
-                        attributes: [{ format: 'float32x2', offset: 0, shaderLocation: 0 }]
+                        attributes: [{
+                            format: 'float32x2',
+                            offset: 0,
+                            shaderLocation: 0
+                        }]
                     }]
                 },
                 fragment: {
                     module: webgpuDevice.createShaderModule({ code: fragmentShader }),
                     entryPoint: 'fs_main',
-                    targets: [{ format: navigator.gpu.getPreferredCanvasFormat() }]
+                    targets: [{
+                        format: navigator.gpu.getPreferredCanvasFormat()
+                    }]
                 },
-                primitive: { topology: 'triangle-list' }
+                primitive: {
+                    topology: 'triangle-list'
+                }
             });
             webgpuBindGroup = webgpuDevice.createBindGroup({
                 layout: bindGroupLayout,
-                entries: [{ binding: 0, resource: { buffer: webgpuUniformBuffer } }]
+                entries: [{
+                    binding: 0,
+                    resource: { buffer: webgpuUniformBuffer }
+                }]
             });
             return true;
         } catch (error) {
@@ -296,19 +353,23 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
         if (closeBtn) closeBtn.style.display = 'block';
         if (lintDiv) lintDiv.style.display = 'block';
     };
-    let originalRebuildProgram = null;
-    let originalRender = null;
-    const rebuildWebGPUProgram = () => {
-        const vertCode = document.getElementById('vertCode');
-        const fragCode = document.getElementById('fragCode');
-        if (!vertCode || !fragCode) return;
+    const hideWebGPUError = () => {
         const lintDiv = document.getElementById('lint');
         const copyBtn = document.getElementById('copyErrorsBtn');
         const closeBtn = document.getElementById('closeLintBtn');
         if (lintDiv) lintDiv.style.display = 'none';
         if (copyBtn) copyBtn.style.display = 'none';
         if (closeBtn) closeBtn.style.display = 'none';
+    };
+    const rebuildWebGPUProgram = () => {
+        const vertCode = document.getElementById('vertCode');
+        const fragCode = document.getElementById('fragCode');
+        if (!vertCode || !fragCode) return;
+        hideWebGPUError();
         const success = createWebGPUPipeline(vertCode.value, fragCode.value);
+        if (!success) {
+            console.error('Failed to rebuild WebGPU program');
+        }
     };
     const setupWebGPUMouseEvents = () => {
         if (!webgpuCanvas) return;
@@ -323,6 +384,7 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
         const updateMouse = (e, isTouch = false, type) => {
             const pos = getPos(e, isTouch);
             let mouse = window.mouse || { x: 0, y: 0, clickX: 0, clickY: 0, isPressed: false, lastClickTime: 0 };
+            
             if (type === 'move') {
                 mouse.x = pos.x;
                 mouse.y = pos.y;
@@ -337,10 +399,6 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             window.mouse = mouse;
             if (isTouch) e.preventDefault();
         };
-        const events = ['mousemove', 'mousedown', 'mouseup', 'mouseleave', 'touchmove', 'touchstart', 'touchend'];
-        events.forEach(event => {
-            webgpuCanvas.removeEventListener(event, () => {});
-        });
         webgpuCanvas.addEventListener('mousemove', e => updateMouse(e, false, 'move'));
         webgpuCanvas.addEventListener('mousedown', e => updateMouse(e, false, 'down'));
         webgpuCanvas.addEventListener('mouseup', e => updateMouse(e, false, 'up'));
@@ -350,6 +408,38 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
         webgpuCanvas.addEventListener('touchmove', e => updateMouse(e, true, 'move'), { passive: false });
         webgpuCanvas.addEventListener('touchstart', e => updateMouse(e, true, 'down'), { passive: false });
         webgpuCanvas.addEventListener('touchend', e => updateMouse(e, true, 'up'), { passive: false });
+    };
+    const cleanupWebGL = () => {
+        if (window.gl && window.program) {
+            window.gl.deleteProgram(window.program);
+            window.program = null;
+        }
+        if (window.animationId) {
+            cancelAnimationFrame(window.animationId);
+            window.animationId = null;
+        }
+    };
+    const restoreWebGL = () => {
+        const canvas = document.getElementById('glcanvas');
+        if (canvas) {
+            window.gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+            if (!window.gl) {
+                console.error('Failed to get WebGL context');
+                return false;
+            }
+            const quadVerts = new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]);
+            const buf = window.gl.createBuffer();
+            window.gl.bindBuffer(window.gl.ARRAY_BUFFER, buf);
+            window.gl.bufferData(window.gl.ARRAY_BUFFER, quadVerts, window.gl.STATIC_DRAW);
+            window.gl.enable(window.gl.BLEND);
+            window.gl.blendFunc(window.gl.SRC_ALPHA, window.gl.ONE_MINUS_SRC_ALPHA);
+            window.gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            window.gl.clear(window.gl.COLOR_BUFFER_BIT);
+            window.buf = buf;
+            console.log('WebGL context restored');
+            return true;
+        }
+        return false;
     };
     const toggleWebGPU = async () => {
         const toggleBtn = document.getElementById('webgpuToggle');
@@ -368,28 +458,38 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             return null;
         };
         if (!isWebGPUMode) {
-            if (!originalRebuildProgram && window.rebuildProgram) originalRebuildProgram = window.rebuildProgram;
-            if (!originalRender && window.render) originalRender = window.render;
+            console.log('Switching to WebGPU mode...');
+            if (!originalRebuildProgram && window.rebuildProgram) {
+                originalRebuildProgram = window.rebuildProgram;
+            }
+            if (!originalRender && window.render) {
+                originalRender = window.render;
+            }
             cleanupAnimation();
+            cleanupWebGL();
+            hideWebGPUError();
             if (await initWebGPU()) {
                 isWebGPUMode = true;
                 setToggleState('GLSL', 'var(--r)');
+                removeWebGPUEventListeners();
                 updateShaderEditors(true);
-                Object.assign(window, {
-                    rebuildProgram: rebuildWebGPUProgram,
-                    render: webgpuRenderLoop
-                });
+                window.rebuildProgram = rebuildWebGPUProgram;
+                window.render = webgpuRenderLoop;
+                addWebGPUEventListeners();
                 setupWebGPUMouseEvents();
                 setTimeout(() => {
                     rebuildWebGPUProgram();
                     webgpuRenderLoop();
                 }, 100);
+                console.log('Successfully switched to WebGPU mode');
             } else {
                 console.error('Failed to initialize WebGPU');
                 alert('WebGPU initialization failed. Check the console for details.');
             }
         } else {
+            console.log('Switching back to WebGL mode...');
             cleanupAnimation();
+            hideWebGPUError();
             if (resizeObserver) {
                 resizeObserver.disconnect();
                 resizeObserver = null;
@@ -408,23 +508,34 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             }
             isWebGPUMode = false;
             setToggleState('WebGPU', 'var(--d)');
+            removeWebGPUEventListeners();
             updateShaderEditors(false);
             if (originalRebuildProgram) window.rebuildProgram = originalRebuildProgram;
             if (originalRender) window.render = originalRender;
-            const canvas = document.getElementById('glcanvas');
-            if (canvas) {
-                window.gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
-                if (!window.gl) console.warn('WebGL2 not available, falling back to WebGL1.');
+            if (restoreWebGL()) {
+                restoreWebGLEventListeners();
+                setTimeout(() => {
+                    if (window.rebuildProgram) {
+                        window.rebuildProgram();
+                        console.log('WebGL program rebuilt');
+                    }
+                    if (window.render) {
+                        window.render();
+                        console.log('WebGL render started');
+                    }
+                }, 150);
+                console.log('Successfully switched back to WebGL mode');
+            } else {
+                console.error('Failed to restore WebGL context');
             }
-            setTimeout(() => {
-                window.rebuildProgram?.();
-                window.render?.();
-            }, 100);
         }
     };
     const init = () => {
         const toggleBtn = createWebGPUToggle();
-        if (toggleBtn) {toggleBtn.addEventListener('click', toggleWebGPU);}
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', toggleWebGPU);
+            console.log('WebGPU toggle initialized');
+        }
     };
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
