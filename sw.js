@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v16";
+const CACHE_VERSION = "v25";
 const CACHE_NAME = `glsl-app-${CACHE_VERSION}`;
 const ASSETS = [
     "/glsl/index.php",

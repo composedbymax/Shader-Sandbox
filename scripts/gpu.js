@@ -29,34 +29,10 @@
     };
     const style = document.createElement('style');
     style.textContent = `
-        .webgpu-toggle {
-            font-style: inherit;
-            all: unset;
-            position: fixed;
-            bottom: 10px;
-            right: 146px;
-            z-index: 9999;
-            background-color: var(--d);
-            color: var(--7);
-            padding: 8px 12px;
-            cursor: pointer;
-            font-size: 12px;
-            border: none;
-            display: inline-block;
-            height:23px;
-            width: auto;
-        }
-        .webgpu-toggle:hover {
-            background-color: var(--5);
-        }
-        .editor-panel .panel-header span {
-            font-weight: bold;
-        }
-        #webgpu-canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
+        .webgpu-toggle{position: absolute;bottom: 10px;right: 146px;z-index: 9999;background-color: var(--d);width:4.25rem;cursor: pointer;font-size: 12px;border: none;display: inline-block;height:39px;width: 4.25rem;font-style: inherit;color: var(--l);}
+        .webgpu-toggle:hover{background-color: var(--5);}
+        .editor-panel .panel-header span{font-weight: bold;}
+        #webgpu-canvas{display: block;width: 100%;height: 100%;}
     `;
     document.head.appendChild(style);
     const storeOriginalCode = () => {
@@ -65,7 +41,6 @@
         if (vertCode && fragCode && originalVertexCode === null && originalFragmentCode === null) {
             originalVertexCode = vertCode.value;
             originalFragmentCode = fragCode.value;
-            console.log('Stored original GLSL code');
         }
     };
     const addWebGPUEventListeners = () => {
@@ -81,7 +56,6 @@
             webgpuInputHandlers.set(fragTA, webgpuHandler);
             vertTA.addEventListener('input', webgpuHandler);
             fragTA.addEventListener('input', webgpuHandler);
-            console.log('Added WebGPU event listeners');
         }
     };
     const removeWebGPUEventListeners = () => {
@@ -91,7 +65,6 @@
             element.removeEventListener('input', handler);
         });
         webgpuInputHandlers.clear();
-        console.log('Removed WebGPU event listeners');
     };
     const restoreWebGLEventListeners = () => {
         const vertTA = document.getElementById('vertCode');
@@ -99,7 +72,6 @@
         if (vertTA && fragTA && originalRebuildProgram) {
             vertTA.addEventListener('input', originalRebuildProgram);
             fragTA.addEventListener('input', originalRebuildProgram);
-            console.log('Restored WebGL event listeners');
         }
     };
     const updateShaderEditors = (isWebGPU) => {
@@ -159,11 +131,9 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             if (fragFile) fragFile.accept = '.frag,.fs,.txt';
             if (vertCode && originalVertexCode !== null) {
                 vertCode.value = originalVertexCode;
-                console.log('Restored vertex shader code');
             }
             if (fragCode && originalFragmentCode !== null) {
                 fragCode.value = originalFragmentCode;
-                console.log('Restored fragment shader code');
             }
         }
     };
@@ -436,7 +406,6 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             window.gl.clearColor(0.0, 0.0, 0.0, 1.0);
             window.gl.clear(window.gl.COLOR_BUFFER_BIT);
             window.buf = buf;
-            console.log('WebGL context restored');
             return true;
         }
         return false;
@@ -458,7 +427,6 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             return null;
         };
         if (!isWebGPUMode) {
-            console.log('Switching to WebGPU mode...');
             if (!originalRebuildProgram && window.rebuildProgram) {
                 originalRebuildProgram = window.rebuildProgram;
             }
@@ -481,13 +449,12 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
                     rebuildWebGPUProgram();
                     webgpuRenderLoop();
                 }, 100);
-                console.log('Successfully switched to WebGPU mode');
+                console.log('WebGPU');
             } else {
                 console.error('Failed to initialize WebGPU');
                 alert('WebGPU initialization failed. Check the console for details.');
             }
         } else {
-            console.log('Switching back to WebGL mode...');
             cleanupAnimation();
             hideWebGPUError();
             if (resizeObserver) {
@@ -517,14 +484,12 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
                 setTimeout(() => {
                     if (window.rebuildProgram) {
                         window.rebuildProgram();
-                        console.log('WebGL program rebuilt');
                     }
                     if (window.render) {
                         window.render();
-                        console.log('WebGL render started');
                     }
                 }, 150);
-                console.log('Successfully switched back to WebGL mode');
+                console.log('WebGL');
             } else {
                 console.error('Failed to restore WebGL context');
             }
@@ -534,7 +499,6 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
         const toggleBtn = createWebGPUToggle();
         if (toggleBtn) {
             toggleBtn.addEventListener('click', toggleWebGPU);
-            console.log('WebGPU toggle initialized');
         }
     };
     if (document.readyState === 'loading') {
