@@ -495,15 +495,22 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             }
         }
     };
-    const init = () => {
-        const toggleBtn = createWebGPUToggle();
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', toggleWebGPU);
-        }
+    const init = async () => {
+    if (!navigator.gpu) {
+        console.log('WebGPU not supported');
+        return;
+    }
+    const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
+    if (!adapter) {
+        console.log('WebGPU not supported');
+        return;
+    }
+    const toggleBtn = createWebGPUToggle();
+    toggleBtn.addEventListener('click', toggleWebGPU);
     };
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
-        setTimeout(init, 500);
+    setTimeout(init, 500);
     }
 })();
