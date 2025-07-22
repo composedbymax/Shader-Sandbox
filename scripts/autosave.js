@@ -249,6 +249,14 @@ return worker;
         };
         hover(noBtn, { backgroundColor: 'var(--4)', color: 'var(--7)' }, { backgroundColor: 'var(--3)', color: 'var(--6)' });
         hover(yesBtn, { backgroundColor: 'var(--ah)' }, { backgroundColor: 'var(--a)' });
+        const handleKey = e => {
+            if (e.key === 'Enter') restoreEditors(data);
+            if (e.key === 'Enter' || e.key === 'Escape') {
+                overlay.remove();
+                document.removeEventListener('keydown', handleKey);
+            }
+        };
+        document.addEventListener('keydown', handleKey);
         noBtn.onclick = () => overlay.remove();
         yesBtn.onclick = () => { restoreEditors(data); overlay.remove(); };
         const handleEscape = e => {
