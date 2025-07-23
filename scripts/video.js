@@ -21,7 +21,7 @@
     #vidModal video{max-width: 100%;max-height: 30vh;display: block;margin: 10px auto;background: #000;}
     #vidDropButton{padding: 40px 60px;border: 2px dashed var(--6);background: var(--3);border-radius: 8px;cursor: pointer;font-size: 16px;color: var(--6);margin: 20px 0;transition: all 0.3s ease;}
     #vidDropButton:hover{background: var(--5);border-color: var(--a);color:var(--7);}
-    #vidDragOverlay{position: fixed;top: 0;left: 0;right: 0;bottom: 0;background: var(--d);backdrop-filter: blur(5px);z-index: 2000;display: none;align-items: center;justify-content: center;flex-direction: column;color: white;font-size: 24px;text-align: center;}
+    #vidDragOverlay{position: absolute;top: 0;left: 0;width: 100%;height: 100%;background: var(--d);backdrop-filter: blur(5px);z-index: 2000;display: none;align-items: center;justify-content: center;flex-direction: column;color: white;font-size: 24px;text-align: center;}
     #vidDragOverlay .filename{margin-top: 10px;font-size: 18px;opacity: 0.8;}
     .video-controls{display: flex;align-items: center;justify-content: center;gap: 10px;margin: 15px 0;padding: 15px;background: var(--3);border-radius: 8px;}
     .video-controls button{background: var(--a);color: white;border: none;border-radius: 4px;padding: 8px 16px;cursor: pointer;font-size: 14px;}
@@ -141,7 +141,7 @@ void main() {
     <div>Drop video to upload</div>
     <div class="filename"></div>
   `;
-  document.body.appendChild(dragOverlay);
+  document.getElementById('preview-panel').appendChild(dragOverlay);
   const dropButton = modal.querySelector('#vidDropButton');
   const preview = modal.querySelector('#vidPreview');
   const closeBtn = modal.querySelector('#vidCloseBtn');

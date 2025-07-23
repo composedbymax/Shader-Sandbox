@@ -6,6 +6,7 @@
   let imageTexture = null;
   let activeEffects = [];
   let currentView = 'upload';
+  const previewPanel = document.getElementById('preview-panel');
   const style = document.createElement('style');
   style.textContent = `
     #imgUploadBtn{z-index: 10;cursor: pointer;position: absolute;top: 42px;right: 10px;background: var(--d);color: var(--6);border: none;width: 2rem;height: 2rem;padding: 0.25rem;display: flex;align-items: center;justify-content: center;}
@@ -275,12 +276,12 @@ void main() {
   `;
   document.body.appendChild(modal);
   const dragOverlay = document.createElement('div');
-  dragOverlay.id = 'dragOverlay';
+  dragOverlay.id = 'vidDragOverlay';
   dragOverlay.innerHTML = `
-    <div>Drop image to upload</div>
+    <div>Drop video to upload</div>
     <div class="filename"></div>
   `;
-  document.body.appendChild(dragOverlay);
+  previewPanel.appendChild(dragOverlay);
   const dropButton = modal.querySelector('#imgDropButton');
   const preview = modal.querySelector('#imgPreview');
   const closeBtn = modal.querySelector('#imgCloseBtn');
@@ -473,35 +474,38 @@ void main() {
       handleImageFile(file);
     }
   });
+  function isOverPreviewPanel(e) {
+    const rect = previewPanel.getBoundingClientRect();
+    return (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom);
+  }
   window.addEventListener('dragenter', e => {
     e.preventDefault();
     dragCounter++;
-    const items = e.dataTransfer.items;
-    if (modal.style.display !== 'flex' && items && items.length > 0) {
-      const isImage = Array.from(items).some(item =>
-        item.kind === 'file' && item.type.startsWith('image/')
-      );
-      if (isImage) {
-        const imageItem = Array.from(items).find(item =>
-          item.kind === 'file' && item.type.startsWith('image/')
-        );
-        filenameDiv.textContent = imageItem?.getAsFile()?.name || 'Image file';
-        dragOverlay.style.display = 'flex';
-      }
+    if (
+      modal.style.display !== 'flex' &&
+      e.dataTransfer.items &&
+      [...e.dataTransfer.items].some(item => item.kind === 'file' && item.type.startsWith('image/')) &&
+      isOverPreviewPanel(e)
+    ) {
+      const imageItem = [...e.dataTransfer.items].find(item => item.type.startsWith('image/'));
+      filenameDiv.textContent = imageItem?.getAsFile()?.name || 'Image file';
+      dragOverlay.style.display = 'flex';
     }
   });
   window.addEventListener('dragover', e => e.preventDefault());
   window.addEventListener('dragleave', e => {
     e.preventDefault();
-    dragCounter--;
-    if (dragCounter === 0) dragOverlay.style.display = 'none';
+    dragCounter = Math.max(dragCounter - 1, 0);
+    if (!isOverPreviewPanel(e) || dragCounter === 0) {
+      dragOverlay.style.display = 'none';
+    }
   });
   window.addEventListener('drop', e => {
     e.preventDefault();
-    dragCounter = 0;
     dragOverlay.style.display = 'none';
+    dragCounter = 0;
     const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
+    if (file && file.type.startsWith('image/') && isOverPreviewPanel(e)) {
       handleImageFile(file);
       modal.style.display = 'flex';
     }
