@@ -17,6 +17,12 @@
     let originalRebuildProgram = null;
     let originalRender = null;
     let webgpuInputHandlers = new Map();
+    let startTime = performance.now();
+    let frameCount = 0;
+    let lastFrameTime = 0;
+    let deltaTime = 0;
+    let fps = 60;
+    const UNIFORM_BUFFER_SIZE = 64;
     const createWebGPUToggle = () => {
         const toggleBtn = Object.assign(document.createElement('button'), {
             id: 'webgpuToggle',
@@ -91,6 +97,7 @@
             if (fragFile) fragFile.accept = '.wgsl,.txt';
             if (vertCode) {
                 vertCode.value = `// WebGPU Vertex Shader (WGSL)
+//  Created by Max Warren
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
     @location(0) uv: vec2<f32>,
@@ -104,37 +111,49 @@ fn vs_main(@location(0) position: vec2<f32>) -> VertexOutput {
 }`;
             }
             if (fragCode) {
-                fragCode.value = `// WebGPU Fragment Shader (WGSL) - Created By: Max Warren
+                fragCode.value = `// WebGPU Fragment Shader (WGSL)
 struct Uniforms {
     resolution: vec2<f32>,
     time: f32,
-    mouse_x: f32,
+    delta_time: f32,
+    mouse: vec2<f32>,
+    mouse_click: vec2<f32>,
+    mouse_pressed: f32,
+    frame: f32,
+    fps: f32,
+    aspect: f32,
+    pixel_size: vec2<f32>,
+    padding: vec2<f32>,
 }
-@group(0) @binding(0) var<uniform> uniforms: Uniforms;
+@group(0) @binding(0) var<uniform> u: Uniforms;
 @fragment  
 fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
-    let fragCoord = uv * uniforms.resolution;
-    let r = sin(uniforms.time * 2.0 + fragCoord.x * 0.01) * 0.5 + 0.5;
-    let g = sin(uniforms.time * 1.5 + fragCoord.y * 0.01) * 0.5 + 0.5;
-    let b = sin(uniforms.time * 3.0 + (fragCoord.x + fragCoord.y) * 0.005) * 0.5 + 0.5;
-    return vec4<f32>(r, g, b, 1.0);
+    let fragCoord = uv * u.resolution;
+    let mouse_influence = length(fragCoord - u.mouse) / max(u.resolution.x, u.resolution.y);
+    let click_influence = length(fragCoord - u.mouse_click) / max(u.resolution.x, u.resolution.y);
+    let r = sin(u.time * 2.0 + fragCoord.x * 0.01 + mouse_influence * 10.0) * 0.5 + 0.5;
+    let g = sin(u.time * 1.5 + fragCoord.y * 0.01 + click_influence * 5.0) * 0.5 + 0.5;
+    let b = sin(u.time * 3.0 + u.frame * 0.01) * 0.5 + 0.5;
+    let press_effect = u.mouse_pressed * 0.3;
+    let fps_effect = u.fps / 60.0 * 0.1;
+    let delta_effect = clamp(u.delta_time * 10.0, 0.0, 0.2);
+    let color = vec3<f32>(r + press_effect, g + fps_effect, b + delta_effect);
+    return vec4<f32>(color, 1.0);
 }`;
             }
         } else {
-            const vertHeader = vertPanel?.querySelector('.panel-header span');
-            const fragHeader = fragPanel?.querySelector('.panel-header span');
-            if (vertHeader) vertHeader.textContent = 'Vertex Shader';
-            if (fragHeader) fragHeader.textContent = 'Fragment Shader';
+            if (vertPanel && vertPanel.querySelector('.panel-header span')) {
+                vertPanel.querySelector('.panel-header span').textContent = 'Vertex Shader';
+            }
+            if (fragPanel && fragPanel.querySelector('.panel-header span')) {
+                fragPanel.querySelector('.panel-header span').textContent = 'Fragment Shader';
+            }
             const vertFile = document.getElementById('vertFile');
             const fragFile = document.getElementById('fragFile');
             if (vertFile) vertFile.accept = '.vert,.vs,.txt';
             if (fragFile) fragFile.accept = '.frag,.fs,.txt';
-            if (vertCode && originalVertexCode !== null) {
-                vertCode.value = originalVertexCode;
-            }
-            if (fragCode && originalFragmentCode !== null) {
-                fragCode.value = originalFragmentCode;
-            }
+            if (vertCode && originalVertexCode !== null) {vertCode.value = originalVertexCode;}
+            if (fragCode && originalFragmentCode !== null) {fragCode.value = originalFragmentCode;}
         }
     };
     const setupCanvasResizing = () => {
@@ -207,6 +226,11 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
                 format: canvasFormat,
                 alphaMode: 'premultiplied',
             });
+            startTime = performance.now();
+            frameCount = 0;
+            lastFrameTime = 0;
+            deltaTime = 0;
+            fps = 60;
             setupCanvasResizing();
             return true;
         } catch (error) {
@@ -223,7 +247,7 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             });
             webgpuUniformBuffer = webgpuVertexBuffer = null;
             webgpuUniformBuffer = webgpuDevice.createBuffer({
-                size: 16,
+                size: UNIFORM_BUFFER_SIZE,
                 usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
             });
             const vertices = new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]);
@@ -233,15 +257,9 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             });
             webgpuDevice.queue.writeBuffer(webgpuVertexBuffer, 0, vertices);
             const bindGroupLayout = webgpuDevice.createBindGroupLayout({
-                entries: [{
-                    binding: 0,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    buffer: { type: 'uniform' }
-                }]
+                entries: [{ binding: 0, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } }]
             });
-            const pipelineLayout = webgpuDevice.createPipelineLayout({
-                bindGroupLayouts: [bindGroupLayout]
-            });
+            const pipelineLayout = webgpuDevice.createPipelineLayout({ bindGroupLayouts: [bindGroupLayout] });
             webgpuPipeline = webgpuDevice.createRenderPipeline({
                 layout: pipelineLayout,
                 vertex: {
@@ -249,30 +267,19 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
                     entryPoint: 'vs_main',
                     buffers: [{
                         arrayStride: 8,
-                        attributes: [{
-                            format: 'float32x2',
-                            offset: 0,
-                            shaderLocation: 0
-                        }]
+                        attributes: [{ format: 'float32x2', offset: 0, shaderLocation: 0 }]
                     }]
                 },
                 fragment: {
                     module: webgpuDevice.createShaderModule({ code: fragmentShader }),
                     entryPoint: 'fs_main',
-                    targets: [{
-                        format: navigator.gpu.getPreferredCanvasFormat()
-                    }]
+                    targets: [{ format: navigator.gpu.getPreferredCanvasFormat() }]
                 },
-                primitive: {
-                    topology: 'triangle-list'
-                }
+                primitive: { topology: 'triangle-list' }
             });
             webgpuBindGroup = webgpuDevice.createBindGroup({
                 layout: bindGroupLayout,
-                entries: [{
-                    binding: 0,
-                    resource: { buffer: webgpuUniformBuffer }
-                }]
+                entries: [{ binding: 0, resource: { buffer: webgpuUniformBuffer } }]
             });
             return true;
         } catch (error) {
@@ -283,12 +290,36 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
     };
     const renderWebGPU = (time) => {
         if (!webgpuPipeline || !webgpuContext || !webgpuDevice || !webgpuCanvas) return;
-        const mouse = window.mouse || { x: 0, y: 0 };
-        const uniformData = new Float32Array([
-            webgpuCanvas.width, webgpuCanvas.height,
-            time,
-            mouse.x / webgpuCanvas.width,
-        ]);
+        const currentTime = performance.now();
+        deltaTime = (currentTime - lastFrameTime) / 1000.0;
+        lastFrameTime = currentTime;
+        frameCount++;
+        if (frameCount % 10 === 0) {
+            fps = fps * 0.9 + (1.0 / deltaTime) * 0.1;
+        }
+        const mouse = window.mouse || { 
+            x: 0, y: 0, 
+            clickX: 0, clickY: 0, 
+            isPressed: false 
+        };
+        const uniformData = new Float32Array(16);
+        let offset = 0;
+        uniformData[offset++] = webgpuCanvas.width;
+        uniformData[offset++] = webgpuCanvas.height;
+        uniformData[offset++] = time;
+        uniformData[offset++] = deltaTime;
+        uniformData[offset++] = mouse.x;
+        uniformData[offset++] = mouse.y;
+        uniformData[offset++] = mouse.clickX || 0;
+        uniformData[offset++] = mouse.clickY || 0;
+        uniformData[offset++] = mouse.isPressed ? 1.0 : 0.0;
+        uniformData[offset++] = frameCount;
+        uniformData[offset++] = fps;
+        uniformData[offset++] = webgpuCanvas.width / webgpuCanvas.height;
+        uniformData[offset++] = 1.0 / webgpuCanvas.width;
+        uniformData[offset++] = 1.0 / webgpuCanvas.height;
+        uniformData[offset++] = 0.0;
+        uniformData[offset++] = 0.0;
         webgpuDevice.queue.writeBuffer(webgpuUniformBuffer, 0, uniformData);
         const commandEncoder = webgpuDevice.createCommandEncoder();
         const renderPass = commandEncoder.beginRenderPass({
@@ -308,8 +339,8 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
     };
     const webgpuRenderLoop = () => {
         if (!isWebGPUMode) return;
-        const startTime = performance.now() - (window.startTime || 0);
-        const time = startTime * 0.001;
+        const currentTime = performance.now();
+        const time = (currentTime - startTime) * 0.001;
         renderWebGPU(time);
         webgpuAnimationId = requestAnimationFrame(webgpuRenderLoop);
     };
@@ -335,11 +366,13 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
         const vertCode = document.getElementById('vertCode');
         const fragCode = document.getElementById('fragCode');
         if (!vertCode || !fragCode) return;
-        hideWebGPUError();
+        const lintDiv = document.getElementById('lint');
+        const copyBtn = document.getElementById('copyErrorsBtn');
+        const closeBtn = document.getElementById('closeLintBtn');
+        if (lintDiv) lintDiv.style.display = 'none';
+        if (copyBtn) copyBtn.style.display = 'none';
+        if (closeBtn) closeBtn.style.display = 'none';
         const success = createWebGPUPipeline(vertCode.value, fragCode.value);
-        if (!success) {
-            console.error('Failed to rebuild WebGPU program');
-        }
     };
     const setupWebGPUMouseEvents = () => {
         if (!webgpuCanvas) return;
@@ -354,7 +387,6 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
         const updateMouse = (e, isTouch = false, type) => {
             const pos = getPos(e, isTouch);
             let mouse = window.mouse || { x: 0, y: 0, clickX: 0, clickY: 0, isPressed: false, lastClickTime: 0 };
-            
             if (type === 'move') {
                 mouse.x = pos.x;
                 mouse.y = pos.y;
@@ -369,6 +401,10 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             window.mouse = mouse;
             if (isTouch) e.preventDefault();
         };
+        const events = ['mousemove', 'mousedown', 'mouseup', 'mouseleave', 'touchmove', 'touchstart', 'touchend'];
+        events.forEach(event => {
+            webgpuCanvas.removeEventListener(event, () => {});
+        });
         webgpuCanvas.addEventListener('mousemove', e => updateMouse(e, false, 'move'));
         webgpuCanvas.addEventListener('mousedown', e => updateMouse(e, false, 'down'));
         webgpuCanvas.addEventListener('mouseup', e => updateMouse(e, false, 'up'));
