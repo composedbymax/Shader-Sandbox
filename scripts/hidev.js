@@ -3,12 +3,19 @@
   if (isMobile) return;
   let hasGreeted = false;
   function greet() {
-    if (hasGreeted) return;
-    hasGreeted = true;
-    console.group('%cHello', 'font-size:1rem; color:#00ffcc; font-weight:bold;');
+  if (hasGreeted) return;
+  hasGreeted = true;
+  const glsl = `
+  ____  _      ____  _     
+ / ___|| |    / ___|| |
+| |  _ | |___ \\___\\ | |___ 
+ \\____||_____||____/|_____|
+
+`;
+    console.group('%c' + glsl, 'font-size:1rem; color:#00ffcc; font-weight:extra-bold; font-family: monospace; white-space: pre;');
     console.log('%cThis Site/App was created by: %cMax Warren', 'font-size:1rem; color:#dadada;', 'font-size:1rem; color:#fff; font-weight:bold;');
     console.log('%cContribute or ask questions: %ccompositionsbymax@gmail.com', 'font-size:1rem; color:#dadada;', 'font-size:0.8rem; color:#51f6d5;');
-    console.log('%cGithub: %cgithub.com/composedbymax.com', 'font-size:1rem; color:#dadada;', 'font-size:0.8rem; color:#51f6d5;');
+    console.log('%cGithub Repo: %cgithub.com/composedbymax/WebGL-Sandbox', 'font-size:1rem; color:#dadada;', 'font-size:0.8rem; color:#51f6d5;');
     console.groupEnd();
   }
   function isDevToolsOpen() {
