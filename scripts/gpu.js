@@ -24,19 +24,24 @@
     let fps = 60;
     const UNIFORM_BUFFER_SIZE = 64;
     const createWebGPUToggle = () => {
-        const toggleBtn = Object.assign(document.createElement('button'), {
-            id: 'webgpuToggle',
-            className: 'lbtn webgpu-toggle',
-            textContent: 'WebGPU',
-            title: 'Toggle between WebGL and WebGPU rendering',
-        });
-        document.body.appendChild(toggleBtn);
+    const toggleBtn = Object.assign(document.createElement('button'), {
+        id: 'webgpuToggle',
+        className: 'lbtn webgpu-toggle webgl-mode',
+        textContent: 'WebGPU',
+        title: 'Toggle between WebGL and WebGPU rendering',
+    });
+    const canvas = document.getElementById('glcanvas');
+    const container = canvas?.parentElement || document.body;
+    container.appendChild(toggleBtn);
         return toggleBtn;
     };
     const style = document.createElement('style');
     style.textContent = `
-        .webgpu-toggle{position: absolute;bottom: 10px;right: 146px;z-index: 9999;background-color: var(--d);width:4.25rem;cursor: pointer;font-size: 12px;border: none;display: inline-block;height:39px;width: 4.25rem;font-style: inherit;color: var(--l);}
-        .webgpu-toggle:hover{background-color: var(--5);}
+        .webgpu-toggle{position: absolute;bottom: 10px;right: 146px;z-index: 10;width:4.25rem;cursor: pointer;font-size: 12px;border: none;display: inline-block;height:39px;width: 4.25rem;font-style: inherit;color: var(--l);}
+        .webgpu-toggle.webgl-mode{background-color: var(--d);}
+        .webgpu-toggle.webgl-mode:hover{background-color: var(--5);}
+        .webgpu-toggle.webgpu-mode{background-color: var(--r);}
+        .webgpu-toggle.webgpu-mode:hover{background-color: var(--rh);}
         .editor-panel .panel-header span{font-weight: bold;}
         #webgpu-canvas{display: block;width: 100%;height: 100%;}
     `;
@@ -448,9 +453,9 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
     };
     const toggleWebGPU = async () => {
         const toggleBtn = document.getElementById('webgpuToggle');
-        const setToggleState = (text, color) => {
+        const setToggleState = (text, className) => {
             toggleBtn.textContent = text;
-            toggleBtn.style.backgroundColor = color;
+            toggleBtn.className = 'lbtn webgpu-toggle ' + className;
         };
         const cleanupAnimation = () => {
             [webglAnimationId, window.animationId, webgpuAnimationId].forEach(id => {
@@ -474,7 +479,7 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             hideWebGPUError();
             if (await initWebGPU()) {
                 isWebGPUMode = true;
-                setToggleState('GLSL', 'var(--r)');
+                setToggleState('GLSL', 'webgpu-mode');
                 removeWebGPUEventListeners();
                 updateShaderEditors(true);
                 window.rebuildProgram = rebuildWebGPUProgram;
@@ -510,7 +515,7 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
                 webgpuCanvas = null;
             }
             isWebGPUMode = false;
-            setToggleState('WebGPU', 'var(--d)');
+            setToggleState('WebGPU', 'webgl-mode');
             removeWebGPUEventListeners();
             updateShaderEditors(false);
             if (originalRebuildProgram) window.rebuildProgram = originalRebuildProgram;
