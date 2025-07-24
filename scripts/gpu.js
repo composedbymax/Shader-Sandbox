@@ -22,17 +22,17 @@
     let lastFrameTime = 0;
     let deltaTime = 0;
     let fps = 60;
-    const UNIFORM_BUFFER_SIZE = 64;
+    const UNIFORM_BUFFER_SIZE = 80;
     const createWebGPUToggle = () => {
-    const toggleBtn = Object.assign(document.createElement('button'), {
-        id: 'webgpuToggle',
-        className: 'lbtn webgpu-toggle webgl-mode',
-        textContent: 'WebGPU',
-        title: 'Toggle between WebGL and WebGPU rendering',
-    });
-    const canvas = document.getElementById('glcanvas');
-    const container = canvas?.parentElement || document.body;
-    container.appendChild(toggleBtn);
+        const toggleBtn = Object.assign(document.createElement('button'), {
+            id: 'webgpuToggle',
+            className: 'lbtn webgpu-toggle webgl-mode',
+            textContent: 'WebGPU',
+            title: 'Toggle between WebGL and WebGPU rendering',
+        });
+        const canvas = document.getElementById('glcanvas');
+        const container = canvas?.parentElement || document.body;
+        container.appendChild(toggleBtn);
         return toggleBtn;
     };
     const style = document.createElement('style');
@@ -46,6 +46,7 @@
         #webgpu-canvas{display: block;width: 100%;height: 100%;}
     `;
     document.head.appendChild(style);
+
     const storeOriginalCode = () => {
         const vertCode = document.getElementById('vertCode');
         const fragCode = document.getElementById('fragCode');
@@ -54,6 +55,7 @@
             originalFragmentCode = fragCode.value;
         }
     };
+
     const addWebGPUEventListeners = () => {
         const vertTA = document.getElementById('vertCode');
         const fragTA = document.getElementById('fragCode');
@@ -100,6 +102,7 @@
             const fragFile = document.getElementById('fragFile');
             if (vertFile) vertFile.accept = '.wgsl,.txt';
             if (fragFile) fragFile.accept = '.wgsl,.txt';
+            
             if (vertCode) {
                 vertCode.value = `// WebGPU Vertex Shader (WGSL)
 //  Created by Max Warren
@@ -116,7 +119,7 @@ fn vs_main(@location(0) position: vec2<f32>) -> VertexOutput {
 }`;
             }
             if (fragCode) {
-                fragCode.value = `// WebGPU Fragment Shader (WGSL)
+                fragCode.value = `// WebGPU Fragment Shader (WGSL) with Audio Reactivity
 struct Uniforms {
     resolution: vec2<f32>,
     time: f32,
@@ -128,7 +131,11 @@ struct Uniforms {
     fps: f32,
     aspect: f32,
     pixel_size: vec2<f32>,
-    padding: vec2<f32>,
+    bass: f32,
+    mid: f32,
+    treble: f32,
+    volume: f32,
+    padding: f32,
 }
 @group(0) @binding(0) var<uniform> u: Uniforms;
 @fragment  
@@ -136,13 +143,14 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
     let fragCoord = uv * u.resolution;
     let mouse_influence = length(fragCoord - u.mouse) / max(u.resolution.x, u.resolution.y);
     let click_influence = length(fragCoord - u.mouse_click) / max(u.resolution.x, u.resolution.y);
-    let r = sin(u.time * 2.0 + fragCoord.x * 0.01 + mouse_influence * 10.0) * 0.5 + 0.5;
-    let g = sin(u.time * 1.5 + fragCoord.y * 0.01 + click_influence * 5.0) * 0.5 + 0.5;
-    let b = sin(u.time * 3.0 + u.frame * 0.01) * 0.5 + 0.5;
+    let r = sin(u.time * 2.0 + fragCoord.x * 0.01 + mouse_influence * 10.0 + u.bass * 5.0) * 0.5 + 0.5;
+    let g = sin(u.time * 1.5 + fragCoord.y * 0.01 + click_influence * 5.0 + u.mid * 3.0) * 0.5 + 0.5;
+    let b = sin(u.time * 3.0 + u.frame * 0.01 + u.treble * 7.0) * 0.5 + 0.5;
     let press_effect = u.mouse_pressed * 0.3;
     let fps_effect = u.fps / 60.0 * 0.1;
     let delta_effect = clamp(u.delta_time * 10.0, 0.0, 0.2);
-    let color = vec3<f32>(r + press_effect, g + fps_effect, b + delta_effect);
+    let volume_boost = 1.0 + u.volume * 0.5;
+    let color = vec3<f32>(r + press_effect, g + fps_effect, b + delta_effect) * volume_boost;
     return vec4<f32>(color, 1.0);
 }`;
             }
@@ -236,6 +244,7 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             lastFrameTime = 0;
             deltaTime = 0;
             fps = 60;
+            
             setupCanvasResizing();
             return true;
         } catch (error) {
@@ -293,6 +302,22 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             return false;
         }
     };
+    const getAudioData = () => {
+        const audioInstance = window.audioReactiveInstance;
+        if (audioInstance && audioInstance.analyser && audioInstance.isActive) {
+            const data = new Uint8Array(audioInstance.analyser.frequencyBinCount);
+            audioInstance.analyser.getByteFrequencyData(data);
+            const calc = (from, to, sens, dampening = 1) =>
+                Math.min(1, data.slice(from, to).reduce((a, b) => a + b) / (to - from) / 255 * sens * dampening);
+            return {
+                bass: calc(0, 20, audioInstance.sensitivity.bass, 0.4),
+                mid: calc(20, 60, audioInstance.sensitivity.mid),
+                treble: calc(60, 120, audioInstance.sensitivity.treble),
+                volume: calc(0, data.length, audioInstance.sensitivity.volume)
+            };
+        }
+        return { bass: 0, mid: 0, treble: 0, volume: 0 };
+    };
     const renderWebGPU = (time) => {
         if (!webgpuPipeline || !webgpuContext || !webgpuDevice || !webgpuCanvas) return;
         const currentTime = performance.now();
@@ -307,7 +332,8 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             clickX: 0, clickY: 0, 
             isPressed: false 
         };
-        const uniformData = new Float32Array(16);
+        const audioData = getAudioData();
+        const uniformData = new Float32Array(20);
         let offset = 0;
         uniformData[offset++] = webgpuCanvas.width;
         uniformData[offset++] = webgpuCanvas.height;
@@ -323,6 +349,10 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
         uniformData[offset++] = webgpuCanvas.width / webgpuCanvas.height;
         uniformData[offset++] = 1.0 / webgpuCanvas.width;
         uniformData[offset++] = 1.0 / webgpuCanvas.height;
+        uniformData[offset++] = audioData.bass;
+        uniformData[offset++] = audioData.mid;
+        uniformData[offset++] = audioData.treble;
+        uniformData[offset++] = audioData.volume;
         uniformData[offset++] = 0.0;
         uniformData[offset++] = 0.0;
         webgpuDevice.queue.writeBuffer(webgpuUniformBuffer, 0, uniformData);
@@ -537,21 +567,21 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
         }
     };
     const init = async () => {
-    if (!navigator.gpu) {
-        console.log('WebGPU not supported');
-        return;
-    }
-    const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
-    if (!adapter) {
-        console.log('WebGPU not supported');
-        return;
-    }
-    const toggleBtn = createWebGPUToggle();
-    toggleBtn.addEventListener('click', toggleWebGPU);
+        if (!navigator.gpu) {
+            console.log('WebGPU not supported');
+            return;
+        }
+        const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
+        if (!adapter) {
+            console.log('WebGPU not supported');
+            return;
+        }
+        const toggleBtn = createWebGPUToggle();
+        toggleBtn.addEventListener('click', toggleWebGPU);
     };
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
-    setTimeout(init, 500);
+        setTimeout(init, 500);
     }
 })();
