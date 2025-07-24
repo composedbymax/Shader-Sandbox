@@ -1,9 +1,18 @@
 (() => {
-  const canvas = document.getElementById('glcanvas');
+  function getCurrentCanvas() {
+    if (window.webgpuState && window.webgpuState.isWebGPUMode()) {
+      return window.webgpuState.getCanvas();
+    }
+    return document.getElementById('glcanvas');
+  }
+  const canvas = getCurrentCanvas();
   const container = document.getElementById('preview-panel');
   if (!canvas || !container) return;
-  const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true }) ||
-             canvas.getContext('experimental-webgl', { preserveDrawingBuffer: true });
+  let gl = null;
+  if (!window.webgpuState || !window.webgpuState.isWebGPUMode()) {
+    gl = canvas.getContext('webgl', { preserveDrawingBuffer: true }) ||
+         canvas.getContext('experimental-webgl', { preserveDrawingBuffer: true });
+  }
   const style = document.createElement('style');
   style.textContent = `
     #recSettings{display: none;position: absolute;bottom: 42px;left: 10px;background: var(--d);color: var(--l);padding: 10px;z-index: 100;font-size: 0.9rem;min-width: 240px;max-height:80%;overflow-y: auto;}
@@ -35,7 +44,9 @@
     #videoPreview .delete-btn{background: var(--r);color: var(--7);}
     #videoPreview .delete-btn:hover{background: var(--rh);color: var(--1);}
     #videoPreview .info{color: var(--l);font-size: 11px;margin-top: 8px;line-height: 1.3;}
-    .audio-status{color: var(--7);font-size: 11px;margin-top: 5px;padding: 5px;background: var(--D);border-radius: 3px;}
+    .status-block{background: var(--d);padding: 6px;border-radius: 6px;margin: 5px 0px;font-size: 11px;color: var(--7);}
+    .status-block .canvas-mode,
+    .status-block .audio-status{background: none;padding: 2px 0;margin: 0;border-radius: 0;color: inherit;}
   `;
   document.head.appendChild(style);
   const recIndicator = document.createElement('div');
@@ -101,7 +112,10 @@
         <div class="custom-checkbox"></div>
       </div>
     </label>
-    <div id="audioStatus" class="audio-status">Audio: Not detected</div>
+    <div id="statusBlock" class="status-block">
+      <div id="canvasMode" class="canvas-mode">Canvas: WebGL</div>
+      <div id="audioStatus" class="audio-status">Audio: Not detected</div>
+    </div>
     <button id="recRotate" title="Rotate dimensions">⟲ Rotate</button>
     <div id="recPresets">
       <button class="preset active" data-w="1920" data-h="1080">1080p</button>
@@ -133,6 +147,7 @@
   const recRotate = settingsPanel.querySelector('#recRotate');
   const includeAudio = settingsPanel.querySelector('#includeAudio');
   const audioStatus = settingsPanel.querySelector('#audioStatus');
+  const canvasMode = settingsPanel.querySelector('#canvasMode');
   const presets = settingsPanel.querySelectorAll('.preset');
   const startRec = settingsPanel.querySelector('#startRec');
   const stopRec = settingsPanel.querySelector('#stopRec');
@@ -148,6 +163,13 @@
   let currentVideoBlob = null;
   let currentVideoUrl = null;
   let currentVideoData = null;
+  function updateCanvasMode() {
+    if (window.webgpuState && window.webgpuState.isWebGPUMode()) {
+      canvasMode.textContent = 'Canvas: WebGPU';
+    } else {
+      canvasMode.textContent = 'Canvas: WebGL';
+    }
+  }
   function getAudioStream() {
     if (window.AudioReactive && window.audioReactiveInstance) {
       const audioInstance = window.audioReactiveInstance;
@@ -191,6 +213,7 @@
     } else {
       audioStatus.textContent = 'Audio: AudioReactive not found';
     }
+    updateCanvasMode();
   }
   setInterval(updateAudioStatus, 1000);
   recQuality.addEventListener('input', () => {
@@ -277,6 +300,11 @@
     downloadLink.style.display = recStats.style.display = 'none';
     recStats.textContent = '';
     const w = +recWidth.value, h = +recHeight.value, fps = +recFPS.value;
+    const currentCanvas = getCurrentCanvas();
+    if (!currentCanvas) {
+      alert('Canvas not found. Make sure the visualization is running.');
+      return;
+    }
     hiddenCanvas = Object.assign(document.createElement('canvas'), { width: w, height: h });
     hiddenCtx = hiddenCanvas.getContext('2d', { alpha: false });
     const videoStream = hiddenCanvas.captureStream(fps);
@@ -295,9 +323,9 @@
     if (mime && mime !== checkCodecSupport(want, !!audioStream)) {
       alert(`Falling back to ${recCodec.value} (+audio: ${!!audioStream}).`);
     }
-    startRecording(finalStream, mime, bits, w, h, recCodec.value);
+    startRecording(finalStream, mime, bits, w, h, recCodec.value, currentCanvas);
   });
-  function startRecording(stream, mimeType, bits, w, h, selectedCodec) {
+  function startRecording(stream, mimeType, bits, w, h, selectedCodec, sourceCanvas) {
     const options = {
       mimeType: mimeType,
       videoBitsPerSecond: bits
@@ -326,6 +354,7 @@
       const fileSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
       const duration = ((Date.now() - recordingStartTime) / 1000).toFixed(1);
       const hasAudio = stream.getAudioTracks().length > 0;
+      const canvasType = window.webgpuState && window.webgpuState.isWebGPUMode() ? 'WebGPU' : 'WebGL';
       if (currentVideoUrl) {
         URL.revokeObjectURL(currentVideoUrl);
       }
@@ -339,12 +368,13 @@
         size: fileSizeMB,
         duration: duration,
         bitrate: recQuality.value,
-        hasAudio: hasAudio
+        hasAudio: hasAudio,
+        canvasType: canvasType
       };
       previewVideo.src = currentVideoUrl;
       videoInfo.innerHTML = `
         <div><strong>File:</strong> ${fileSizeMB} MB • ${duration}s • ${w}×${h}</div>
-        <div><strong>Settings:</strong> ${selectedCodec} • ${recQuality.value} kbps</div>
+        <div><strong>Settings:</strong> ${selectedCodec} • ${recQuality.value} kbps • ${canvasType}</div>
         <div><strong>Audio:</strong> ${hasAudio ? 'Included' : 'Video only'}</div>
       `;
       videoPreview.style.display = 'block';
@@ -357,13 +387,14 @@
     function updateRecordingStats() {
       const duration = ((Date.now() - recordingStartTime) / 1000).toFixed(1);
       const hasAudio = stream.getAudioTracks().length > 0;
-      recIndicator.textContent = `● RECORDING ${duration}s ${hasAudio ? '♪' : ''}`;
+      const canvasType = window.webgpuState && window.webgpuState.isWebGPUMode() ? 'GPU' : 'GL';
+      recIndicator.textContent = `● RECORDING ${duration}s ${hasAudio ? '♪' : ''} ${canvasType}`;
     }
     function drawLoop() {
       hiddenCtx.imageSmoothingEnabled = true;
       hiddenCtx.imageSmoothingQuality = 'high';
       hiddenCtx.clearRect(0, 0, w, h);
-      hiddenCtx.drawImage(canvas, 0, 0, w, h);
+      hiddenCtx.drawImage(sourceCanvas, 0, 0, w, h);
       drawLoopId = requestAnimationFrame(drawLoop);
     }
     drawLoop();

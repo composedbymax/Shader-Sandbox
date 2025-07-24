@@ -131,6 +131,7 @@ struct Uniforms {
     fps: f32,
     aspect: f32,
     pixel_size: vec2<f32>,
+    // AUDIO UNIFORMS
     bass: f32,
     mid: f32,
     treble: f32,
@@ -253,6 +254,7 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             return false;
         }
     };
+
     const createWebGPUPipeline = (vertexShader, fragmentShader) => {
         try {
             [webgpuPipeline, webgpuBindGroup] = [null, null];
@@ -578,6 +580,10 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
         }
         const toggleBtn = createWebGPUToggle();
         toggleBtn.addEventListener('click', toggleWebGPU);
+    };
+    window.webgpuState = {
+        isWebGPUMode: () => isWebGPUMode,
+        getCanvas: () => webgpuCanvas,
     };
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
