@@ -1,3 +1,4 @@
+(() => {
 function compressString(str) {
   const dict = new Map();
   let data = Array.from(str).map(c => c.charCodeAt(0));
@@ -154,3 +155,5 @@ if (document.readyState === 'loading') {
 } else {
     initShaderLink();
 }
+window.saveLink = saveLink;
+})();
