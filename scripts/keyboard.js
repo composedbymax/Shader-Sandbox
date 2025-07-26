@@ -28,6 +28,8 @@
         @media (max-width: 800px){.shortcut{padding: 20px;}.key{min-height: 28px;font-size: 10px;}.commands-list{grid-template-columns: 1fr;}}
         @media (max-width: 600px){.shortcut{padding: 15px;max-height: 95vh;}.shortcut-title{font-size: 24px;margin-bottom: 15px;}.shortcut-header{margin-bottom: 20px;}}
         @media (max-width: 480px){.shortcut-modal{padding: 10px;}.shortcut{padding: 10px;}.keyboard-container{margin: 0 -10px;}}
+        .arrow-stack{display: flex;flex-direction: column;gap: 2px;height: 32px;box-sizing: border-box;}
+        .key.half-height{min-height: calc(50% - 1px) !important;height: calc(50% - 1px) !important;max-height: calc(50% - 1px);font-size: 9px;flex: none;}
         </style>
     `;
     const keyboardLayout = [
@@ -79,10 +81,16 @@
         {
             row: 6,
             keys: [
-                { key: 'Ctrl', width: '4em', class: 'modifier', id: 'ctrl' }, { key: 'Win', width: '3em', class: 'modifier' },
-                { key: 'Alt', width: '3em', class: 'modifier', id: 'alt' }, { key: 'Space', width: '18em' },
-                { key: 'Alt', width: '3em', class: 'modifier', id: 'alt-right' }, { key: 'Menu', width: '3em', class: 'modifier' },
-                { key: 'Ctrl', width: '4em', class: 'modifier', id: 'ctrl-right' }
+                { key: 'Ctrl', width: '4em', class: 'modifier', id: 'ctrl' }, 
+                { key: 'Win', width: '3em', class: 'modifier' },
+                { key: 'Alt', width: '3em', class: 'modifier', id: 'alt' }, 
+                { key: 'Space', width: '18em' },
+                { key: 'Alt', width: '3em', class: 'modifier', id: 'alt-right' }, 
+                { key: 'Menu', width: '3em', class: 'modifier' },
+                { key: 'Ctrl', width: '4em', class: 'modifier', id: 'ctrl-right' },
+                { key: '←', width: '3em', id: 'arrow-left' },
+                { key: 'UD', width: '3em', id: 'arrow-stack', isStack: true },
+                { key: '→', width: '3em', id: 'arrow-right' }
             ]
         }
     ];
@@ -107,8 +115,8 @@
         },
         { 
             desc: 'Performance mode (hide buttons)', 
-            keys: 'Control + Shift + F', 
-            highlight: ['ctrl', 'shift', 'f'],
+            keys: 'Control + Shift + D', 
+            highlight: ['ctrl', 'shift', 'd'],
             id: 'performance'
         },
         { 
@@ -126,13 +134,13 @@
         {
             desc: 'Switch between local shaders',
             keys: 'L + Arrow Keys',
-            highlight: ['l', 'arrow'],
+            highlight: ['l', 'arrow-right', 'arrow-left'],
             id: 'local-shaders'
         },
         {
             desc: 'Switch between public shaders',
             keys: 'P + Arrow Keys',
-            highlight: ['p', 'arrow'],
+            highlight: ['p', 'arrow-right', 'arrow-left'],
             id: 'public-shaders'
         }
     ];
@@ -155,17 +163,28 @@
                 <div class="keyboard-container">
                     <div class="keyboard" id="keyboard">
                         ${keyboardLayout.map(row => `
-                            <div class="keyboard-row" style="grid-template-columns: repeat(${row.keys.length}, auto);">
-                                ${row.keys.map(keyData => `
-                                    <div class="key ${keyData.class || ''}" 
-                                         style="width: ${keyData.width};" 
-                                         data-key="${keyData.id || keyData.key.toLowerCase()}"
-                                         id="key-${keyData.id || keyData.key.toLowerCase()}">
-                                        ${keyData.key}
-                                    </div>
-                                `).join('')}
-                            </div>
-                        `).join('')}
+                        <div class="keyboard-row" style="grid-template-columns: repeat(${row.keys.length}, auto);">
+                            ${row.keys.map(keyData => {
+                                if (keyData.isStack) {
+                                    return `
+                                        <div class="arrow-stack" style="width: ${keyData.width};">
+                                            <div class="key half-height" data-key="arrow-up" id="key-arrow-up">↑</div>
+                                            <div class="key half-height" data-key="arrow-down" id="key-arrow-down">↓</div>
+                                        </div>
+                                    `;
+                                } else {
+                                    return `
+                                        <div class="key ${keyData.class || ''}" 
+                                            style="width: ${keyData.width};" 
+                                            data-key="${keyData.id || keyData.key.toLowerCase()}"
+                                            id="key-${keyData.id || keyData.key.toLowerCase()}">
+                                            ${keyData.key}
+                                        </div>
+                                    `;
+                                }
+                            }).join('')}
+                        </div>
+                    `).join('')}
                     </div>
                 </div>
             </div>
@@ -184,9 +203,9 @@
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
             const modalContent = modal.querySelector('.shortcut');
-            const modalPadding = 60;
+            const modalPadding = viewportWidth <= 480 ? 20 : 60;
             const headerHeight = modal.querySelector('.shortcut-header').offsetHeight;
-            const modalVerticalPadding = 60;
+            const modalVerticalPadding = viewportWidth <= 480 ? 30 : 60;
             const keyboardContainerPadding = 40;
             const availableWidth = Math.min(viewportWidth * 0.95, 1200) - modalPadding;
             const availableHeight = (viewportHeight * 0.9) - headerHeight - modalVerticalPadding - keyboardContainerPadding;
@@ -195,26 +214,34 @@
             const widthScale = availableWidth / baseKeyboardWidth;
             const heightScale = availableHeight / baseKeyboardHeight;
             let scale = Math.min(widthScale, heightScale, 1);
-            scale = Math.max(scale, 0.4);
             if (viewportWidth <= 480) {
-                scale = Math.min(scale, 0.6);
+                scale = Math.max(scale, 0.65); // Increased from 0.6
             } else if (viewportWidth <= 600) {
-                scale = Math.min(scale, 0.7);
+                scale = Math.max(scale, 0.75); // Increased from 0.7
             } else if (viewportWidth <= 800) {
-                scale = Math.min(scale, 0.85);
+                scale = Math.max(scale, 0.85); // Keep this the same
             }
+            scale = Math.max(scale, 0.5); // Increased from 0.4
             keyboard.style.transform = `scale(${scale})`;
             const keys = keyboard.querySelectorAll('.key');
             keys.forEach(key => {
                 if (scale < 0.7) {
-                    key.style.fontSize = '9px';
-                    key.style.minHeight = '24px';
-                } else if (scale < 0.85) {
                     key.style.fontSize = '10px';
                     key.style.minHeight = '28px';
+                } else if (scale < 0.85) {
+                    key.style.fontSize = '11px';
+                    key.style.minHeight = '30px';
                 } else {
                     key.style.fontSize = '11px';
                     key.style.minHeight = '32px';
+                }
+            });
+            const halfHeightKeys = keyboard.querySelectorAll('.key.half-height');
+            halfHeightKeys.forEach(key => {
+                if (scale < 0.7) {
+                    key.style.fontSize = '9px';
+                } else {
+                    key.style.fontSize = '9px';
                 }
             });
         },
