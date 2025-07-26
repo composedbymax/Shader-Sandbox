@@ -17,7 +17,7 @@
     #vidCloseBtn{position: absolute;top: 10px;right: 15px;background: var(--r);color: white;border: none;border-radius: 50%;width: 30px;height: 30px;font-size: 18px;cursor: pointer;display: flex;align-items: center;justify-content: center;}
     #vidCloseBtn:hover{background: var(--rh);}
     #vidModal{position: fixed;top: 0;left: 0;right: 0;bottom: 0;display: none;align-items: center;justify-content: center;z-index: 99999;max-width: 60vw;margin: auto;}
-    #vidModal .modal-content{background: var(--4);padding: 20px;border-radius: 8px;max-width: 90%;max-height: 90%;overflow: auto;text-align: center;position: relative;min-width: 600px;}
+    #vidModal .modal-content{background: var(--4);padding: 20px;border-radius: 8px;max-width: 90vw;max-height: 90vh;overflow: auto;text-align: center;position: relative;width: 100%;box-sizing: border-box;}
     #vidModal video{max-width: 100%;max-height: 30vh;display: block;margin: 10px auto;background: #000;}
     #vidDropButton{padding: 40px 60px;border: 2px dashed var(--6);background: var(--3);border-radius: 8px;cursor: pointer;font-size: 16px;color: var(--6);margin: 20px 0;transition: all 0.3s ease;}
     #vidDropButton:hover{background: var(--5);border-color: var(--a);color:var(--7);}
