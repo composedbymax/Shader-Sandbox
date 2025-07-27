@@ -215,13 +215,13 @@
             const heightScale = availableHeight / baseKeyboardHeight;
             let scale = Math.min(widthScale, heightScale, 1);
             if (viewportWidth <= 480) {
-                scale = Math.max(scale, 0.65); // Increased from 0.6
+                scale = Math.max(scale, 0.65);
             } else if (viewportWidth <= 600) {
-                scale = Math.max(scale, 0.75); // Increased from 0.7
+                scale = Math.max(scale, 0.75);
             } else if (viewportWidth <= 800) {
-                scale = Math.max(scale, 0.85); // Keep this the same
+                scale = Math.max(scale, 0.85);
             }
-            scale = Math.max(scale, 0.5); // Increased from 0.4
+            scale = Math.max(scale, 0.5);
             keyboard.style.transform = `scale(${scale})`;
             const keys = keyboard.querySelectorAll('.key');
             keys.forEach(key => {
