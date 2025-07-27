@@ -343,131 +343,129 @@ void main() {
     }
     window.objCanvasActive = false;
   }
-  window.addEventListener('DOMContentLoaded', () => {
-    const UI = buildUI();
-    let mesh = null, scene = null;
-    const state = { drag: false, last: [0,0], rot: [0,0], zoom: 1 };
-    let startTime = performance.now();
-    storeOriginalShaderCode();
-    UI.revertBtn.addEventListener('click', () => {
-      revertShadersToOriginal();
-      switchToOriginalCanvas(UI);
-      if (scene) {
-        scene = null;
-      }
-      mesh = null;
-      UI.fileInput.value = '';
-      UI.info.textContent = 'Reverted to original shaders';
-      UI.hide();
-    });
-    const vertCode = document.getElementById('vertCode');
-    const fragCode = document.getElementById('fragCode');
-    if (vertCode && fragCode) {
-      [vertCode, fragCode].forEach(ta => {
-        ta.addEventListener('input', () => {
-          if (scene) scene.updateProgram();
-        });
-      });
+  const UI = buildUI();
+  let mesh = null, scene = null;
+  const state = { drag: false, last: [0,0], rot: [0,0], zoom: 1 };
+  let startTime = performance.now();
+  storeOriginalShaderCode();
+  UI.revertBtn.addEventListener('click', () => {
+    revertShadersToOriginal();
+    switchToOriginalCanvas(UI);
+    if (scene) {
+      scene = null;
     }
-    UI.fileInput.addEventListener('change', e => {
-      const f = e.target.files[0]; 
-      if (!f) return;
-      UI.err.style.display = 'none'; 
-      UI.info.textContent = 'Loading...';
-      const r = new FileReader();
-      r.onload = () => {
-        mesh = parseOBJ(r.result);
-        switchToObjCanvas(UI);
-        loadShadersToTextareas();
-        initScene();
-        UI.info.textContent = `Verts: ${mesh.stats.vertices}, Faces: ${mesh.stats.faces}, Triangles: ${mesh.stats.triangles}`;
-        UI.hide();
-      };
-      r.readAsText(f);
-    });
-    function initScene() {
-      const c = UI.canvas;
-      c.style.width = '100%'; 
-      c.style.height = '100%';
-      c.width = c.clientWidth; 
-      c.height = c.clientHeight;
-      scene = createGL(c);
-      const gl = scene.gl;
-      scene.bV = gl.createBuffer(); 
-      gl.bindBuffer(gl.ARRAY_BUFFER, scene.bV);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.verts), gl.STATIC_DRAW);
-      scene.bN = gl.createBuffer(); 
-      gl.bindBuffer(gl.ARRAY_BUFFER, scene.bN);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.norms), gl.STATIC_DRAW);
-      const ext = gl.getExtension('OES_element_index_uint');
-      const useUint32 = ext && mesh.idxs.length > 0xFFFF;
-      const indexArray = useUint32 ? new Uint32Array(mesh.idxs) : new Uint16Array(mesh.idxs);
-      scene.bI = gl.createBuffer(); 
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, scene.bI);
-      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexArray, gl.STATIC_DRAW);
-      mesh.indexType = useUint32 ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT;
-      mesh.indexCount = indexArray.length;
-      gl.enable(gl.DEPTH_TEST);
-      gl.enable(gl.CULL_FACE);
-      c.addEventListener('mousedown', e => { 
-        state.drag = true; 
-        state.last = [e.clientX, e.clientY]; 
-      });
-      window.addEventListener('mousemove', e => {
-        if (state.drag) {
-          state.rot[0] += (e.clientY - state.last[1]) * 0.01;
-          state.rot[1] += (e.clientX - state.last[0]) * 0.01;
-          state.last = [e.clientX, e.clientY];
-        }
-      });
-      window.addEventListener('mouseup', () => state.drag = false);
-      c.addEventListener('wheel', e => { 
-        e.preventDefault(); 
-        state.zoom *= e.deltaY > 0 ? 1.1 : 0.9; 
-        state.zoom = Math.min(Math.max(state.zoom, 0.1), 10); 
-      });
-      window.addEventListener('resize', () => { 
-        c.width = c.clientWidth; 
-        c.height = c.clientHeight; 
-      });
-      requestAnimationFrame(draw);
-    }
-    function draw() {
-      if (!scene || !mesh) return;
-      const gl = scene.gl;
-      const locations = scene.getLocations();
-      gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-      gl.clearColor(0.0, 0.0, 0.0, 1);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-      const M = mat4.multiply(
-        mat4.rotateY(state.rot[1]),
-        mat4.multiply(mat4.rotateX(state.rot[0]), mat4.scale(state.zoom))
-      );
-      const V = mat4.lookAt([0,0,3], [0,0,0], [0,1,0]);
-      const P = mat4.perspective(Math.PI/3, gl.canvas.width/gl.canvas.height, 0.01, 1000);
-      const Nmat = [M[0],M[1],M[2], M[4],M[5],M[6], M[8],M[9],M[10]];
-      if (locations.uniM) gl.uniformMatrix4fv(locations.uniM, false, M);
-      if (locations.uniV) gl.uniformMatrix4fv(locations.uniV, false, V);
-      if (locations.uniP) gl.uniformMatrix4fv(locations.uniP, false, P);
-      if (locations.uniN) gl.uniformMatrix3fv(locations.uniN, false, Nmat);
-      if (locations.uniL) gl.uniform3fv(locations.uniL, [5,5,5]);
-      if (locations.uniU) gl.uniform3fv(locations.uniU, [0,0,3]);
-      if (locations.uniW) gl.uniform1i(locations.uniW, UI.wireChk.checked ? 1 : 0);
-      if (locations.uniTime) gl.uniform1f(locations.uniTime, (performance.now() - startTime) * 0.001);
-      UI.cullChk.checked ? gl.enable(gl.CULL_FACE) : gl.disable(gl.CULL_FACE);
-      if (locations.attrPos >= 0) {
-        gl.bindBuffer(gl.ARRAY_BUFFER, scene.bV);
-        gl.enableVertexAttribArray(locations.attrPos);
-        gl.vertexAttribPointer(locations.attrPos, 3, gl.FLOAT, false, 0, 0);
-      }
-      if (locations.attrNorm >= 0) {
-        gl.bindBuffer(gl.ARRAY_BUFFER, scene.bN);
-        gl.enableVertexAttribArray(locations.attrNorm);
-        gl.vertexAttribPointer(locations.attrNorm, 3, gl.FLOAT, false, 0, 0);
-      }
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, scene.bI);
-      gl.drawElements(gl.TRIANGLES, mesh.indexCount, mesh.indexType, 0);
-      requestAnimationFrame(draw);
-    }
+    mesh = null;
+    UI.fileInput.value = '';
+    UI.info.textContent = 'Reverted to original shaders';
+    UI.hide();
   });
+  const vertCode = document.getElementById('vertCode');
+  const fragCode = document.getElementById('fragCode');
+  if (vertCode && fragCode) {
+    [vertCode, fragCode].forEach(ta => {
+      ta.addEventListener('input', () => {
+        if (scene) scene.updateProgram();
+      });
+    });
+  }
+  UI.fileInput.addEventListener('change', e => {
+    const f = e.target.files[0]; 
+    if (!f) return;
+    UI.err.style.display = 'none'; 
+    UI.info.textContent = 'Loading...';
+    const r = new FileReader();
+    r.onload = () => {
+      mesh = parseOBJ(r.result);
+      switchToObjCanvas(UI);
+      loadShadersToTextareas();
+      initScene();
+      UI.info.textContent = `Verts: ${mesh.stats.vertices}, Faces: ${mesh.stats.faces}, Triangles: ${mesh.stats.triangles}`;
+      UI.hide();
+    };
+    r.readAsText(f);
+  });
+  function initScene() {
+    const c = UI.canvas;
+    c.style.width = '100%'; 
+    c.style.height = '100%';
+    c.width = c.clientWidth; 
+    c.height = c.clientHeight;
+    scene = createGL(c);
+    const gl = scene.gl;
+    scene.bV = gl.createBuffer(); 
+    gl.bindBuffer(gl.ARRAY_BUFFER, scene.bV);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.verts), gl.STATIC_DRAW);
+    scene.bN = gl.createBuffer(); 
+    gl.bindBuffer(gl.ARRAY_BUFFER, scene.bN);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.norms), gl.STATIC_DRAW);
+    const ext = gl.getExtension('OES_element_index_uint');
+    const useUint32 = ext && mesh.idxs.length > 0xFFFF;
+    const indexArray = useUint32 ? new Uint32Array(mesh.idxs) : new Uint16Array(mesh.idxs);
+    scene.bI = gl.createBuffer(); 
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, scene.bI);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexArray, gl.STATIC_DRAW);
+    mesh.indexType = useUint32 ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT;
+    mesh.indexCount = indexArray.length;
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
+    c.addEventListener('mousedown', e => { 
+      state.drag = true; 
+      state.last = [e.clientX, e.clientY]; 
+    });
+    window.addEventListener('mousemove', e => {
+      if (state.drag) {
+        state.rot[0] += (e.clientY - state.last[1]) * 0.01;
+        state.rot[1] += (e.clientX - state.last[0]) * 0.01;
+        state.last = [e.clientX, e.clientY];
+      }
+    });
+    window.addEventListener('mouseup', () => state.drag = false);
+    c.addEventListener('wheel', e => { 
+      e.preventDefault(); 
+      state.zoom *= e.deltaY > 0 ? 1.1 : 0.9; 
+      state.zoom = Math.min(Math.max(state.zoom, 0.1), 10); 
+    });
+    window.addEventListener('resize', () => { 
+      c.width = c.clientWidth; 
+      c.height = c.clientHeight; 
+    });
+    requestAnimationFrame(draw);
+  }
+  function draw() {
+    if (!scene || !mesh) return;
+    const gl = scene.gl;
+    const locations = scene.getLocations();
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.clearColor(0.0, 0.0, 0.0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    const M = mat4.multiply(
+      mat4.rotateY(state.rot[1]),
+      mat4.multiply(mat4.rotateX(state.rot[0]), mat4.scale(state.zoom))
+    );
+    const V = mat4.lookAt([0,0,3], [0,0,0], [0,1,0]);
+    const P = mat4.perspective(Math.PI/3, gl.canvas.width/gl.canvas.height, 0.01, 1000);
+    const Nmat = [M[0],M[1],M[2], M[4],M[5],M[6], M[8],M[9],M[10]];
+    if (locations.uniM) gl.uniformMatrix4fv(locations.uniM, false, M);
+    if (locations.uniV) gl.uniformMatrix4fv(locations.uniV, false, V);
+    if (locations.uniP) gl.uniformMatrix4fv(locations.uniP, false, P);
+    if (locations.uniN) gl.uniformMatrix3fv(locations.uniN, false, Nmat);
+    if (locations.uniL) gl.uniform3fv(locations.uniL, [5,5,5]);
+    if (locations.uniU) gl.uniform3fv(locations.uniU, [0,0,3]);
+    if (locations.uniW) gl.uniform1i(locations.uniW, UI.wireChk.checked ? 1 : 0);
+    if (locations.uniTime) gl.uniform1f(locations.uniTime, (performance.now() - startTime) * 0.001);
+    UI.cullChk.checked ? gl.enable(gl.CULL_FACE) : gl.disable(gl.CULL_FACE);
+    if (locations.attrPos >= 0) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, scene.bV);
+      gl.enableVertexAttribArray(locations.attrPos);
+      gl.vertexAttribPointer(locations.attrPos, 3, gl.FLOAT, false, 0, 0);
+    }
+    if (locations.attrNorm >= 0) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, scene.bN);
+      gl.enableVertexAttribArray(locations.attrNorm);
+      gl.vertexAttribPointer(locations.attrNorm, 3, gl.FLOAT, false, 0, 0);
+    }
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, scene.bI);
+    gl.drawElements(gl.TRIANGLES, mesh.indexCount, mesh.indexType, 0);
+    requestAnimationFrame(draw);
+  }
 })();

@@ -38,6 +38,7 @@
             "scripts/show.js", 
             "scripts/gpu.js", 
             "scripts/video.js", 
+            "scripts/obj.js",
             ...(window.userLoggedIn ? ["scripts/find.js"] : []),
             ...(window.userLoggedIn ? ["scripts/p2p.js"] : []),
         ];
