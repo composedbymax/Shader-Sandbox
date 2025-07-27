@@ -15,17 +15,21 @@
       #objModal label{color: var(--6);}
       #objInfo{margin-top: 10px;color: var(--6);font-size: 14px;}
       #objErr{margin-top: 10px;color: var(--rh);font-size: 14px;display: none;}
-      #objModal footer{margin-top: 20px;text-align: right;}
-      #objClose{padding: 6px 12px;background: var(--3);color: var(--6);border: 1px solid var(--4);border-radius: 4px;cursor: pointer;}
-      #objClose:hover{background: var(--4);color: var(--l);}
+      #objModal footer{margin-top: 20px;text-align: right;display: flex;gap: 10px;justify-content: flex-end;}
+      #objClose, #objRevert{padding: 6px 12px;background: var(--3);color: var(--6);border: 1px solid var(--4);border-radius: 4px;cursor: pointer;}
+      #objClose:hover, #objRevert:hover{background: var(--4);color: var(--l);}
+      #objRevert{background: var(--5);color: var(--l);}
+      #objRevert:hover{background: var(--6);}
     `;
     const style = document.createElement('style');
     style.textContent = css;
     document.head.appendChild(style);
     const preview = document.getElementById('preview-panel');
     preview.style.position = 'relative';
+    const originalCanvas = document.getElementById('glcanvas');
     const canvas = document.createElement('canvas');
     canvas.id = 'objCanvas';
+    canvas.style.display = 'none';
     preview.appendChild(canvas);
     const btn = document.createElement('button');
     btn.id = 'objLoadBtn';
@@ -55,7 +59,10 @@
       </div>
       <div id="objInfo">No model loaded</div>
       <div id="objErr"></div>
-      <footer><button id="objClose">Cancel</button></footer>
+      <footer>
+        <button id="objRevert">Revert Shaders</button>
+        <button id="objClose">Cancel</button>
+      </footer>
     `;
     modalBg.appendChild(modal);
     preview.appendChild(modalBg);
@@ -82,29 +89,37 @@
     });
     return {
       canvas,
+      originalCanvas,
       fileInput,
       cullChk: modal.querySelector('#objCull'),
       wireChk: modal.querySelector('#objWire'),
       info: modal.querySelector('#objInfo'),
       err: modal.querySelector('#objErr'),
+      revertBtn: modal.querySelector('#objRevert'),
       hide: () => modalBg.classList.remove('show')
     };
   }
-  const defaultVS = `attribute vec3 a_position,a_normal;
-uniform mat4 u_modelMatrix,u_viewMatrix,u_projectionMatrix;
+  let originalShaderCode = {
+    vertex: '',
+    fragment: ''
+  };
+  const shaders = {
+    vertex: `attribute vec3 a_position, a_normal;
+uniform mat4 u_modelMatrix, u_viewMatrix, u_projectionMatrix;
 uniform mat3 u_normalMatrix;
-varying vec3 v_normal,v_position;
-void main(){
-  vec4 worldPosition = u_modelMatrix * vec4(a_position,1.0);
+varying vec3 v_normal, v_position;
+void main() {
+  vec4 worldPosition = u_modelMatrix * vec4(a_position, 1.0);
   v_position = worldPosition.xyz;
   v_normal = normalize(u_normalMatrix * a_normal);
   gl_Position = u_projectionMatrix * u_viewMatrix * worldPosition;
-}`;
-  const defaultFS = `precision mediump float;
-varying vec3 v_normal,v_position;
-uniform vec3 u_lightPosition,u_viewPosition;
+}`,
+    fragment: `precision mediump float;
+varying vec3 v_normal, v_position;
+uniform vec3 u_lightPosition, u_viewPosition;
 uniform bool u_wireframe;
-void main(){
+uniform float u_time;
+void main() {
   vec3 normal = normalize(v_normal);
   vec3 lightDir = normalize(u_lightPosition - v_position);
   vec3 viewDir = normalize(u_viewPosition - v_position);
@@ -112,14 +127,50 @@ void main(){
   float ambient = 0.3;
   float diffuse = max(dot(normal, lightDir), 0.0);
   float specular = pow(max(dot(viewDir, reflectDir), 0.0), 32.0) * 0.5;
-  vec3 base = u_wireframe ? vec3(0.0,1.0,0.0) : vec3(0.7,0.8,1.0);
+  vec3 base = u_wireframe ? vec3(0.0, 1.0, 0.0) : vec3(0.7, 0.8, 1.0);
+  vec3 timeColor = vec3(
+    0.5 + 0.5 * sin(u_time * 0.8),
+    0.5 + 0.5 * sin(u_time * 1.2 + 2.0),
+    0.5 + 0.5 * sin(u_time * 0.6 + 4.0)
+  );
   vec3 color = u_wireframe 
-               ? base 
-               : base * (ambient + diffuse) + vec3(1.0) * specular;
-  gl_FragColor = vec4(color,1.0);
-}`;
+    ? base 
+    : mix(base, timeColor * 0.3 + base, 0.3) * (ambient + diffuse) + vec3(1.0) * specular;
+  gl_FragColor = vec4(color, 1.0);
+}`
+  };
+  function storeOriginalShaderCode() {
+    const vertCode = document.getElementById('vertCode');
+    const fragCode = document.getElementById('fragCode');
+    if (vertCode && fragCode) {
+      originalShaderCode.vertex = vertCode.value;
+      originalShaderCode.fragment = fragCode.value;
+    }
+  }
+  function loadShadersToTextareas() {
+    const vertCode = document.getElementById('vertCode');
+    const fragCode = document.getElementById('fragCode');
+    if (vertCode && fragCode) {
+      vertCode.value = shaders.vertex;
+      fragCode.value = shaders.fragment;
+      if (window.rebuildProgram) {
+        window.rebuildProgram();
+      }
+    }
+  }
+  function revertShadersToOriginal() {
+    const vertCode = document.getElementById('vertCode');
+    const fragCode = document.getElementById('fragCode');
+    if (vertCode && fragCode && originalShaderCode.vertex && originalShaderCode.fragment) {
+      vertCode.value = originalShaderCode.vertex;
+      fragCode.value = originalShaderCode.fragment;
+      if (window.rebuildProgram) {
+        window.rebuildProgram();
+      }
+    }
+  }
   const mat4 = {
-    identity:    () => [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1],
+    identity: () => [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1],
     perspective: (fov, aspect, near, far) => {
       const f = 1/Math.tan(fov/2), nf = 1/(near - far);
       return [
@@ -166,13 +217,13 @@ void main(){
       const L = Math.hypot(v[0], v[1], v[2]);
       return L > 1e-5 ? [v[0]/L, v[1]/L, v[2]/L] : [0,0,1];
     },
-    sub:   (a, b) => [a[0]-b[0], a[1]-b[1], a[2]-b[2]],
+    sub: (a, b) => [a[0]-b[0], a[1]-b[1], a[2]-b[2]],
     cross: (a, b) => [
       a[1]*b[2] - a[2]*b[1],
       a[2]*b[0] - a[0]*b[2],
       a[0]*b[1] - a[1]*b[0]
     ],
-    dot:   (a, b) => a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
+    dot: (a, b) => a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
   };
   function parseOBJ(txt) {
     const P = [], N = [], F = [];
@@ -235,6 +286,8 @@ void main(){
   function createGL(canvas) {
     const gl = canvas.getContext('webgl');
     if (!gl) throw new Error('WebGL unavailable');
+    let program = null;
+    const locations = {};
     const compile = (type, src) => {
       const sh = gl.createShader(type);
       gl.shaderSource(sh, src);
@@ -243,36 +296,87 @@ void main(){
         throw new Error(gl.getShaderInfoLog(sh));
       return sh;
     };
-    const prog = gl.createProgram();
-    gl.attachShader(prog, compile(gl.VERTEX_SHADER, defaultVS));
-    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, defaultFS));
-    gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS))
-      throw new Error(gl.getProgramInfoLog(prog));
-    gl.useProgram(prog);
-    return { gl, prog,
-      attrPos: gl.getAttribLocation(prog,'a_position'),
-      attrNorm: gl.getAttribLocation(prog,'a_normal'),
-      uniM: gl.getUniformLocation(prog,'u_modelMatrix'),
-      uniV: gl.getUniformLocation(prog,'u_viewMatrix'),
-      uniP: gl.getUniformLocation(prog,'u_projectionMatrix'),
-      uniN: gl.getUniformLocation(prog,'u_normalMatrix'),
-      uniL: gl.getUniformLocation(prog,'u_lightPosition'),
-      uniU: gl.getUniformLocation(prog,'u_viewPosition'),
-      uniW: gl.getUniformLocation(prog,'u_wireframe')
+    const updateProgram = () => {
+      const vertCode = document.getElementById('vertCode');
+      const fragCode = document.getElementById('fragCode');
+      if (!vertCode || !fragCode) return false;
+      try {
+        if (program) gl.deleteProgram(program);
+        program = gl.createProgram();
+        gl.attachShader(program, compile(gl.VERTEX_SHADER, vertCode.value));
+        gl.attachShader(program, compile(gl.FRAGMENT_SHADER, fragCode.value));
+        gl.linkProgram(program);
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS))
+          throw new Error(gl.getProgramInfoLog(program));
+        
+        gl.useProgram(program);
+        locations.attrPos = gl.getAttribLocation(program, 'a_position');
+        locations.attrNorm = gl.getAttribLocation(program, 'a_normal');
+        locations.uniM = gl.getUniformLocation(program, 'u_modelMatrix');
+        locations.uniV = gl.getUniformLocation(program, 'u_viewMatrix');
+        locations.uniP = gl.getUniformLocation(program, 'u_projectionMatrix');
+        locations.uniN = gl.getUniformLocation(program, 'u_normalMatrix');
+        locations.uniL = gl.getUniformLocation(program, 'u_lightPosition');
+        locations.uniU = gl.getUniformLocation(program, 'u_viewPosition');
+        locations.uniW = gl.getUniformLocation(program, 'u_wireframe');
+        locations.uniTime = gl.getUniformLocation(program, 'u_time');
+        return true;
+      } catch (e) {
+        console.error('Shader compilation error:', e.message);
+        return false;
+      }
     };
+    updateProgram();
+    return { gl, updateProgram, getLocations: () => locations };
+  }
+  function switchToObjCanvas(UI) {
+    if (UI.originalCanvas) {
+      UI.originalCanvas.style.display = 'none';
+    }
+    UI.canvas.style.display = 'block';
+  }
+  function switchToOriginalCanvas(UI) {
+    UI.canvas.style.display = 'none';
+    if (UI.originalCanvas) {
+      UI.originalCanvas.style.display = 'block';
+    }
   }
   window.addEventListener('DOMContentLoaded', () => {
     const UI = buildUI();
     let mesh = null, scene = null;
-    const state = { drag:false, last:[0,0], rot:[0,0], zoom:1 };
+    const state = { drag: false, last: [0,0], rot: [0,0], zoom: 1 };
+    let startTime = performance.now();
+    storeOriginalShaderCode();
+    UI.revertBtn.addEventListener('click', () => {
+      revertShadersToOriginal();
+      switchToOriginalCanvas(UI);
+      if (scene) {
+        scene = null;
+      }
+      mesh = null;
+      UI.fileInput.value = '';
+      UI.info.textContent = 'Reverted to original shaders';
+      UI.hide();
+    });
+    const vertCode = document.getElementById('vertCode');
+    const fragCode = document.getElementById('fragCode');
+    if (vertCode && fragCode) {
+      [vertCode, fragCode].forEach(ta => {
+        ta.addEventListener('input', () => {
+          if (scene) scene.updateProgram();
+        });
+      });
+    }
     UI.fileInput.addEventListener('change', e => {
-      const f = e.target.files[0]; if (!f) return;
-      UI.err.style.display = 'none'; UI.info.textContent = 'Loading...';
+      const f = e.target.files[0]; 
+      if (!f) return;
+      UI.err.style.display = 'none'; 
+      UI.info.textContent = 'Loading...';
       const r = new FileReader();
       r.onload = () => {
         mesh = parseOBJ(r.result);
-        const { verts, norms, idxs } = mesh;
+        switchToObjCanvas(UI);
+        loadShadersToTextareas();
         initScene();
         UI.info.textContent = `Verts: ${mesh.stats.vertices}, Faces: ${mesh.stats.faces}, Triangles: ${mesh.stats.triangles}`;
         UI.hide();
@@ -281,26 +385,32 @@ void main(){
     });
     function initScene() {
       const c = UI.canvas;
-      c.style.width = '100%'; c.style.height = '100%';
-      c.width  = c.clientWidth; c.height = c.clientHeight;
+      c.style.width = '100%'; 
+      c.style.height = '100%';
+      c.width = c.clientWidth; 
+      c.height = c.clientHeight;
       scene = createGL(c);
       const gl = scene.gl;
-      scene.bV = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, scene.bV);
+      scene.bV = gl.createBuffer(); 
+      gl.bindBuffer(gl.ARRAY_BUFFER, scene.bV);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.verts), gl.STATIC_DRAW);
-      scene.bN = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, scene.bN);
+      scene.bN = gl.createBuffer(); 
+      gl.bindBuffer(gl.ARRAY_BUFFER, scene.bN);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.norms), gl.STATIC_DRAW);
       const ext = gl.getExtension('OES_element_index_uint');
       const useUint32 = ext && mesh.idxs.length > 0xFFFF;
-      const indexArray = useUint32
-        ? new Uint32Array(mesh.idxs)
-        : new Uint16Array(mesh.idxs);
-      scene.bI = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, scene.bI);
+      const indexArray = useUint32 ? new Uint32Array(mesh.idxs) : new Uint16Array(mesh.idxs);
+      scene.bI = gl.createBuffer(); 
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, scene.bI);
       gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexArray, gl.STATIC_DRAW);
       mesh.indexType = useUint32 ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT;
       mesh.indexCount = indexArray.length;
       gl.enable(gl.DEPTH_TEST);
       gl.enable(gl.CULL_FACE);
-      c.addEventListener('mousedown', e => { state.drag = true; state.last = [e.clientX, e.clientY]; });
+      c.addEventListener('mousedown', e => { 
+        state.drag = true; 
+        state.last = [e.clientX, e.clientY]; 
+      });
       window.addEventListener('mousemove', e => {
         if (state.drag) {
           state.rot[0] += (e.clientY - state.last[1]) * 0.01;
@@ -309,37 +419,50 @@ void main(){
         }
       });
       window.addEventListener('mouseup', () => state.drag = false);
-      c.addEventListener('wheel', e => { e.preventDefault(); state.zoom *= e.deltaY>0?1.1:0.9; state.zoom = Math.min(Math.max(state.zoom,0.1),10); });
-      window.addEventListener('resize', () => { c.width = c.clientWidth; c.height = c.clientHeight; });
+      c.addEventListener('wheel', e => { 
+        e.preventDefault(); 
+        state.zoom *= e.deltaY > 0 ? 1.1 : 0.9; 
+        state.zoom = Math.min(Math.max(state.zoom, 0.1), 10); 
+      });
+      window.addEventListener('resize', () => { 
+        c.width = c.clientWidth; 
+        c.height = c.clientHeight; 
+      });
       requestAnimationFrame(draw);
     }
     function draw() {
-      if (!scene) return;
+      if (!scene || !mesh) return;
       const gl = scene.gl;
+      const locations = scene.getLocations();
       gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-      gl.clearColor(0.1,0.1,0.1,1);
+      gl.clearColor(0.0, 0.0, 0.0, 1);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       const M = mat4.multiply(
         mat4.rotateY(state.rot[1]),
         mat4.multiply(mat4.rotateX(state.rot[0]), mat4.scale(state.zoom))
       );
-      const V = mat4.lookAt([0,0,3],[0,0,0],[0,1,0]);
+      const V = mat4.lookAt([0,0,3], [0,0,0], [0,1,0]);
       const P = mat4.perspective(Math.PI/3, gl.canvas.width/gl.canvas.height, 0.01, 1000);
       const Nmat = [M[0],M[1],M[2], M[4],M[5],M[6], M[8],M[9],M[10]];
-      gl.uniformMatrix4fv(scene.uniM, false, M);
-      gl.uniformMatrix4fv(scene.uniV, false, V);
-      gl.uniformMatrix4fv(scene.uniP, false, P);
-      gl.uniformMatrix3fv(scene.uniN,false,Nmat);
-      gl.uniform3fv(scene.uniL, [5,5,5]);
-      gl.uniform3fv(scene.uniU, [0,0,3]);
-      gl.uniform1i(scene.uniW, UI.wireChk.checked?1:0);
+      if (locations.uniM) gl.uniformMatrix4fv(locations.uniM, false, M);
+      if (locations.uniV) gl.uniformMatrix4fv(locations.uniV, false, V);
+      if (locations.uniP) gl.uniformMatrix4fv(locations.uniP, false, P);
+      if (locations.uniN) gl.uniformMatrix3fv(locations.uniN, false, Nmat);
+      if (locations.uniL) gl.uniform3fv(locations.uniL, [5,5,5]);
+      if (locations.uniU) gl.uniform3fv(locations.uniU, [0,0,3]);
+      if (locations.uniW) gl.uniform1i(locations.uniW, UI.wireChk.checked ? 1 : 0);
+      if (locations.uniTime) gl.uniform1f(locations.uniTime, (performance.now() - startTime) * 0.001);
       UI.cullChk.checked ? gl.enable(gl.CULL_FACE) : gl.disable(gl.CULL_FACE);
-      gl.bindBuffer(gl.ARRAY_BUFFER, scene.bV);
-      gl.enableVertexAttribArray(scene.attrPos);
-      gl.vertexAttribPointer(scene.attrPos, 3, gl.FLOAT, false, 0, 0);
-      gl.bindBuffer(gl.ARRAY_BUFFER, scene.bN);
-      gl.enableVertexAttribArray(scene.attrNorm);
-      gl.vertexAttribPointer(scene.attrNorm, 3, gl.FLOAT, false, 0, 0);
+      if (locations.attrPos >= 0) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, scene.bV);
+        gl.enableVertexAttribArray(locations.attrPos);
+        gl.vertexAttribPointer(locations.attrPos, 3, gl.FLOAT, false, 0, 0);
+      }
+      if (locations.attrNorm >= 0) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, scene.bN);
+        gl.enableVertexAttribArray(locations.attrNorm);
+        gl.vertexAttribPointer(locations.attrNorm, 3, gl.FLOAT, false, 0, 0);
+      }
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, scene.bI);
       gl.drawElements(gl.TRIANGLES, mesh.indexCount, mesh.indexType, 0);
       requestAnimationFrame(draw);
