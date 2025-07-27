@@ -334,12 +334,14 @@ void main() {
       UI.originalCanvas.style.display = 'none';
     }
     UI.canvas.style.display = 'block';
+    window.objCanvasActive = true;
   }
   function switchToOriginalCanvas(UI) {
     UI.canvas.style.display = 'none';
     if (UI.originalCanvas) {
       UI.originalCanvas.style.display = 'block';
     }
+    window.objCanvasActive = false;
   }
   window.addEventListener('DOMContentLoaded', () => {
     const UI = buildUI();

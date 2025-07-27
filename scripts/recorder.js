@@ -1,5 +1,9 @@
 (() => {
   function getCurrentCanvas() {
+    const objCanvas = document.getElementById('objCanvas');
+    if (objCanvas && objCanvas.style.display !== 'none') {
+      return objCanvas;
+    }
     if (window.webgpuState && window.webgpuState.isWebGPUMode()) {
       return window.webgpuState.getCanvas();
     }
