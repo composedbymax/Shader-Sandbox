@@ -37,7 +37,7 @@
     };
     const style = document.createElement('style');
     style.textContent = `
-        .webgpu-toggle{position: absolute;bottom: 10px;right: 146px;z-index: 10;width:4.25rem;cursor: pointer;font-size: 12px;border: none;display: inline-block;height:39px;width: 4.25rem;font-style: inherit;color: var(--l);}
+        .webgpu-toggle{position: absolute;bottom: 10px;right: 214px;z-index: 1;cursor: pointer;font-size: 12px;border: none;height:39px;width: 4.25rem;font-style: inherit;color: var(--l);}
         .webgpu-toggle.webgl-mode{background-color: var(--d);}
         .webgpu-toggle.webgl-mode:hover{background-color: var(--5);}
         .webgpu-toggle.webgpu-mode{background-color: var(--r);}
@@ -46,7 +46,6 @@
         #webgpu-canvas{display: block;width: 100%;height: 100%;}
     `;
     document.head.appendChild(style);
-
     const storeOriginalCode = () => {
         const vertCode = document.getElementById('vertCode');
         const fragCode = document.getElementById('fragCode');
@@ -55,7 +54,6 @@
             originalFragmentCode = fragCode.value;
         }
     };
-
     const addWebGPUEventListeners = () => {
         const vertTA = document.getElementById('vertCode');
         const fragTA = document.getElementById('fragCode');

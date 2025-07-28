@@ -1,6 +1,6 @@
 #app { display: flex; height: 100%; }
 #editors { width: 40%; background: var(--2); display: flex; flex-direction: column; border-right: 2px solid var(--4); position: relative; }
-.editor-panel { flex: none; display: flex; flex-direction: column; overflow: hidden;white-space: nowrap;}
+.editor-panel { flex: none; display: flex; flex-direction: column; overflow: hidden;white-space: nowrap;z-index:2;}
 .panel-header { background: var(--3); color: var(--6); padding: var(--pad); font-size: 0.9em; display: flex; justify-content: space-between; align-items: center;}
 .panel-header input[type=file] { display: none;}
 .file-name { margin-left: 8px; color: var(--6); font-size: 0.9em;}
@@ -17,9 +17,9 @@ textarea { flex: 1; background: var(--2); color: var(--6); border: none; padding
 #closeLintBtn:hover{background: var(--0);color:var(--r);}
 #lintContent{padding: 0 10px 0 10px;}
 #glcanvas { width: 100%; height: 100%; display: block; }
-#fsBtn { position: absolute; top: 10px; right: 10px; z-index: 10; background: var(--d); color: var(--6); border: none; padding: var(--pad); font-size: 1em; cursor: pointer;width:2rem; }
+#fsBtn { position: absolute; top: 10px; right: 10px; z-index: 10; background: var(--d); color: var(--6); border: none; padding: var(--pad); font-size: 1em; cursor: pointer;width:2rem;height:2rem }
 .lbtn {position: absolute;bottom: 10px;right: 10px;background: var(--d);color: var(--l);padding: 12px 10px;border: none;cursor: pointer;z-index:10}.expbtn:hover {background:var(--5);}
-.expbtn {position: absolute;bottom: 10px;right: 10px;background: var(--d);color: var(--l);padding: 12px 10px;border: none;cursor: pointer;z-index:4;width:4.25rem}.lbtn:hover {background:var(--5);}
+.expbtn {position: absolute;bottom: 10px;right: 10px;background: var(--d);color: var(--l);height:39px;border: none;cursor: pointer;z-index:4;width:4.25rem}.lbtn:hover {background:var(--5);}
 .savew {display:none; position:absolute; width:100%; height:100%; background:var(--2); color:var(--6); padding:10px; z-index:100;}
 .toggles {display:flex; margin-bottom:10px;}
 .togbtn{flex: 1;border: none;padding: 16px 0px;cursor: pointer;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;text-align: center;}

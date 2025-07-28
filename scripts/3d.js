@@ -2,7 +2,7 @@
   function buildUI() {
     const css = `
       #objCanvas{position: absolute;top: 0;left: 0;width: 100%;height: 100%;z-index: 0;}
-      #objLoadBtn{position: absolute;bottom: 10px;right: 214px;z-index: 21;padding: 6px 12px;background: var(--d);color: var(--l);border: none;cursor: pointer;width:4.25rem;height:39px;}
+      #objLoadBtn{position: absolute;bottom: 10px;right: 214px;z-index: 1;padding: 6px 12px;background: var(--d);color: var(--l);border: none;cursor: pointer;width:4.25rem;height:39px;}
       #objLoadBtn:hover{background: var(--5);color: var(--l);}
       #objModalBg{display: none;position: fixed;inset: 0;background: rgba(0, 0, 0, 0.5);z-index: 30;justify-content: center;align-items: center;}
       #objModalBg.show{display: flex;}
