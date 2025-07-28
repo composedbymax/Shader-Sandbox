@@ -23,7 +23,7 @@ function handleFile(input, ta) {
 }
 function handleFileDrop(file, ta, nameSpan) {
     const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
-    const allowed = ['.txt','.vert','.vs','.frag','.fs'];
+    const allowed = ['.txt','.vert','.vs','.frag','.fs','.wgsl'];
     if (!allowed.includes(ext)) return;
     const r = new FileReader();
     r.onload = e => { ta.value = e.target.result; rebuildProgram(); };
@@ -70,11 +70,28 @@ function exportFullHTML() {
         alert('No shader code to export!');
         return;
     }
+    const isWebGPU = window.webgpuState && window.webgpuState.isWebGPUMode();
+    if (isWebGPU) {
+        exportWebGPUHTML(vertexSource, fragmentSource);
+    } else {
+        exportWebGLHTML(vertexSource, fragmentSource);
+    }
+}
+function exportWebGLHTML(vertexSource, fragmentSource) {
+    function escapeForTemplateLiteral(str) {
+        return str
+            .replace(/\\/g, '\\\\')
+            .replace(/`/g, '\\`')
+            .replace(/\$\{/g, '\\${')
+            .replace(/\r\n/g, '\\n')
+            .replace(/\r/g, '\\n')
+            .replace(/\n/g, '\\n');
+    }
     const template = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>GLSL Animation</title>
+<title>WebGL Shader Animation</title>
 <style>
 body { margin: 0; overflow: hidden; }
 canvas { width: 100vw; height: 100vh; display: block; }
@@ -215,52 +232,275 @@ canvas { width: 100vw; height: 100vh; display: block; }
         gl.drawArrays(gl.TRIANGLES, 0, 6);
         requestAnimationFrame(render);
     }
-    canvas.addEventListener('mousemove', e => {
-        const rect = canvas.getBoundingClientRect();
-        mouse.x = e.clientX - rect.left;
-        mouse.y = rect.height - (e.clientY - rect.top); // This is correct
-    });
-    canvas.addEventListener('mousedown', e => {
-        const rect = canvas.getBoundingClientRect();
-        mouse.clickX = e.clientX - rect.left;
-        mouse.clickY = rect.height - (e.clientY - rect.top); // This is correct
-        mouse.lastClickTime = performance.now(); // Remove the * 0.001 here since we convert in render()
-        mouse.isPressed = true;
-    });
-    canvas.addEventListener('mouseup', () => {
-        mouse.isPressed = false;
-    });
-    canvas.addEventListener('mouseleave', () => {
-        mouse.isPressed = false;
-    });
     render();
 })();
 </script>
 </body>
 </html>`;
+    downloadFile(template, 'webgl-shader.html', 'text/html');
+}
+function exportWebGPUHTML(vertexSource, fragmentSource) {
+    function escapeForTemplateLiteral(str) {
+        return str
+            .replace(/\\/g, '\\\\')
+            .replace(/`/g, '\\`')
+            .replace(/\$\{/g, '\\${')
+            .replace(/\r\n/g, '\\n')
+            .replace(/\r/g, '\\n')
+            .replace(/\n/g, '\\n');
+    }
+    const template = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WebGPU Shader Animation</title>
+<style>
+body { margin: 0; overflow: hidden; background: #000; }
+canvas { width: 100vw; height: 100vh; display: block; }
+#error { 
+    position: absolute; 
+    top: 50%; 
+    left: 50%; 
+    transform: translate(-50%, -50%); 
+    color: white; 
+    font-family: Arial, sans-serif; 
+    text-align: center; 
+}
+</style>
+</head>
+<body>
+<canvas id="webgpu-canvas"></canvas>
+<div id="error" style="display: none;">
+    <h2>WebGPU Not Supported</h2>
+    <p>This animation requires WebGPU support.<br>
+    Please use a modern browser with WebGPU enabled.</p>
+</div>
+<script>
+(async function(){
+    const canvas = document.getElementById('webgpu-canvas');
+    const errorDiv = document.getElementById('error');
+    if (!navigator.gpu) {
+        errorDiv.style.display = 'block';
+        return;
+    }
+    const vertexShader = \`${escapeForTemplateLiteral(vertexSource)}\`;
+    const fragmentShader = \`${escapeForTemplateLiteral(fragmentSource)}\`;
+    let device, context, pipeline, bindGroup, uniformBuffer, vertexBuffer;
+    let startTime = performance.now();
+    let frameCount = 0;
+    let lastFrameTime = 0;
+    let deltaTime = 0;
+    let fps = 60;
+    const UNIFORM_BUFFER_SIZE = 80;
+    const mouse = {
+        x: 0,
+        y: 0,
+        clickX: 0,
+        clickY: 0,
+        isPressed: false
+    };
     try {
-        const blob = new Blob([template], { type: 'text/html' });
+        const adapter = await navigator.gpu.requestAdapter({
+            powerPreference: 'high-performance'
+        });
+        if (!adapter) {
+            throw new Error('No WebGPU adapter found');
+        }
+        device = await adapter.requestDevice();
+        context = canvas.getContext('webgpu');
+        if (!context) {
+            throw new Error('Could not get WebGPU context');
+        }
+        const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
+        context.configure({
+            device: device,
+            format: canvasFormat,
+            alphaMode: 'premultiplied',
+        });
+        uniformBuffer = device.createBuffer({
+            size: UNIFORM_BUFFER_SIZE,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
+        const vertices = new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]);
+        vertexBuffer = device.createBuffer({
+            size: vertices.byteLength,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        });
+        device.queue.writeBuffer(vertexBuffer, 0, vertices);
+        const bindGroupLayout = device.createBindGroupLayout({
+            entries: [{
+                binding: 0,
+                visibility: GPUShaderStage.FRAGMENT,
+                buffer: { type: 'uniform' }
+            }]
+        });
+        const pipelineLayout = device.createPipelineLayout({
+            bindGroupLayouts: [bindGroupLayout]
+        });
+        pipeline = device.createRenderPipeline({
+            layout: pipelineLayout,
+            vertex: {
+                module: device.createShaderModule({ code: vertexShader }),
+                entryPoint: 'vs_main',
+                buffers: [{
+                    arrayStride: 8,
+                    attributes: [{
+                        format: 'float32x2',
+                        offset: 0,
+                        shaderLocation: 0
+                    }]
+                }]
+            },
+            fragment: {
+                module: device.createShaderModule({ code: fragmentShader }),
+                entryPoint: 'fs_main',
+                targets: [{ format: canvasFormat }]
+            },
+            primitive: { topology: 'triangle-list' }
+        });
+        bindGroup = device.createBindGroup({
+            layout: bindGroupLayout,
+            entries: [{
+                binding: 0,
+                resource: { buffer: uniformBuffer }
+            }]
+        });
+        const getMousePos = (e, isTouch = false) => {
+            const rect = canvas.getBoundingClientRect();
+            const point = isTouch ? (e.touches[0] || e.changedTouches[0]) : e;
+            return {
+                x: point.clientX - rect.left,
+                y: rect.height - (point.clientY - rect.top),
+            };
+        };
+        const updateMouse = (e, isTouch = false, type) => {
+            const pos = getMousePos(e, isTouch);
+            if (type === 'move') {
+                mouse.x = pos.x;
+                mouse.y = pos.y;
+            } else if (type === 'down') {
+                mouse.isPressed = true;
+                mouse.clickX = pos.x;
+                mouse.clickY = pos.y;
+            } else if (type === 'up') {
+                mouse.isPressed = false;
+            }
+            if (isTouch) e.preventDefault();
+        };
+        canvas.addEventListener('mousemove', e => updateMouse(e, false, 'move'));
+        canvas.addEventListener('mousedown', e => updateMouse(e, false, 'down'));
+        canvas.addEventListener('mouseup', e => updateMouse(e, false, 'up'));
+        canvas.addEventListener('mouseleave', () => { mouse.isPressed = false; });
+        canvas.addEventListener('touchmove', e => updateMouse(e, true, 'move'), { passive: false });
+        canvas.addEventListener('touchstart', e => updateMouse(e, true, 'down'), { passive: false });
+        canvas.addEventListener('touchend', e => updateMouse(e, true, 'up'), { passive: false });
+        const resize = () => {
+            const w = canvas.clientWidth;
+            const h = canvas.clientHeight;
+            if (canvas.width !== w || canvas.height !== h) {
+                canvas.width = w;
+                canvas.height = h;
+            }
+        };
+        window.addEventListener('resize', resize);
+        resize();
+        function render() {
+            const currentTime = performance.now();
+            deltaTime = (currentTime - lastFrameTime) / 1000.0;
+            lastFrameTime = currentTime;
+            frameCount++;
+            if (frameCount % 10 === 0) {
+                fps = fps * 0.9 + (1.0 / deltaTime) * 0.1;
+            }
+            const time = (currentTime - startTime) * 0.001;
+            const uniformData = new Float32Array(20);
+            let offset = 0;
+            uniformData[offset++] = canvas.width;
+            uniformData[offset++] = canvas.height;
+            uniformData[offset++] = time;
+            uniformData[offset++] = deltaTime;
+            uniformData[offset++] = mouse.x;
+            uniformData[offset++] = mouse.y;
+            uniformData[offset++] = mouse.clickX || 0;
+            uniformData[offset++] = mouse.clickY || 0;
+            uniformData[offset++] = mouse.isPressed ? 1.0 : 0.0;
+            uniformData[offset++] = frameCount;
+            uniformData[offset++] = fps;
+            uniformData[offset++] = canvas.width / canvas.height;
+            uniformData[offset++] = 1.0 / canvas.width;
+            uniformData[offset++] = 1.0 / canvas.height;
+            uniformData[offset++] = 0.0;
+            uniformData[offset++] = 0.0;
+            uniformData[offset++] = 0.0;
+            uniformData[offset++] = 0.0;
+            uniformData[offset++] = 0.0;
+            uniformData[offset++] = 0.0;
+            device.queue.writeBuffer(uniformBuffer, 0, uniformData);
+            const commandEncoder = device.createCommandEncoder();
+            const renderPass = commandEncoder.beginRenderPass({
+                colorAttachments: [{
+                    view: context.getCurrentTexture().createView(),
+                    clearValue: { r: 0, g: 0, b: 0, a: 1 },
+                    loadOp: 'clear',
+                    storeOp: 'store',
+                }]
+            });
+            renderPass.setPipeline(pipeline);
+            renderPass.setBindGroup(0, bindGroup);
+            renderPass.setVertexBuffer(0, vertexBuffer);
+            renderPass.draw(6);
+            renderPass.end();
+            device.queue.submit([commandEncoder.finish()]);
+            requestAnimationFrame(render);
+        }
+        render();
+    } catch (error) {
+        console.error('WebGPU initialization failed:', error);
+        errorDiv.style.display = 'block';
+        errorDiv.innerHTML = \`
+            <h2>WebGPU Error</h2>
+            <p>Failed to initialize WebGPU:<br>\${error.message}</p>
+            <p>Please check the console for more details.</p>
+        \`;
+    }
+})();
+</script>
+</body>
+</html>`;
+    downloadFile(template, 'webgpu-shader.html', 'text/html');
+}
+function downloadFile(content, filename, mimeType) {
+    try {
+        const blob = new Blob([content], { type: mimeType });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'webgl-shader.html';
+        a.download = filename;
         a.click();
         URL.revokeObjectURL(url);
     } catch (error) {
         console.error('Export failed:', error);
-        alert('Failed to export HTML file: ' + error.message);
+        alert('Failed to export file: ' + error.message);
     }
 }
 function addExportButtons() {
     const vertExportBtn = document.createElement('button');
     vertExportBtn.textContent = 'Export';
     vertExportBtn.title = 'Export Vertex Shader';
-    vertExportBtn.onclick = () => exportShader('vert', vertTA.value);
+    vertExportBtn.onclick = () => {
+        const isWebGPU = window.webgpuState && window.webgpuState.isWebGPUMode();
+        const extension = isWebGPU ? 'wgsl' : 'vert';
+        exportShader(extension, vertTA.value);
+    };
     vertPanel.querySelector('.panel-header').appendChild(vertExportBtn);
     const fragExportBtn = document.createElement('button');
     fragExportBtn.textContent = 'Export';
     fragExportBtn.title = 'Export Fragment Shader';
-    fragExportBtn.onclick = () => exportShader('frag', fragTA.value);
+    fragExportBtn.onclick = () => {
+        const isWebGPU = window.webgpuState && window.webgpuState.isWebGPUMode();
+        const extension = isWebGPU ? 'wgsl' : 'frag';
+        exportShader(extension, fragTA.value);
+    };
     fragPanel.querySelector('.panel-header').appendChild(fragExportBtn);
     const fullExportBtn = document.createElement('button');
     fullExportBtn.textContent = 'Export';
