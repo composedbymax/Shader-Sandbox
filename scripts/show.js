@@ -99,7 +99,7 @@
         }
     }
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'F11' || (e.ctrlKey && e.shiftKey && e.key === 'F')) {
+        if (e.key === 'F11' || (e.ctrlKey && e.shiftKey && e.key === 'D')) {
             e.preventDefault();
             togglePerformanceMode();
         }

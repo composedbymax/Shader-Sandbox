@@ -213,10 +213,7 @@ return worker;
             return el;
         };
         const overlay = create('div', {}, {
-            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-            backgroundColor: 'var(--0)', display: 'flex',
-            alignItems: 'center', justifyContent: 'center',
-            zIndex: 10000, backdropFilter: 'blur(4px)'
+            position: 'fixed',bottom: '20px',right: '20px',zIndex: 10000,pointerEvents: 'none'
         });
         const title = create('h3', { textContent: 'Load Autosaved Data?' }, {
             marginBottom: '16px', color: 'var(--7)', fontSize: '18px', fontWeight: 600
@@ -226,7 +223,7 @@ return worker;
             textContent: `We found autosaved shader code from ${timeAgo}. Would you like to load it?`
         }, { marginBottom: '24px', color: 'var(--6)', lineHeight: 1.5 });
         const btnStyle = {
-            padding: '8px 16px', borderRadius: '4px', cursor: 'pointer',
+            padding: '8px 16px', borderRadius: '2px', cursor: 'pointer',
             fontSize: '14px', transition: 'all 0.2s ease'
         };
         const noBtn = create('button', { textContent: 'No, Start Fresh' }, {
@@ -239,8 +236,7 @@ return worker;
             display: 'flex', gap: '12px', justifyContent: 'flex-end'
         }, [noBtn, yesBtn]);
         const dialog = create('div', {}, {
-            backgroundColor: 'var(--2)', border: '1px solid var(--4)',
-            borderRadius: '8px', padding: '24px', maxWidth: '400px', width: '90%'
+            backgroundColor: 'var(--2)',border: '1px solid var(--4)',borderRadius: '2px',padding: '16px',maxWidth: '320px',width: '100%',animation: 'slideIn 0.3s ease-out',pointerEvents: 'auto'
         }, [title, message, buttonContainer]);
         overlay.appendChild(dialog);
         const hover = (el, enterStyles, leaveStyles) => {

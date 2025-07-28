@@ -48,7 +48,7 @@ class AudioReactive {
       transform:'translateY(-50%)', padding:'8px',
       backgroundColor:'var(--d)', color:'var(--6)', border:'none',
       borderRadius:'0', cursor:'pointer', fontSize:'12px',
-      display:'flex', transition:'all .2s ease', zIndex:'1000',
+      display:'flex', transition:'all .2s ease', zIndex:'1',
       height:'2rem', width: '2rem'
     };
     this.button = this.EL('button', {
