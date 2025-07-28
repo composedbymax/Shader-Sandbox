@@ -206,13 +206,33 @@ canvas { width: 100vw; height: 100vh; display: block; }
         setUniform(['time', 'u_time', 'uTime', 'iTime'], gl.uniform1f.bind(gl), time);
         setUniform(['resolution', 'u_resolution', 'uResolution', 'iResolution'], gl.uniform2f.bind(gl), canvas.width, canvas.height);
         setUniform(['uColor', 'u_color', 'color'], gl.uniform3f.bind(gl), 1.0, 1.0, 1.0);
-        setUniform(mouseUniforms, gl.uniform2f.bind(gl), mouse.x, mouse.y);
+        setUniform(['mouse', 'u_mouse', 'uMouse', 'iMouse'], gl.uniform2f.bind(gl),mouse.x / canvas.width, mouse.y / canvas.height);
+        setUniform(['u_mouse_pixel', 'uMousePixel'], gl.uniform2f.bind(gl), mouse.x, mouse.y);
+        setUniform(['u_mouse_click', 'uMouseClick'], gl.uniform2f.bind(gl),mouse.clickX / canvas.width, mouse.clickY / canvas.height);
+        setUniform(['u_mouse_click_pixel', 'uMouseClickPixel'], gl.uniform2f.bind(gl),mouse.clickX, mouse.clickY);
         setUniform(mouseDownUniforms, gl.uniform1i.bind(gl), mouse.isPressed ? 1 : 0);
-        setUniform(mouseClickUniforms, gl.uniform2f.bind(gl), mouse.clickX, mouse.clickY);
-        setUniform(mouseTimeUniforms, gl.uniform1f.bind(gl), mouse.lastClickTime);
+        setUniform(mouseTimeUniforms, gl.uniform1f.bind(gl),(performance.now() - mouse.lastClickTime) * 0.001);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
         requestAnimationFrame(render);
     }
+    canvas.addEventListener('mousemove', e => {
+        const rect = canvas.getBoundingClientRect();
+        mouse.x = e.clientX - rect.left;
+        mouse.y = rect.height - (e.clientY - rect.top); // This is correct
+    });
+    canvas.addEventListener('mousedown', e => {
+        const rect = canvas.getBoundingClientRect();
+        mouse.clickX = e.clientX - rect.left;
+        mouse.clickY = rect.height - (e.clientY - rect.top); // This is correct
+        mouse.lastClickTime = performance.now(); // Remove the * 0.001 here since we convert in render()
+        mouse.isPressed = true;
+    });
+    canvas.addEventListener('mouseup', () => {
+        mouse.isPressed = false;
+    });
+    canvas.addEventListener('mouseleave', () => {
+        mouse.isPressed = false;
+    });
     render();
 })();
 </script>
