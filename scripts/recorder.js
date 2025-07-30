@@ -1,8 +1,8 @@
 (() => {
   function getCurrentCanvas() {
-    const objCanvas = document.getElementById('objCanvas');
-    if (objCanvas && objCanvas.style.display !== 'none') {
-      return objCanvas;
+    const threedCanvas = document.getElementById('3dCanvas');
+    if (threedCanvas && threedCanvas.style.display !== 'none') {
+      return threedCanvas;
     }
     if (window.webgpuState && window.webgpuState.isWebGPUMode()) {
       return window.webgpuState.getCanvas();

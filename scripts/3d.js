@@ -6,25 +6,25 @@ function initModelLoader() {
   (() => {
     function buildUI() {
       const css = `
-      #objCanvas{position: absolute;top: 0;left: 0;width: 100%;height: 100%;z-index: 0;}
-      #objLoadBtn{position: absolute;bottom: 10px;right: 146px;z-index: 1;background: var(--d);color: var(--l);border: none;cursor: pointer;width:4.25rem;height:39px;}
-      #objLoadBtn:hover{background: var(--5);color: var(--l);}
-      #objModalBg{display: none;position: fixed;inset: 0;background: rgba(0, 0, 0, 0.5);z-index: 30;justify-content: center;align-items: center;}
-      #objModalBg.show{display: flex;}
-      #objModal{background: var(--2);padding: 20px;border-radius: 6px;color: var(--7);min-width: 320px;border: 1px solid var(--4);}
-      #objModal h2{margin-top: 0;color: var(--6);}
-      #objDropZone{border: 2px dashed var(--5);background: var(--3);padding: 30px;text-align: center;border-radius: 6px;cursor: pointer;transition: background 0.2s, border-color 0.2s;color: var(--7);user-select: none;}
-      #objDropZone:hover{background: var(--4);}
-      #objDropZone.dragover{border-color: var(--rh);background: var(--4);}
-      #objDropZone p{margin: 0;font-size: 14px;color: var(--6);}
-      #objModal label{color: var(--6);}
-      #objInfo{margin-top: 10px;color: var(--6);font-size: 14px;}
-      #objErr{margin-top: 10px;color: var(--rh);font-size: 14px;display: none;}
-      #objModal footer{margin-top: 20px;text-align: right;display: flex;gap: 10px;justify-content: flex-end;}
-      #objClose, #objRevert{padding: 6px 12px;background: var(--3);color: var(--6);border: 1px solid var(--4);border-radius: 4px;cursor: pointer;}
-      #objClose:hover, #objRevert:hover{background: var(--4);color: var(--l);}
-      #objRevert{background: var(--5);color: var(--l);}
-      #objRevert:hover{background: var(--6);}
+      #3dCanvas{position: absolute;top: 0;left: 0;width: 100%;height: 100%;z-index: 0;}
+      #threeLoadBtn{position: absolute;bottom: 10px;right: 146px;z-index: 1;background: var(--d);color: var(--l);border: none;cursor: pointer;width:4.25rem;height:39px;}
+      #threeLoadBtn:hover{background: var(--5);color: var(--l);}
+      #threedModalBg{display: none;position: fixed;inset: 0;background: rgba(0, 0, 0, 0.5);z-index: 100;justify-content: center;align-items: center;}
+      #threedModalBg.show{display: flex;}
+      #threedModal{background: var(--2);padding: 20px;border-radius: 6px;color: var(--7);min-width: 320px;border: 1px solid var(--4);}
+      #threedModal h2{margin-top: 0;color: var(--6);}
+      #threedDropZone{border: 2px dashed var(--5);background: var(--3);padding: 30px;text-align: center;border-radius: 6px;cursor: pointer;transition: background 0.2s, border-color 0.2s;color: var(--7);user-select: none;}
+      #threedDropZone:hover{background: var(--4);}
+      #threedDropZone.dragover{border-color: var(--rh);background: var(--4);}
+      #threedDropZone p{margin: 0;font-size: 14px;color: var(--6);}
+      #threedModal label{color: var(--6);}
+      #threedInfo{margin-top: 10px;color: var(--6);font-size: 14px;}
+      #threedErr{margin-top: 10px;color: var(--rh);font-size: 14px;display: none;}
+      #threedModal footer{margin-top: 20px;text-align: right;display: flex;gap: 10px;justify-content: flex-end;}
+      #threedClose, #threedRevert{padding: 6px 12px;background: var(--3);color: var(--6);border: 1px solid var(--4);border-radius: 4px;cursor: pointer;}
+      #threedClose:hover, #threedRevert:hover{background: var(--4);color: var(--l);}
+      #threedRevert{background: var(--5);color: var(--l);}
+      #threedRevert:hover{background: var(--6);}
       .format-info{margin-top: 5px;font-size: 12px;color: var(--5);}
     `;
       const style = document.createElement("style");
@@ -34,20 +34,20 @@ function initModelLoader() {
       preview.style.position = "relative";
       const originalCanvas = document.getElementById("glcanvas");
       const canvas = document.createElement("canvas");
-      canvas.id = "objCanvas";
+      canvas.id = "3dCanvas";
       canvas.style.display = "none";
       preview.appendChild(canvas);
       const btn = document.createElement("button");
-      btn.id = "objLoadBtn";
+      btn.id = "threeLoadBtn";
       btn.textContent = "3D";
       preview.appendChild(btn);
       const modalBg = document.createElement("div");
-      modalBg.id = "objModalBg";
+      modalBg.id = "threedModalBg";
       const modal = document.createElement("div");
-      modal.id = "objModal";
+      modal.id = "threedModal";
       modal.innerHTML = `
       <h2>Load 3D Model</h2>
-      <div id="objDropZone">
+      <div id="threedDropZone">
         <p>Drag and drop a 3D model file here<br>or click to browse</p>
         <div class="format-info">Supports: OBJ, PLY, STL, OFF</div>
         <input type="file" id="objFileInput" accept=".obj,.ply,.stl,.off" hidden />
@@ -64,19 +64,19 @@ function initModelLoader() {
           <span style="margin-left:5px;">Wireframe</span>
         </label>
       </div>
-      <div id="objInfo">No model loaded</div>
-      <div id="objErr"></div>
+      <div id="threedInfo">No model loaded</div>
+      <div id="threedErr"></div>
       <footer>
-        <button id="objRevert">Revert Shaders</button>
-        <button id="objClose">Cancel</button>
+        <button id="threedRevert">Revert Shaders</button>
+        <button id="threedClose">Cancel</button>
       </footer>
     `;
       modalBg.appendChild(modal);
       preview.appendChild(modalBg);
       btn.onclick = () => modalBg.classList.add("show");
-      modal.querySelector("#objClose").onclick = () =>
+      modal.querySelector("#threedClose").onclick = () =>
         modalBg.classList.remove("show");
-      const dropZone = modal.querySelector("#objDropZone");
+      const dropZone = modal.querySelector("#threedDropZone");
       const fileInput = modal.querySelector("#objFileInput");
       dropZone.addEventListener("click", () => fileInput.click());
       dropZone.addEventListener("dragover", (e) => {
@@ -101,9 +101,9 @@ function initModelLoader() {
         fileInput,
         cullChk: modal.querySelector("#objCull"),
         wireChk: modal.querySelector("#objWire"),
-        info: modal.querySelector("#objInfo"),
-        err: modal.querySelector("#objErr"),
-        revertBtn: modal.querySelector("#objRevert"),
+        info: modal.querySelector("#threedInfo"),
+        err: modal.querySelector("#threedErr"),
+        revertBtn: modal.querySelector("#threedRevert"),
         hide: () => modalBg.classList.remove("show"),
       };
     }
