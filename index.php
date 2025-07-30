@@ -35,8 +35,8 @@ created by Max Warren
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <script>window.userLoggedIn = <?php echo isset($_SESSION['user']) ? 'true' : 'false'; ?>;window.userRole = <?php echo isset($_SESSION['user_role']) ? json_encode($_SESSION['user_role']) : 'null'; ?>;</script>
   <script>"serviceWorker"in navigator&&navigator.serviceWorker.register("/glsl/sw.js",{scope:"/glsl/"});</script>
-  <link rel="preload" as="script" href="scripts/cover.js">
-  <script src="scripts/cover.js"></script>
+  <link rel="preload" as="script" href="scripts/utils/cover.js">
+  <script src="scripts/utils/cover.js"></script>
   <link rel="preload" href="css/style.css" as="style">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/root.css">
@@ -104,6 +104,8 @@ uniform float u_volume;
 uniform float u_treble;
 uniform float u_mid;
 uniform float u_bass;
+uniform vec2 mouse;
+vec2 axel = vec2(1.0);
 float hash(vec2 p) {
     p = fract(p * vec2(123.34, 456.21));
     p += dot(p, p + 78.23);
@@ -139,7 +141,8 @@ vec3 getNormal(vec3 p) {
     ));
 }
 void main() {
-    vec2 uv = (gl_FragCoord.xy / u_resolution) * 2.0 - 1.0;
+    axel = mouse;
+    vec2 uv = (gl_FragCoord.xy / u_resolution) * 2.0 - 1.0 + (axel * 0.1);
     uv.x *= u_resolution.x / u_resolution.y;
     vec3 ro = vec3(0.0, 2.0, u_time * 5.0);
     vec3 lookAt = vec3(0.0, 2.0, ro.z + 5.0);
@@ -176,7 +179,8 @@ void main() {
         </div>
       </div>
     </div>
-  <script src="scripts/main.js"></script>
-  <script src="scripts/hidev.js" defer></script>
+  <script src="scripts/utils/main.js"></script>
+  <script src="scripts/utils/hidev.js" defer></script>
+  <script src="scripts/utils/autosave.js"></script>
 </body>
 </html>

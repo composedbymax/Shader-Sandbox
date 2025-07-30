@@ -1,22 +1,24 @@
-const CACHE_VERSION = "v25";
+const CACHE_VERSION = "v30";
 const CACHE_NAME = `glsl-app-${CACHE_VERSION}`;
 const ASSETS = [
     "/glsl/index.php",
     "/glsl/scripts/audio.js",
+    "/glsl/scripts/utils/autosave.js",
     "/glsl/scripts/banner.js",
     "/glsl/scripts/color.js",
-    "/glsl/scripts/cover.js",
+    "/glsl/scripts/utils/cover.js",
     "/glsl/scripts/export.js",
-    "/glsl/scripts/find.js",
+    "/glsl/scripts/utils/find.js",
     "/glsl/scripts/flowchart.js",
     "/glsl/scripts/format.js",
     "/glsl/scripts/gpu.js",
-    "/glsl/scripts/hidev.js",
+    "/glsl/scripts/utils/hidev.js",
     "/glsl/scripts/info.js",
+    "/glsl/scripts/js.js",
     "/glsl/scripts/image.js",
     "/glsl/scripts/link.js",
-    "/glsl/scripts/main.js",
-    "/glsl/scripts/p2p.js",
+    "/glsl/scripts/utils/main.js",
+    "/glsl/scripts/utils/p2p.js",
     "/glsl/scripts/parse.js",
     "/glsl/scripts/performance.js",
     "/glsl/scripts/player.js",
@@ -29,6 +31,7 @@ const ASSETS = [
     "/glsl/scripts/shuffle.js",
     "/glsl/scripts/stay.js",
     "/glsl/scripts/theme.js",
+    "/glsl/scripts/video.js",
     "/glsl/css/root.css",
     "/glsl/css/style.css",
 ];
