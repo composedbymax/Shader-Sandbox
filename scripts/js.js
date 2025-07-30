@@ -1,0 +1,303 @@
+(function() {
+    const $ = id => document.getElementById(id);
+    let jsMode = false;
+    let savedShaderCode = { vertex: '', fragment: '' };
+    let jsAnimationId = null;
+    let jsCanvas = null;
+    let jsCtx = null;
+    let jsStartTime = Date.now();
+    let jsMouse = {
+        x: 0,
+        y: 0,
+        clickX: 0,
+        clickY: 0,
+        isPressed: false,
+        lastClickTime: 0
+    };
+    const defaultJSAnimation = `// JavaScript Canvas Animation
+// Available variables: ctx, width, height, time, mouse
+// ctx - 2D canvas context
+// width, height - canvas dimensions
+// time - elapsed time in seconds
+// mouse - {x, y, clickX, clickY, isPressed, lastClickTime}
+// Clear canvas with semi-transparent black for trail effect
+ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+ctx.fillRect(0, 0, width, height);
+// Create animated gradient background
+const gradient = ctx.createRadialGradient(
+    width / 2 + Math.sin(time) * 100,
+    height / 2 + Math.cos(time * 0.7) * 80,
+    50,
+    width / 2,
+    height / 2,
+    Math.max(width, height) / 2
+);
+gradient.addColorStop(0, \`hsl(\${time * 20 % 360}, 70%, 60%)\`);
+gradient.addColorStop(1, \`hsl(\${(time * 20 + 180) % 360}, 50%, 20%)\`);
+ctx.globalCompositeOperation = 'multiply';
+ctx.fillStyle = gradient;
+ctx.fillRect(0, 0, width, height);
+ctx.globalCompositeOperation = 'source-over';
+// Draw animated circles
+for (let i = 0; i < 8; i++) {
+    const angle = (time + i * 0.5) * 0.8;
+    const x = width / 2 + Math.cos(angle) * (100 + i * 20);
+    const y = height / 2 + Math.sin(angle) * (80 + i * 15);
+    const radius = 20 + Math.sin(time * 2 + i) * 10;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = \`hsla(\${(time * 30 + i * 45) % 360}, 80%, 70%, 0.8)\`;
+    ctx.fill();
+}
+// Interactive mouse effect
+if (mouse.isPressed) {
+    const rippleTime = (Date.now() - mouse.lastClickTime) / 1000;
+    const rippleRadius = rippleTime * 200;
+    const alpha = Math.max(0, 1 - rippleTime);
+    if (alpha > 0) {
+        ctx.beginPath();
+        ctx.arc(mouse.clickX, mouse.clickY, rippleRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = \`rgba(255, 255, 255, \${alpha})\`;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+    }
+}
+// Draw mouse cursor effect
+if (mouse.x > 0 && mouse.y > 0) {
+    ctx.beginPath();
+    ctx.arc(mouse.x, mouse.y, 30 + Math.sin(time * 3) * 10, 0, Math.PI * 2);
+    ctx.strokeStyle = \`hsla(\${time * 50 % 360}, 100%, 80%, 0.6)\`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+}`;
+    function createToggleButton() {
+        const toggleBtn = document.createElement('button');
+        toggleBtn.id = 'jsToggleBtn';
+        toggleBtn.innerHTML = 'JS';
+        toggleBtn.title = 'JavaScript Canvas Mode';
+        toggleBtn.style.cssText = `
+            position: absolute;
+            bottom: 49px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            background: var(--d);
+            color: white;
+            border: none;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        `;
+        toggleBtn.addEventListener('click', toggleMode);
+        const previewPanel = $('preview-panel');
+        previewPanel.style.position = 'relative';
+        previewPanel.appendChild(toggleBtn);
+    }
+    function setupJSMouseEvents() {
+        if (!jsCanvas) return;
+        const getMousePos = (e) => {
+            const rect = jsCanvas.getBoundingClientRect();
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        };
+        jsCanvas.addEventListener('mousemove', (e) => {
+            const pos = getMousePos(e);
+            jsMouse.x = pos.x;
+            jsMouse.y = pos.y;
+        });
+        jsCanvas.addEventListener('mousedown', (e) => {
+            const pos = getMousePos(e);
+            jsMouse.isPressed = true;
+            jsMouse.clickX = pos.x;
+            jsMouse.clickY = pos.y;
+            jsMouse.lastClickTime = Date.now();
+        });
+        jsCanvas.addEventListener('mouseup', () => {
+            jsMouse.isPressed = false;
+        });
+        jsCanvas.addEventListener('mouseleave', () => {
+            jsMouse.isPressed = false;
+        });
+    }
+    function toggleMode() {
+        const toggleBtn = $('jsToggleBtn');
+        const vertPanel = $('vertPanel');
+        const fragPanel = $('fragPanel');
+        const rowDivider = $('rowDivider');
+        const glCanvas = $('glcanvas');
+        const vertTA = $('vertCode');
+        const fragTA = $('fragCode');
+        if (!jsMode) {
+            jsMode = true;
+            savedShaderCode.vertex = vertTA.value;
+            savedShaderCode.fragment = fragTA.value;
+            toggleBtn.innerHTML = 'GL';
+            toggleBtn.title = 'Switch back to WebGL Mode';
+            toggleBtn.style.background = 'var(--d)';
+            fragPanel.style.display = 'none';
+            rowDivider.style.display = 'none';
+            vertPanel.style.height = '100%';
+            const vertHeader = vertPanel.querySelector('.panel-header span');
+            vertHeader.textContent = 'JavaScript Animation';
+            vertTA.value = defaultJSAnimation;
+            glCanvas.style.display = 'none';
+            createJSCanvas();
+            setupJSMouseEvents();
+            startJSAnimation();
+            console.log('JavaScript');
+        } else {
+            jsMode = false;
+            stopJSAnimation();
+            toggleBtn.innerHTML = 'JS';
+            toggleBtn.title = 'Switch to JavaScript Canvas Mode';
+            toggleBtn.style.background = 'var(--a)';
+            fragPanel.style.removeProperty('display');
+            rowDivider.style.removeProperty('display');
+            vertPanel.style.height = '50%';
+            fragPanel.style.height = '50%';
+            const vertHeader = vertPanel.querySelector('.panel-header span');
+            vertHeader.textContent = 'Vertex Shader';
+            vertTA.value = savedShaderCode.vertex;
+            fragTA.value = savedShaderCode.fragment;
+            glCanvas.style.display = 'block';
+            removeJSCanvas();
+            if (window.rebuildProgram) {
+                window.rebuildProgram();
+            }
+            console.log('WebGL');
+        }
+    }
+    function createJSCanvas() {
+        const previewPanel = $('preview-panel');
+        jsCanvas = document.createElement('canvas');
+        jsCanvas.id = 'jsCanvas';
+        jsCanvas.style.cssText = `
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: #000;
+            position: absolute;
+            top: 0;
+            left: 0;
+        `;
+        previewPanel.appendChild(jsCanvas);
+        jsCtx = jsCanvas.getContext('2d');
+        resizeJSCanvas();
+    }
+    function removeJSCanvas() {
+        if (jsCanvas) {
+            jsCanvas.remove();
+            jsCanvas = null;
+            jsCtx = null;
+        }
+    }
+    function resizeJSCanvas() {
+        if (!jsCanvas) return;
+        const previewPanel = $('preview-panel');
+        const rect = previewPanel.getBoundingClientRect();
+        jsCanvas.width = rect.width;
+        jsCanvas.height = rect.height;
+    }
+    function startJSAnimation() {
+        jsStartTime = Date.now();
+        renderJSAnimation();
+    }
+    function stopJSAnimation() {
+        if (jsAnimationId) {
+            cancelAnimationFrame(jsAnimationId);
+            jsAnimationId = null;
+        }
+    }
+    function renderJSAnimation() {
+        if (!jsMode || !jsCanvas || !jsCtx) return;
+        const vertTA = $('vertCode');
+        const time = (Date.now() - jsStartTime) / 1000;
+        const width = jsCanvas.width;
+        const height = jsCanvas.height;
+        if (width === 0 || height === 0) {
+            resizeJSCanvas();
+        }
+        try {
+            const userCode = vertTA.value;
+            const wrappedCode = `
+                try {
+                    ${userCode}
+                } catch (e) {
+                    ctx.fillStyle = '#ff0000';
+                    ctx.font = '14px monospace';
+                    ctx.fillText('Error: ' + e.message, 10, 30);
+                    console.error('Animation error:', e);
+                }
+            `;
+            const animateFunction = new Function('ctx', 'width', 'height', 'time', 'mouse', wrappedCode);
+            animateFunction(jsCtx, width, height, time, jsMouse);
+        } catch (error) {
+            jsCtx.fillStyle = '#ff0000';
+            jsCtx.font = '14px monospace';
+            jsCtx.fillText('Error: ' + error.message, 10, 30);
+            console.error('JavaScript animation error:', error);
+        }
+        jsAnimationId = requestAnimationFrame(renderJSAnimation);
+    }
+    function setupCodeListener() {
+        const vertTA = $('vertCode');
+        let timeout;
+        vertTA.addEventListener('input', () => {
+            if (!jsMode) return;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                console.log('JavaScript code updated');
+            }, 100);
+        });
+    }
+    function init() {
+        const checkReady = () => {
+            if (!$('preview-panel') || !$('vertCode')) {
+                setTimeout(checkReady, 100);
+                return;
+            }
+            createToggleButton();
+            setupCodeListener();
+            window.addEventListener('resize', () => {
+            if (jsMode) {
+                resizeJSCanvas();
+                setTimeout(() => {
+                    const vertPanel = $('vertPanel');
+                    const fragPanel = $('fragPanel');
+                    const rowDivider = $('rowDivider');
+                    if (vertPanel && fragPanel && rowDivider) {
+                        fragPanel.style.display = 'none';
+                        rowDivider.style.display = 'none';
+                        vertPanel.style.height = '100%';
+                    }
+                }, 10);
+            }
+        });
+        const observer = new MutationObserver(() => {
+            if (jsMode) {
+                const vertPanel = $('vertPanel');
+                if (vertPanel && vertPanel.style.height !== '100%') {
+                    vertPanel.style.height = '100%';
+                }
+            }
+        });
+        setTimeout(() => {
+            const vertPanel = $('vertPanel');
+            if (vertPanel) {
+                observer.observe(vertPanel, { attributes: true, attributeFilter: ['style'] });
+            }
+        }, 1000);
+            console.log('JavaScript toggle feature initialized');
+        };
+        checkReady();
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();

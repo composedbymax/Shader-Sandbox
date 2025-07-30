@@ -40,6 +40,7 @@
             "scripts/show.js",
             "scripts/shuffle.js",
             "scripts/3d.js",
+            "scripts/js.js",
             ...(window.userLoggedIn ? ["scripts/utils/find.js"] : []),
             ...(window.userLoggedIn ? ["scripts/utils/p2p.js"] : []),
         ];
