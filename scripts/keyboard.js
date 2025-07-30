@@ -326,11 +326,14 @@
             }
         },
         open: function() {
+            const fullscreenEl = document.fullscreenElement || 
+                                document.webkitFullscreenElement || 
+                                document.mozFullScreenElement;
+            const container = fullscreenEl || document.body;
+            container.appendChild(this.modal);
             this.modal.classList.add('show');
             this.isOpen = true;
-            setTimeout(() => {
-                this.calculateKeyboardSize();
-            }, 50);
+            setTimeout(() => this.calculateKeyboardSize(), 50);
         },
         close: function() {
             this.modal.classList.remove('show');
