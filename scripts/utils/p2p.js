@@ -337,7 +337,7 @@
         els.syncInfo.style.display = 'none';
       }
     };
-    pc.onicecandidate = (event) => event.candidate && console.debug('ICE candidate gathered:', event.candidate);
+    pc.onicecandidate = (event) => {};
     if (isOfferer) {
       dc = pc.createDataChannel('shaderSync');
       setupDataChannel(dc);
