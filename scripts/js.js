@@ -20,10 +20,8 @@
 // width, height - canvas dimensions
 // time - elapsed time in seconds
 // mouse - {x, y, clickX, clickY, isPressed, lastClickTime}
-// Clear canvas with semi-transparent black for trail effect
 ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
 ctx.fillRect(0, 0, width, height);
-// Create animated gradient background
 const gradient = ctx.createRadialGradient(
     width / 2 + Math.sin(time) * 100,
     height / 2 + Math.cos(time * 0.7) * 80,
@@ -34,11 +32,8 @@ const gradient = ctx.createRadialGradient(
 );
 gradient.addColorStop(0, \`hsl(\${time * 20 % 360}, 70%, 60%)\`);
 gradient.addColorStop(1, \`hsl(\${(time * 20 + 180) % 360}, 50%, 20%)\`);
-ctx.globalCompositeOperation = 'multiply';
 ctx.fillStyle = gradient;
 ctx.fillRect(0, 0, width, height);
-ctx.globalCompositeOperation = 'source-over';
-// Draw animated circles
 for (let i = 0; i < 8; i++) {
     const angle = (time + i * 0.5) * 0.8;
     const x = width / 2 + Math.cos(angle) * (100 + i * 20);
@@ -49,7 +44,6 @@ for (let i = 0; i < 8; i++) {
     ctx.fillStyle = \`hsla(\${(time * 30 + i * 45) % 360}, 80%, 70%, 0.8)\`;
     ctx.fill();
 }
-// Interactive mouse effect
 if (mouse.isPressed) {
     const rippleTime = (Date.now() - mouse.lastClickTime) / 1000;
     const rippleRadius = rippleTime * 200;
@@ -62,7 +56,6 @@ if (mouse.isPressed) {
         ctx.stroke();
     }
 }
-// Draw mouse cursor effect
 if (mouse.x > 0 && mouse.y > 0) {
     ctx.beginPath();
     ctx.arc(mouse.x, mouse.y, 30 + Math.sin(time * 3) * 10, 0, Math.PI * 2);
@@ -137,7 +130,7 @@ if (mouse.x > 0 && mouse.y > 0) {
             savedShaderCode.fragment = fragTA.value;
             toggleBtn.innerHTML = 'GL';
             toggleBtn.title = 'Switch back to WebGL Mode';
-            toggleBtn.style.background = 'var(--d)';
+            toggleBtn.style.background = 'var(--a)';
             fragPanel.style.display = 'none';
             rowDivider.style.display = 'none';
             vertPanel.style.height = '100%';
@@ -154,7 +147,7 @@ if (mouse.x > 0 && mouse.y > 0) {
             stopJSAnimation();
             toggleBtn.innerHTML = 'JS';
             toggleBtn.title = 'Switch to JavaScript Canvas Mode';
-            toggleBtn.style.background = 'var(--a)';
+            toggleBtn.style.background = 'var(--d)';
             fragPanel.style.removeProperty('display');
             rowDivider.style.removeProperty('display');
             vertPanel.style.height = '50%';

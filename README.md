@@ -12,7 +12,7 @@
 
 # GLSL Editor - Max Warren
 
-A browser-based GLSL (OpenGL Shading Language) editor for writing, testing, recording, and exporting or loading vertex and fragment shaders, as well as standalone .html animations. Users can interactively build shaders and preview them in real time using WebGL.
+A browser-based GLSL + WGSL editor for writing, testing, recording, and exporting or loading vertex and fragment shaders, as well as standalone .html animations. Users can interactively build shaders and preview them in real time using WebGL or WebGPU.
 
 [Go to App](https://max.wuaze.com/glsl)
 
@@ -28,7 +28,7 @@ This application was developed to address those limitations. It provides a brows
 
 ## Development
 
-This application is built entirely with native PHP, HTML5, CSS, and JavaScript. It uses the WebGL API directly for rendering and shader compilation, without relying on any third-party libraries or frameworks. Aside from minimal server-side functionality for public posting and list retrieval via PHP endpoints, the entire application runs client-side.
+This application is built entirely with native PHP, HTML5, CSS, and JavaScript. It uses the WebGL and WebGPU API directly for rendering and shader compilation, without relying on any third-party libraries or frameworks. Aside from minimal server-side functionality for public posting, code retrieval, authentication and p2p signaling via PHP endpoints, the entire application runs client-side.
 
 ---
 
