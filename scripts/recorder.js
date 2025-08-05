@@ -1,11 +1,14 @@
 (() => {
   function getCurrentCanvas() {
+    if (window.jsCanvasState && window.jsCanvasState.isJSMode()) {
+        return window.jsCanvasState.getCanvas();
+    }
     const threedCanvas = document.getElementById('3dCanvas');
     if (threedCanvas && threedCanvas.style.display !== 'none') {
-      return threedCanvas;
+        return threedCanvas;
     }
     if (window.webgpuState && window.webgpuState.isWebGPUMode()) {
-      return window.webgpuState.getCanvas();
+        return window.webgpuState.getCanvas();
     }
     return document.getElementById('glcanvas');
   }
@@ -168,10 +171,12 @@
   let currentVideoUrl = null;
   let currentVideoData = null;
   function updateCanvasMode() {
-    if (window.webgpuState && window.webgpuState.isWebGPUMode()) {
-      canvasMode.textContent = 'Canvas: WebGPU';
+    if (window.jsCanvasState && window.jsCanvasState.isJSMode()) {
+        canvasMode.textContent = 'Canvas: JavaScript 2D';
+    } else if (window.webgpuState && window.webgpuState.isWebGPUMode()) {
+        canvasMode.textContent = 'Canvas: WebGPU';
     } else {
-      canvasMode.textContent = 'Canvas: WebGL';
+        canvasMode.textContent = 'Canvas: WebGL';
     }
   }
   function getAudioStream() {

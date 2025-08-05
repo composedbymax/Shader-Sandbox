@@ -14,6 +14,11 @@
         isPressed: false,
         lastClickTime: 0
     };
+    window.jsCanvasState = {
+        isJSMode: () => jsMode,
+        getCanvas: () => jsCanvas,
+        getContext: () => jsCtx
+    };
     const defaultJSAnimation = `// JavaScript Canvas Animation
 // Available variables: ctx, width, height, time, mouse
 // ctx - 2D canvas context
@@ -146,7 +151,7 @@ if (mouse.x > 0 && mouse.y > 0) {
             jsMode = false;
             stopJSAnimation();
             toggleBtn.innerHTML = 'JS';
-            toggleBtn.title = 'Switch to JavaScript Canvas Mode';
+            toggleBtn.title = 'Switch to JavaScript Mode';
             toggleBtn.style.background = 'var(--d)';
             fragPanel.style.removeProperty('display');
             rowDivider.style.removeProperty('display');
