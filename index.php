@@ -12,22 +12,35 @@ created by Max Warren
   <title>CODEVANILLA - GLSL</title>
   <meta charset="UTF-8">
   <meta name="description" content="A browser-based GLSL editor for writing, previewing, and exporting real-time WebGL shaders with audio-reactive support, video recording, and full HTML export">
+  <meta name="keywords" content="GLSL, WebGL, shader editor, live coding, Max, browser shader tool, WebGL editor, visual coding, audio reactive shader">
   <meta name="author" content="github.com/composedbymax">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#252525">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="GLSL Editor">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="application-name" content="GLSL Editor">
+  <meta name="HandheldFriendly" content="true">
+  <meta name="apple-touch-fullscreen" content="yes">
   <link rel="apple-touch-icon" href="/assets/img/icon-192.png">
-  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="apple-touch-startup-image" href="/assets/img/icon-512.png">
+  <link rel="shortcut icon" href="/favicon.ico">
   <meta name="robots" content="index, nofollow">
   <meta name="referrer" content="no-referrer">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="GLSL Editor Application">
+  <meta name="twitter:description" content="Write and preview GLSL shaders in real-time. Audio reactive support, WebGL, and full HTML export.">
+  <meta name="twitter:image" content="https://max.wuaze.com/assets/img/glsl.jpeg">
+  <meta name="twitter:site" content="@your_twitter_handle">
   <meta property="og:title" content="GLSL Editor Application" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://max.wuaze.com/glsl" />
   <meta property="og:image" content="https://max.wuaze.com/assets/img/glsl.jpeg" />
   <meta property="og:description" content="An interactive GLSL editor for experimenting with shaders directly in your browser." />
   <meta property="og:site_name" content="GLSL Editor by Max Wuaze" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self';script-src 'self' 'unsafe-inline' 'unsafe-eval';worker-src 'self' blob:;style-src 'self' 'unsafe-inline';img-src 'self' data:;connect-src 'self';font-src 'self';object-src 'none';media-src 'self' blob:;">
   <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(self), camera=(), fullscreen=(self), clipboard-read=(self), clipboard-write=(self)">
@@ -37,6 +50,8 @@ created by Max Warren
   <script>"serviceWorker"in navigator&&navigator.serviceWorker.register("/glsl/sw.js",{scope:"/glsl/"});</script>
   <link rel="preload" as="script" href="scripts/utils/cover.js">
   <script src="scripts/utils/cover.js"></script>
+  <script src="scripts/utils/autosave.js"></script>
+  <script src="scripts/utils/hidev.js" defer></script>
   <link rel="preload" href="css/style.css" as="style">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/root.css">
@@ -180,7 +195,5 @@ void main() {
       </div>
     </div>
   <script src="scripts/utils/main.js"></script>
-  <script src="scripts/utils/hidev.js" defer></script>
-  <script src="scripts/utils/autosave.js"></script>
 </body>
 </html>
