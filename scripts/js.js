@@ -1,4 +1,12 @@
 (function() {
+    const CSS_STYLES = `
+        #jsToggleBtn{position: absolute;bottom: 49px;right: 10px;width: 40px;height: 40px;background: var(--d);color: var(--l);border: none;font-size: 12px;cursor: pointer;z-index: 1000;transition: all 0.3s ease;}
+        #jsToggleBtn:hover{background: var(--5);}
+        #jsToggleBtn.active{background: var(--a);}
+        #jsCanvas{width: 100%;height: 100%;display: block;background: #000000;position: absolute;top: 0;left: 0;}
+        .preview-panel-relative{position: relative;}
+
+    `;
     const $ = id => document.getElementById(id);
     let jsMode = false;
     let savedShaderCode = { vertex: '', fragment: '' };
@@ -68,29 +76,20 @@ if (mouse.x > 0 && mouse.y > 0) {
     ctx.lineWidth = 2;
     ctx.stroke();
 }`;
+    function injectCSS() {
+        const styleSheet = document.createElement('style');
+        styleSheet.type = 'text/css';
+        styleSheet.textContent = CSS_STYLES;
+        document.head.appendChild(styleSheet);
+    }
     function createToggleButton() {
         const toggleBtn = document.createElement('button');
         toggleBtn.id = 'jsToggleBtn';
         toggleBtn.innerHTML = 'JS';
         toggleBtn.title = 'JavaScript Canvas Mode';
-        toggleBtn.style.cssText = `
-            position: absolute;
-            bottom: 49px;
-            right: 10px;
-            width: 40px;
-            height: 40px;
-            background: var(--d);
-            color: white;
-            border: none;
-            font-weight: bold;
-            font-size: 12px;
-            cursor: pointer;
-            z-index: 1000;
-            transition: all 0.3s ease;
-        `;
         toggleBtn.addEventListener('click', toggleMode);
         const previewPanel = $('preview-panel');
-        previewPanel.style.position = 'relative';
+        previewPanel.classList.add('preview-panel-relative');
         previewPanel.appendChild(toggleBtn);
     }
     function setupJSMouseEvents() {
@@ -135,7 +134,7 @@ if (mouse.x > 0 && mouse.y > 0) {
             savedShaderCode.fragment = fragTA.value;
             toggleBtn.innerHTML = 'GL';
             toggleBtn.title = 'Switch back to WebGL Mode';
-            toggleBtn.style.background = 'var(--a)';
+            toggleBtn.classList.add('active');
             fragPanel.style.display = 'none';
             rowDivider.style.display = 'none';
             vertPanel.style.height = '100%';
@@ -152,7 +151,7 @@ if (mouse.x > 0 && mouse.y > 0) {
             stopJSAnimation();
             toggleBtn.innerHTML = 'JS';
             toggleBtn.title = 'Switch to JavaScript Mode';
-            toggleBtn.style.background = 'var(--d)';
+            toggleBtn.classList.remove('active');
             fragPanel.style.removeProperty('display');
             rowDivider.style.removeProperty('display');
             vertPanel.style.height = '50%';
@@ -173,15 +172,6 @@ if (mouse.x > 0 && mouse.y > 0) {
         const previewPanel = $('preview-panel');
         jsCanvas = document.createElement('canvas');
         jsCanvas.id = 'jsCanvas';
-        jsCanvas.style.cssText = `
-            width: 100%;
-            height: 100%;
-            display: block;
-            background: #000;
-            position: absolute;
-            top: 0;
-            left: 0;
-        `;
         previewPanel.appendChild(jsCanvas);
         jsCtx = jsCanvas.getContext('2d');
         resizeJSCanvas();
@@ -225,7 +215,7 @@ if (mouse.x > 0 && mouse.y > 0) {
                 try {
                     ${userCode}
                 } catch (e) {
-                    ctx.fillStyle = '#ff0000';
+                    ctx.fillStyle = 'var(--r)';
                     ctx.font = '14px monospace';
                     ctx.fillText('Error: ' + e.message, 10, 30);
                     console.error('Animation error:', e);
@@ -258,38 +248,38 @@ if (mouse.x > 0 && mouse.y > 0) {
                 setTimeout(checkReady, 100);
                 return;
             }
+            injectCSS();
             createToggleButton();
             setupCodeListener();
             window.addEventListener('resize', () => {
-            if (jsMode) {
-                resizeJSCanvas();
-                setTimeout(() => {
+                if (jsMode) {
+                    resizeJSCanvas();
+                    setTimeout(() => {
+                        const vertPanel = $('vertPanel');
+                        const fragPanel = $('fragPanel');
+                        const rowDivider = $('rowDivider');
+                        if (vertPanel && fragPanel && rowDivider) {
+                            fragPanel.style.display = 'none';
+                            rowDivider.style.display = 'none';
+                            vertPanel.style.height = '100%';
+                        }
+                    }, 10);
+                }
+            });
+            const observer = new MutationObserver(() => {
+                if (jsMode) {
                     const vertPanel = $('vertPanel');
-                    const fragPanel = $('fragPanel');
-                    const rowDivider = $('rowDivider');
-                    if (vertPanel && fragPanel && rowDivider) {
-                        fragPanel.style.display = 'none';
-                        rowDivider.style.display = 'none';
+                    if (vertPanel && vertPanel.style.height !== '100%') {
                         vertPanel.style.height = '100%';
                     }
-                }, 10);
-            }
-        });
-        const observer = new MutationObserver(() => {
-            if (jsMode) {
-                const vertPanel = $('vertPanel');
-                if (vertPanel && vertPanel.style.height !== '100%') {
-                    vertPanel.style.height = '100%';
                 }
-            }
-        });
-        setTimeout(() => {
-            const vertPanel = $('vertPanel');
-            if (vertPanel) {
-                observer.observe(vertPanel, { attributes: true, attributeFilter: ['style'] });
-            }
-        }, 1000);
-            console.log('JavaScript toggle feature initialized');
+            });
+            setTimeout(() => {
+                const vertPanel = $('vertPanel');
+                if (vertPanel) {
+                    observer.observe(vertPanel, { attributes: true, attributeFilter: ['style'] });
+                }
+            }, 1000);
         };
         checkReady();
     }
