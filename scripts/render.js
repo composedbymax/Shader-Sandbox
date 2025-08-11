@@ -272,14 +272,14 @@ function render() {
             }
         }
     };
-    setUniform(['u_time', 'uTime'], loc => gl.uniform1f(loc, time));
-    setUniform(['u_resolution', 'uResolution'], loc => gl.uniform2f(loc, canvas.width, canvas.height));
-    setUniform(['u_mouse', 'uMouse'], loc => gl.uniform2f(loc, mouse.x / canvas.width, mouse.y / canvas.height));
-    setUniform(['u_mouse_pixel', 'uMousePixel'], loc => gl.uniform2f(loc, mouse.x, mouse.y));
-    setUniform(['u_mouse_click', 'uMouseClick'], loc => gl.uniform2f(loc, mouse.clickX / canvas.width, mouse.clickY / canvas.height));
-    setUniform(['u_mouse_click_pixel', 'uMouseClickPixel'], loc => gl.uniform2f(loc, mouse.clickX, mouse.clickY));
-    setUniform(['u_mouse_pressed', 'uMousePressed'], loc => gl.uniform1i(loc, mouse.isPressed ? 1 : 0));
-    setUniform(['u_mouse_click_time', 'uMouseClickTime'], loc =>
+    setUniform(['u_time', 'uTime', 'iTime'], loc => gl.uniform1f(loc, time));
+    setUniform(['u_resolution', 'uResolution', 'iResolution'], loc => gl.uniform2f(loc, canvas.width, canvas.height));
+    setUniform(['u_mouse', 'uMouse', 'iMouse'], loc => gl.uniform2f(loc, mouse.x / canvas.width, mouse.y / canvas.height));
+    setUniform(['u_mouse_pixel', 'uMousePixel', 'iMousePixel'], loc => gl.uniform2f(loc, mouse.x, mouse.y));
+    setUniform(['u_mouse_click', 'uMouseClick', 'iMouseClick'], loc => gl.uniform2f(loc, mouse.clickX / canvas.width, mouse.clickY / canvas.height));
+    setUniform(['u_mouse_click_pixel', 'uMouseClickPixel', 'iMouseClickPixel'], loc => gl.uniform2f(loc, mouse.clickX, mouse.clickY));
+    setUniform(['u_mouse_pressed', 'uMousePressed', 'iMousePressed'], loc => gl.uniform1i(loc, mouse.isPressed ? 1 : 0));
+    setUniform(['u_mouse_click_time', 'uMouseClickTime', 'iMouseClickTime'], loc =>
         gl.uniform1f(loc, (performance.now() - mouse.lastClickTime) * 0.001)
     );
     if (uniforms.uColor) {
