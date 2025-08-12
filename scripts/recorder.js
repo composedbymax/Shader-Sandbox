@@ -363,7 +363,7 @@
       const fileSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
       const duration = ((Date.now() - recordingStartTime) / 1000).toFixed(1);
       const hasAudio = stream.getAudioTracks().length > 0;
-      const canvasType = window.webgpuState && window.webgpuState.isWebGPUMode() ? 'WebGPU' : 'WebGL';
+      const canvasType = window.jsCanvasState && window.jsCanvasState.isJSMode() ? 'JavaScript' : window.webgpuState && window.webgpuState.isWebGPUMode() ? 'WebGPU' : 'WebGL';
       if (currentVideoUrl) {
         URL.revokeObjectURL(currentVideoUrl);
       }
