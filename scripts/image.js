@@ -7,6 +7,10 @@
   let activeEffects = [];
   let currentView = 'upload';
   const previewPanel = document.getElementById('preview-panel');
+  function toGLSLFloat(value) {
+    const num = parseFloat(value);
+    return isNaN(num) ? '0.0' : (num % 1 === 0 ? num + '.0' : num.toString());
+  }
   const style = document.createElement('style');
   style.textContent = `
     #imgUploadBtn{z-index: 10;cursor: pointer;position: absolute;top: 42px;right: 10px;background: var(--d);color: var(--6);border: none;width: 2rem;height: 2rem;padding: 0.25rem;display: flex;align-items: center;justify-content: center;}
@@ -187,22 +191,22 @@ void main() {
       const p = { ...effects[e.type].params, ...e.params };
       switch (e.type) {
         case 'blur':
-          src += `  color = blur(color, uv, ${p.strength});\n`;
+          src += `  color = blur(color, uv, ${toGLSLFloat(p.strength)});\n`;
           break;
         case 'sepia':
-          src += `  color = sepia(color, ${p.intensity});\n`;
+          src += `  color = sepia(color, ${toGLSLFloat(p.intensity)});\n`;
           break;
         case 'vignette':
-          src += `  color = vignette(color, uv, ${p.intensity}, ${p.radius});\n`;
+          src += `  color = vignette(color, uv, ${toGLSLFloat(p.intensity)}, ${toGLSLFloat(p.radius)});\n`;
           break;
         case 'chromatic':
-          src += `  color = chromatic(color, uv, ${p.strength});\n`;
+          src += `  color = chromatic(color, uv, ${toGLSLFloat(p.strength)});\n`;
           break;
         case 'pixelate':
-          src += `  color = pixelate(color, uv, ${p.size.toFixed(1)});\n`;
+          src += `  color = pixelate(color, uv, ${toGLSLFloat(p.size)});\n`;
           break;
         case 'contrast':
-          src += `  color = contrast(color, ${p.amount});\n`;
+          src += `  color = contrast(color, ${toGLSLFloat(p.amount)});\n`;
           break;
       }
     });
