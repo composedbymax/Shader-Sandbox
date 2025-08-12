@@ -240,6 +240,7 @@ void main() {
   const fileInput = document.createElement('input');
   fileInput.type = 'file';
   fileInput.accept = 'image/*';
+  fileInput.id = 'imageFileInput';
   fileInput.style.display = 'none';
   document.body.appendChild(fileInput);
   const modal = document.createElement('div');
@@ -338,24 +339,32 @@ void main() {
     const effect = effects[effectType];
     effectControls.style.display = 'block';
     controlsContainer.innerHTML = '';
-    effect.controls.forEach(control => {
+    effect.controls.forEach((control, index) => {
       const controlDiv = document.createElement('div');
       controlDiv.className = 'effect-control';
       const currentValue = effect.params[control.name];
+      const rangeId = `${effectType}_${control.name}_range_${index}`;
+      const numberId = `${effectType}_${control.name}_number_${index}`;
       controlDiv.innerHTML = `
-        <label>${control.label}:</label>
+        <label for="${rangeId}">${control.label}:</label>
         <input type="range" 
-               min="${control.min}" 
-               max="${control.max}" 
-               step="${control.step}" 
-               value="${currentValue}"
-               data-param="${control.name}">
+              id="${rangeId}"
+              name="${rangeId}"
+              min="${control.min}" 
+              max="${control.max}" 
+              step="${control.step}" 
+              value="${currentValue}"
+              data-param="${control.name}"
+              aria-label="${control.label} range slider">
         <input type="number" 
-               min="${control.min}" 
-               max="${control.max}" 
-               step="${control.step}" 
-               value="${currentValue}"
-               data-param="${control.name}">
+              id="${numberId}"
+              name="${numberId}"
+              min="${control.min}" 
+              max="${control.max}" 
+              step="${control.step}" 
+              value="${currentValue}"
+              data-param="${control.name}"
+              aria-label="${control.label} numeric input">
       `;
       const rangeInput = controlDiv.querySelector('input[type="range"]');
       const numberInput = controlDiv.querySelector('input[type="number"]');
