@@ -65,84 +65,18 @@
         return;
     }
     var css = `
-        #__pageCover {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background:rgb(0, 0, 0);
-            z-index: 2147483647;
-            overflow: hidden;
-            transition: opacity 0.8s ease; /* fade out transition */
-        }
-        #__pageCover.shatter-exit {
-            opacity: 0; /* fade cover out */
-        }
-        #__pageCover .title-container {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            z-index: 10;
-            transition: opacity 0.4s ease, transform 0.4s ease;
-        }
-        #__pageCover .main-title {
-            font-family: 'Courier New', monospace;
-            font-size: clamp(2rem, 8vw, 6rem);
-            font-weight: bold;
-            color: #fff;
-            margin: 0;
-            letter-spacing: 0.1em;
-        }
-        #__pageCover .subtitle {
-            font-family: 'Arial', sans-serif;
-            font-size: clamp(1rem, 3vw, 1.5rem);
-            color: rgba(255, 255, 255, 0.8);
-            margin-top: 1rem;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-        }
-        #__pageCover .grid-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: grid;
-            grid-template-columns: repeat(20, 1fr);
-            grid-template-rows: repeat(15, 1fr);
-            gap: 1px;
-            opacity: 1;
-        }
-        #__pageCover .grid-piece {
-            background:rgb(0, 0, 0);
-            border: 1px solid rgba(0, 162, 255, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-        #__pageCover.shatter-exit .title-container {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.8);
-        }
-        #__pageCover.shatter-exit .grid-piece {
-            animation: __shatterPiece 0.8s ease-in forwards;
-        }
-        @keyframes __shatterPiece {
-            0% {
-                transform: scale(1) rotate(0deg);
-                opacity: 1;
-            }
-            70% {
-                transform: scale(0.8) rotate(var(--rotate)) translateX(var(--tx)) translateY(var(--ty));
-                opacity: 0.3;
-            }
-            100% {
-                transform: scale(0) rotate(calc(var(--rotate) * 2)) translateX(calc(var(--tx) * 2)) translateY(calc(var(--ty) * 2));
-                opacity: 0;
-            }
-        }
+        #__pageCover{position: fixed;top: 0;left: 0;width: 100%;height: 100%;background:rgb(0, 0, 0);z-index: 2147483647;overflow: hidden;transition: opacity 0.8s ease;}
+        #__pageCover.shatter-exit{opacity: 0;}
+        #__pageCover .title-container{position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);text-align: center;z-index: 10;transition: opacity 0.4s ease, transform 0.4s ease;}
+        #__pageCover .main-title{font-family: 'Courier New', monospace;font-size: clamp(2rem, 8vw, 6rem);font-weight: bold;color: #fff;margin: 0;letter-spacing: 0.1em;}
+        #__pageCover .subtitle{font-family: 'Arial', sans-serif;font-size: clamp(1rem, 3vw, 1.5rem);color: rgba(255, 255, 255, 0.8);margin-top: 1rem;letter-spacing: 0.2em;text-transform: uppercase;}
+        #__pageCover .grid-container{position: absolute;top: 0;left: 0;width: 100%;height: 100%;display: grid;grid-template-columns: repeat(20, 1fr);grid-template-rows: repeat(15, 1fr);gap: 1px;opacity: 1;}
+        #__pageCover .grid-piece{background:rgb(0, 0, 0);border: 1px solid rgba(0, 162, 255, 0.3);position: relative;overflow: hidden;}
+        #__pageCover.shatter-exit .title-container{opacity: 0;transform: translate(-50%, -50%) scale(0.8);}
+        #__pageCover.shatter-exit .grid-piece{animation: __shatterPiece 0.8s ease-in forwards;}
+        @keyframes __shatterPiece{0%{transform: scale(1) rotate(0deg);opacity: 1;}
+        70%{transform: scale(0.8) rotate(var(--rotate)) translateX(var(--tx)) translateY(var(--ty));opacity: 0.3;}
+        100%{transform: scale(0) rotate(calc(var(--rotate) * 2)) translateX(calc(var(--tx) * 2)) translateY(calc(var(--ty) * 2));opacity: 0;}}
     `;
     var st = document.createElement('style');
     st.textContent = css;

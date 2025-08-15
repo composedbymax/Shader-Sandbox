@@ -3,21 +3,6 @@
   if (!container) {
     return;
   }
-  const css = `
-    #preview-panel .instruction-btn{position: absolute;left: 10px;top: 50%;transform: translateY(-50%);z-index: 10;background: var(--d);color: var(--6);border: none;font-size: 1em;cursor: pointer;width: 2rem;height: 2rem;display: flex;align-items: center;justify-content: center;}
-    #preview-panel .instruction-btn:hover{background: var(--5);}
-    #preview-panel .instruction-overlay{position: absolute;top: 0;left: 0;right: 0;bottom: 0;background-color: var(--0);display: flex;flex-direction: column;align-items: center;justify-content: flex-start;z-index: 9999;color: var(--7);font-size: 1rem;padding: 20px;box-sizing: border-box;overflow-y: auto;overflow-x: hidden;}
-    #preview-panel .instruction-modal{margin-top: 4rem;width: 100%;max-width: 800px;min-width: 0;line-height: 1.5em;box-sizing: border-box;word-wrap: break-word;overflow-wrap: break-word;}
-    #preview-panel .instruction-modal h2{color: var(--6);margin-bottom: 1rem;word-wrap: break-word;}
-    #preview-panel .instruction-modal ul{text-align: left;padding-left: 1.2em;list-style-type: disc;margin: 0;word-wrap: break-word;}
-    #preview-panel .instruction-modal li{margin-bottom: 0.8em;}
-    #preview-panel .instruction-modal code{word-break: break-all;background: var(--3);padding: 2px 4px;border-radius: 3px;}
-    #preview-panel .instruction-close-btn{position: fixed;top: 10px;right: 10px;width: 2rem;height: 2rem;display: flex;align-items: center;justify-content: center;cursor: pointer;border: none;background-color: var(--3);color: var(--r);font-size: 1.2rem;z-index: 10000;}
-    #preview-panel .instruction-close-btn:hover{background-color: var(--4);}
-  `;
-  const style = document.createElement('style');
-  style.textContent = css;
-  document.head.appendChild(style);
   const btn = document.createElement('button');
   btn.className = 'instruction-btn';
   btn.title = 'Instructions';

@@ -35,17 +35,6 @@
         container.appendChild(toggleBtn);
         return toggleBtn;
     };
-    const style = document.createElement('style');
-    style.textContent = `
-        .webgpu-toggle{position: absolute;bottom: 10px;right: 214px;z-index: 1;cursor: pointer;font-size: 12px;border: none;height:39px;width: 4.25rem;font-style: inherit;color: var(--l);}
-        .webgpu-toggle.webgl-mode{background-color: var(--d);}
-        .webgpu-toggle.webgl-mode:hover{background-color: var(--5);}
-        .webgpu-toggle.webgpu-mode{background-color: var(--r);}
-        .webgpu-toggle.webgpu-mode:hover{background-color: var(--rh);}
-        .editor-panel .panel-header span{font-weight: bold;}
-        #webgpu-canvas{display: block;width: 100%;height: 100%;}
-    `;
-    document.head.appendChild(style);
     const storeOriginalCode = () => {
         const vertCode = document.getElementById('vertCode');
         const fragCode = document.getElementById('fragCode');

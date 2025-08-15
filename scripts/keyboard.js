@@ -1,37 +1,5 @@
 (function() {
     'use strict';
-    const styles = `
-        <style>
-        .shortcut-modal{position: fixed;top: 0;left: 0;width: 100%;height: 100%;background: var(--0);display: none;justify-content: center;align-items: center;z-index: 10000;font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;padding: 20px;box-sizing: border-box;}
-        .shortcut-modal.show{display: flex;}
-        .shortcut{background: var(--1);border-radius: 12px;padding: 30px;max-height: 90vh;max-width: 95vw;width: 100%;color: var(--7);box-shadow: 0 20px 40px var(--0);border: 1px solid var(--3);display: flex;flex-direction: column;position: relative;}
-        .shortcut-header{display: flex;flex-direction: column;margin-bottom: 30px;flex-shrink: 0;}
-        .shortcut-title{font-size: 28px;margin-bottom: 20px;color: var(--a);font-weight: 600;text-align: center;order: 1;}
-        .commands-list{display: grid;grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));gap: 15px;order: 2;}
-        .command-item{display: flex;justify-content: space-between;align-items: center;padding: 12px 16px;background: var(--2);border-radius: 8px;border: 2px solid transparent;transition: all 0.3s ease;cursor: pointer;}
-        .command-item:hover{border-color: var(--a);background: var(--3);}
-        .command-item.active{border-color: var(--a);background: var(--d);}
-        .command-desc{font-size: 14px;color: var(--6);}
-        .command-keys{font-family: monospace;font-size: 13px;color: var(--a);font-weight: bold;}
-        .keyboard-container{display: flex;justify-content: center;overflow-x: hidden;overflow-y: hidden;padding: 10px 0;flex-shrink: 0;width: 100%;box-sizing: border-box;}
-        .keyboard{display: grid;gap: 4px;padding: 20px;background: var(--2);border-radius: 12px;border: 1px solid var(--4);min-width: fit-content;transform-origin: center;transition: transform 0.2s ease;}
-        .keyboard-row{display: grid;gap: 4px;justify-content: center;}
-        .key{background: var(--4);border: 1px solid var(--5);border-radius: 4px;color: var(--6);font-size: 11px;font-weight: 500;display: flex;align-items: center;justify-content: center;text-align: center;transition: all 0.2s ease;cursor: pointer;position: relative;min-height: 32px;padding: 2px;white-space: nowrap;}
-        .key:hover{background: var(--5);border-color: var(--6);}
-        .key.highlight{background: var(--a);border-color: var(--ah);color: var(--1);box-shadow: 0 0 10px var(--ah);transform: translateY(-1px);}
-        .key.modifier{background: var(--3);}
-        .key.modifier.highlight{background: var(--r);border-color: var(--rh);color: var(--1);}
-        .close-btn{position: absolute;top: 15px;right: 20px;background: none;border: none;color: var(--5);font-size: 24px;cursor: pointer;transition: color 0.2s;z-index: 1;}
-        .close-btn:hover{color: var(--7);}
-        #preview-panel .shortcut-trigger-btn{position: fixed;top: 10px;left: 50%;transform: translateX(-50%);background: var(--a);border: none;border-radius: 2px;color: var(--l);padding: 8px 12px;cursor: pointer;font-size: 14px;font-weight: 500;transition: background 0.2s;z-index: 10001;}
-        #preview-panel .shortcut-trigger-btn:hover{background: var(--ah);}
-        @media (max-width: 800px){.shortcut{padding: 20px;}.key{min-height: 28px;font-size: 10px;}.commands-list{grid-template-columns: 1fr;}}
-        @media (max-width: 600px){.shortcut{padding: 15px;max-height: 95vh;}.shortcut-title{font-size: 24px;margin-bottom: 15px;}.shortcut-header{margin-bottom: 20px;}}
-        @media (max-width: 480px){.shortcut-modal{padding: 10px;}.shortcut{padding: 10px;}.keyboard-container{margin: 0 -10px;}}
-        .arrow-stack{display: flex;flex-direction: column;gap: 2px;height: 32px;box-sizing: border-box;}
-        .key.half-height{min-height: calc(50% - 1px) !important;height: calc(50% - 1px) !important;max-height: calc(50% - 1px);font-size: 9px;flex: none;}
-        </style>
-    `;
     const keyboardLayout = [
         {
             row: 1,
@@ -246,7 +214,6 @@
             });
         },
         init: function() {
-            document.head.insertAdjacentHTML('beforeend', styles);
             document.body.insertAdjacentHTML('beforeend', createHTML());
             this.modal = document.getElementById('shortcut-modal');
             this.bindEvents();

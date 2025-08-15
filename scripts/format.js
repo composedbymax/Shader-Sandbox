@@ -16,41 +16,6 @@
     let isModalOpen = false;
     let originalVertCode = '';
     let originalFragCode = '';
-    function injectStyles() {
-        const style = document.createElement('style');
-        style.textContent = `
-            .glsl-formatter-modal-overlay{position: fixed;top: 0;right: 0;bottom: 0;z-index: 10000;display: flex;opacity: 0;transition: opacity 0.3s ease;}
-            .glsl-formatter-modal-overlay.show{opacity: 1;}
-            .glsl-formatter-modal{background: var(--2);padding: 30px;width:50vw;transform: scale(0.8) translateY(20px);transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);}
-            .glsl-formatter-modal-overlay.show .glsl-formatter-modal{transform: scale(1) translateY(0);}
-            .glsl-formatter-modal-header{text-align: center;margin-bottom: 25px;position: relative;}
-            .glsl-formatter-modal-title{font-size: 1.8rem;font-weight: 700;color:var(--a);margin: 0;}
-            .glsl-formatter-modal-close{position: absolute;top: -16px;right: -16px;background: var(--r);border: none;width: 2rem;height: 2rem;cursor: pointer;font-size: 1.5rem;display: flex;align-items: center;justify-content: center;transition: all 0.2s ease;color:var(--0);}
-            .glsl-formatter-modal-close:hover{background: var(--rh);}
-            .glsl-formatter-switches{display: grid;gap: 20px;margin-bottom: 25px;}
-            .glsl-formatter-switch-group{display: flex;align-items: center;gap: 15px;padding: 15px;background: var(--4);border-radius: 12px;transition: all 0.2s ease;}
-            .glsl-formatter-switch-group:hover{background: var(--5);}
-            .glsl-formatter-switch{position: relative;display: flex;align-items: center;cursor: pointer;gap: 15px;}
-            .glsl-formatter-switch input{opacity: 0;width: 0;height: 0;}
-            .glsl-formatter-slider{position: relative;width: 50px;height: 26px;background: var(--1);border-radius: 26px;transition: all 0.3s ease;}
-            .glsl-formatter-slider:before{position: absolute;content: "";height: 20px;width: 20px;left: 3px;top: 3px;background: var(--6);border-radius: 50%;transition: all 0.3s ease;}
-            .glsl-formatter-switch input:checked + .glsl-formatter-slider:before{transform: translateX(24px);}
-            .glsl-formatter-switch input:checked + .glsl-formatter-slider.format{background: var(--a);}
-            .glsl-formatter-switch input:checked + .glsl-formatter-slider.remove-lines{background: var(--ah);}
-            .glsl-formatter-switch input:checked + .glsl-formatter-slider.remove-comments{background: var(--rh);}
-            .glsl-formatter-switch input:checked + .glsl-formatter-slider.minify{background: var(--b);}
-            .glsl-formatter-switch input:disabled + .glsl-formatter-slider{opacity: 0.5;cursor: not-allowed;}
-            .glsl-formatter-switch-label{color: var(--7);font-size: 15px;user-select: none;flex: 1;}
-            .glsl-formatter-switch input:disabled ~ .glsl-formatter-switch-label{opacity: 0.5;color: var(--5);}
-            .glsl-formatter-actions{display: flex;gap: 12px;justify-content: center;}
-            .glsl-formatter-btn{padding: 12px 24px;border: none;border-radius: 12px;font-weight: 600;cursor: pointer;transition: all 0.2s ease;font-size: 14px;}
-            .glsl-formatter-btn-primary{background: var(--a);color: var(--0);}
-            .glsl-formatter-btn-primary:hover{background: var(--ah);}
-            .glsl-formatter-btn-secondary{background: var(--r);color: var(--0);}
-            .glsl-formatter-btn-secondary:hover{background: var(--rh);}
-        `;
-        document.head.appendChild(style);
-    }
     function createModal() {
         const modalHTML = `
             <div class="glsl-formatter-modal-overlay" id="glslFormatterModal">
@@ -372,7 +337,6 @@
         }
     }
     function init() {
-        injectStyles();
         document.addEventListener('keydown', handleKeydown);
         document.addEventListener('fullscreenchange', () => {
             const modalEl  = document.getElementById('glslFormatterModal');

@@ -7,34 +7,6 @@
   let videoElement = null;
   let isPlaying = false;
   let animationId = null;
-  const style = document.createElement('style');
-  style.textContent = `
-    #vidUploadBtn{z-index: 10;cursor: pointer;position: absolute;top: 42px;right: 42px;background: var(--d);color: var(--6);border: none;width: 2rem;height: 2rem;padding: 0.25rem;display: flex;align-items: center;justify-content: center;}
-    #vidUploadBtn svg{width: 1.25rem;height: 1.25rem;}
-    #vidUploadBtn:hover{background: var(--5);}
-    #baseImportBtn{background: var(--a);color: white;border: none;border-radius: 4px;padding: 10px 20px;margin: 10px;cursor: pointer;font-size: 14px;}
-    #baseImportBtn:hover{background: var(--ah);}
-    #vidCloseBtn{position: absolute;top: 10px;right: 15px;background: var(--r);color: white;border: none;border-radius: 50%;width: 30px;height: 30px;font-size: 18px;cursor: pointer;display: flex;align-items: center;justify-content: center;}
-    #vidCloseBtn:hover{background: var(--rh);}
-    #vidModal{position: fixed;top: 0;left: 0;right: 0;bottom: 0;display: none;align-items: center;justify-content: center;z-index: 99999;max-width: 60vw;margin: auto;}
-    #vidModal .modal-content{background: var(--4);padding: 20px;border-radius: 8px;max-width: 90vw;max-height: 90vh;overflow: auto;text-align: center;position: relative;width: 100%;box-sizing: border-box;}
-    #vidModal video{max-width: 100%;max-height: 30vh;display: block;margin: 10px auto;background: #000;}
-    #vidDropButton{padding: 40px 60px;border: 2px dashed var(--6);background: var(--3);border-radius: 8px;cursor: pointer;font-size: 16px;color: var(--6);margin: 20px 0;transition: all 0.3s ease;}
-    #vidDropButton:hover{background: var(--5);border-color: var(--a);color:var(--7);}
-    #vidDragOverlay{position: absolute;top: 0;left: 0;width: 100%;height: 100%;background: var(--d);backdrop-filter: blur(5px);z-index: 2000;display: none;align-items: center;justify-content: center;flex-direction: column;color: white;font-size: 24px;text-align: center;}
-    #vidDragOverlay .filename{margin-top: 10px;font-size: 18px;opacity: 0.8;}
-    .video-controls{display: flex;align-items: center;justify-content: center;gap: 10px;margin: 15px 0;padding: 15px;background: var(--3);border-radius: 8px;}
-    .video-controls button{background: var(--a);color: white;border: none;border-radius: 4px;padding: 8px 16px;cursor: pointer;font-size: 14px;}
-    .video-controls button:hover{background: var(--ah);}
-    .video-controls button:disabled{background: var(--5);cursor: not-allowed;}
-    .video-controls .time-info{color: var(--6);font-size: 14px;margin: 0 10px;}
-    .video-progress{width: 100%;height: 6px;background: var(--5);border-radius: 3px;margin: 10px 0;cursor: pointer;overflow: hidden;}
-    .video-progress-bar{height: 100%;background: var(--a);border-radius: 3px;transition: width 0.1s ease;}
-    .load-video-btn{background: var(--a);color: white;border: none;border-radius: 4px;padding: 12px 24px;margin: 20px 0;cursor: pointer;font-size: 16px;width: 100%;}
-    .load-video-btn:hover{background: var(--ah);}
-    .load-video-btn:disabled{background: var(--5);cursor: not-allowed;}
-  `;
-  document.head.appendChild(style);
   const baseVertexShader = `
 attribute vec2 a_position;
 varying   vec2 v_uv;
@@ -130,7 +102,7 @@ void main() {
       <div class="video-progress" id="videoProgress" style="display:none;">
         <div class="video-progress-bar" id="videoProgressBar"></div>
       </div>
-      <p style="font-size:12px; color:#666;">This will load base video shaders into the editor</p>
+      <p class="loadmediawarn">This will load base video shaders into the editor</p>
       <button class="load-video-btn" id="loadVideoBtn" style="display:none;">Load Video into Shader</button>
     </div>
   `;

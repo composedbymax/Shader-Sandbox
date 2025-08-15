@@ -5,31 +5,6 @@ obs.observe(document.body, { childList: !0, subtree: !0 });
 function initModelLoader() {
   (() => {
     function buildUI() {
-      const css = `
-      #canvas3D{position: absolute;top: 0;left: 0;width: 100%;height: 100%;z-index: 0;}
-      #threeLoadBtn{position: absolute;bottom: 10px;right: 146px;z-index: 1;background: var(--d);color: var(--l);border: none;cursor: pointer;width:4.25rem;height:39px;}
-      #threeLoadBtn:hover{background: var(--5);color: var(--l);}
-      #threedModalBg{display: none;position: fixed;inset: 0;background: rgba(0, 0, 0, 0.5);z-index: 100;justify-content: center;align-items: center;}
-      #threedModalBg.show{display: flex;}
-      #threedModal{background: var(--2);padding: 20px;border-radius: 6px;color: var(--7);min-width: 320px;border: 1px solid var(--4);}
-      #threedModal h2{margin-top: 0;color: var(--6);}
-      #threedDropZone{border: 2px dashed var(--5);background: var(--3);padding: 30px;text-align: center;border-radius: 6px;cursor: pointer;transition: background 0.2s, border-color 0.2s;color: var(--7);user-select: none;}
-      #threedDropZone:hover{background: var(--4);}
-      #threedDropZone.dragover{border-color: var(--rh);background: var(--4);}
-      #threedDropZone p{margin: 0;font-size: 14px;color: var(--6);}
-      #threedModal label{color: var(--6);}
-      #threedInfo{margin-top: 10px;color: var(--6);font-size: 14px;}
-      #threedErr{margin-top: 10px;color: var(--rh);font-size: 14px;display: none;}
-      #threedModal footer{margin-top: 20px;text-align: right;display: flex;gap: 10px;justify-content: flex-end;}
-      #threedClose, #threedRevert{padding: 6px 12px;background: var(--3);color: var(--6);border: 1px solid var(--4);border-radius: 4px;cursor: pointer;}
-      #threedClose:hover, #threedRevert:hover{background: var(--4);color: var(--l);}
-      #threedRevert{background: var(--5);color: var(--l);}
-      #threedRevert:hover{background: var(--6);}
-      .format-info{margin-top: 5px;font-size: 12px;color: var(--5);}
-    `;
-      const style = document.createElement("style");
-      style.textContent = css;
-      document.head.appendChild(style);
       const preview = document.getElementById("preview-panel");
       preview.style.position = "relative";
       const originalCanvas = document.getElementById("glcanvas");

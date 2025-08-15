@@ -20,42 +20,6 @@
     gl = canvas.getContext('webgl', { preserveDrawingBuffer: true }) ||
          canvas.getContext('experimental-webgl', { preserveDrawingBuffer: true });
   }
-  const style = document.createElement('style');
-  style.textContent = `
-    #recSettings{display: none;position: absolute;bottom: 42px;left: 10px;background: var(--d);color: var(--l);padding: 10px;z-index: 100;font-size: 0.9rem;min-width: 240px;max-height:80%;overflow-y: auto;}
-    #recSettings label{display: block;margin-bottom: 6px;}
-    #recSettings input{margin-left: 4px;}
-    #recSettings .preset{margin-right: 4px;margin-top: 4px;}
-    #recSettings button{padding: 4px 8px;margin: 2px;cursor: pointer;border:0px;border-radius:6px;}
-    #recSettings .active{background:var(--a);color: white;}
-    #recBtn{width:2rem;height:2rem;position: absolute;bottom: 10px;left: 10px;background: var(--d);color: var(--l);border: none;padding: 8px;cursor: pointer;z-index: 1;font-size: 1rem;display: flex;align-items: center;justify-content: center;}
-    #recBtn:hover{background:var(--5)}
-    #recBtn svg{width: 14px;height: 14px;}
-    #recBtn svg circle{fill: var(--r);}
-    #recordingIndicator{display: none;position: absolute;top: 10px;right: 10px;background:var(--rh);color: var(--1);padding: 5px 10px;border-radius: 4px;z-index: 100;animation: pulse 1.5s infinite;}
-    @keyframes pulse{0%{opacity: 1;}50%{opacity: 0.6;}100%{opacity: 1;}}
-    input, select{padding: 1rem;border-radius: 5px;border: 0px;width: 100%;background: var(--d);color: var(--l);}
-    .checkbox-container{position: relative;display: inline-flex;align-items: center;cursor: pointer;margin-left: 8px;}
-    .checkbox-container input[type="checkbox"]{opacity: 0;position: absolute;width: 18px;height: 18px;margin: 0;padding: 0;cursor: pointer;}
-    .custom-checkbox{width: 18px;height: 18px;border: 2px solid var(--l);border-radius: 3px;background: var(--d);position: relative;display: flex;align-items: center;justify-content: center;transition: all 0.2s ease;}
-    .checkbox-container input[type="checkbox"]:checked + .custom-checkbox{background: var(--a);border-color: var(--a);}
-    .custom-checkbox::after{content: '';position: absolute;width: 5px;height: 9px;border: solid white;border-width: 0 2px 2px 0;transform: rotate(45deg) scale(0);transition: transform 0.15s ease-in-out;top: 1px;}
-    .checkbox-container input[type="checkbox"]:checked + .custom-checkbox::after{transform: rotate(45deg) scale(1);}
-    .checkbox-container:hover .custom-checkbox{border-color: var(--a);}
-    #videoPreview{display: none;margin-top: 10px;padding: 10px;background: var(--1);border-radius: 5px;}
-    #videoPreview video{width: 100%;max-height: 200px;border-radius: 5px;background: var(--1);}
-    #videoPreview .controls{margin-top: 10px;display: flex;gap: 5px;flex-wrap: wrap;}
-    #videoPreview .controls button{padding: 6px 12px;border: none;border-radius: 5px;cursor: pointer;font-size: 12px;flex: 1;min-width: 70px;}
-    #videoPreview .download-btn{background: var(--m);color: var(--1);}
-    #videoPreview .download-btn:hover{background: var(--6);color: var(--7);}
-    #videoPreview .delete-btn{background: var(--r);color: var(--7);}
-    #videoPreview .delete-btn:hover{background: var(--rh);color: var(--1);}
-    #videoPreview .info{color: var(--l);font-size: 11px;margin-top: 8px;line-height: 1.3;}
-    .status-block{background: var(--d);padding: 6px;border-radius: 6px;margin: 5px 0px;font-size: 11px;color: var(--7);}
-    .status-block .canvas-mode,
-    .status-block .audio-status{background: none;padding: 2px 0;margin: 0;border-radius: 0;color: inherit;}
-  `;
-  document.head.appendChild(style);
   const recIndicator = document.createElement('div');
   recIndicator.id = 'recordingIndicator';
   recIndicator.textContent = '● RECORDING';

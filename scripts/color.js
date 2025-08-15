@@ -16,7 +16,6 @@ class ColorPicker {
     }
     init() {
         if (this.isInitialized) return;
-        this.Styles();
         this.HTML();
         this.bind();
         this.attachToTextareas();
@@ -35,35 +34,6 @@ class ColorPicker {
                 if (tab) {document.body.appendChild(tab);}
             }
         });
-    }
-    Styles() {
-        const style = document.createElement('style');
-        style.textContent = `
-            .glsl-color-picker-overlay{position: fixed;top: 0;left: 0;width: 100%;height: 100%;background: transparent;z-index: 10000;display: none;pointer-events: none;}
-            .glsl-color-picker{position: absolute;background: var(--2);border-radius: 8px;padding: 20px;color: var(--7);min-width: 300px;max-width: 350px;pointer-events: auto;border: 1px solid var(--4);}
-            .glsl-color-picker h3{margin: 0 0 15px 0;color: var(--7);font-size: 16px;}
-            .glsl-color-preview{width: 100%;height: 60px;border-radius: 4px;margin-bottom: 15px;border: 2px solid var(--4);}
-            .glsl-color-inputs{display: grid;grid-template-columns: 1fr 1fr 1fr;gap: 10px;margin-bottom: 15px;}
-            .glsl-input-group{display: flex;flex-direction: column;}
-            .glsl-input-group label{font-size: 12px;color: var(--5);margin-bottom: 5px;}
-            .glsl-input-group input{background: var(--3);border: 1px solid var(--4);border-radius: 4px;color: var(--7);padding: 8px;font-family: inherit;}
-            .glsl-input-group input:focus{outline: none;border-color: var(--r);}
-            .glsl-color-sliders{margin-bottom: 15px;}
-            .glsl-slider-group{display: flex;align-items: center;margin-bottom: 8px;gap: 10px;}
-            .glsl-slider-group label{width: 20px;font-size: 12px;color: var(--5);}
-            .glsl-slider-group input[type="range"]{flex: 1;background: var(--3);}
-            .glsl-slider-group span{width: 50px;font-size: 12px;color: var(--7);text-align: right;}
-            .glsl-color-buttons{display: flex;gap: 10px;justify-content: flex-end;}
-            .glsl-btn{padding: 8px 16px;border: none;border-radius: 4px;cursor: pointer;font-family: inherit;font-size: 14px;}
-            .glsl-btn-cancel{background: var(--5);color: var(--7);}
-            .glsl-btn-apply{background: var(--r);color: var(--7);}
-            .glsl-btn:hover{opacity: 0.8;}
-            .glsl-color-highlight{background-color: var(--ah) !important;border-radius: 2px;}
-            .glsl-tab{position: absolute;width: 24px;height: 24px;background: var(--1);border: 1px solid var(--4);border-radius: 4px;display: flex;justify-content: center;align-items: center;cursor: pointer;z-index: 10001;transition: opacity 0.2s ease;}
-            .glsl-tab:hover{opacity: 0.8;}
-            .glsl-tab svg{width: 16px;height: 16px;fill: var(--7);}
-        `;
-        document.head.appendChild(style);
     }
     HTML() {
         if (document.getElementById('glsl-color-picker-overlay')) return;
@@ -404,10 +374,6 @@ class ColorPicker {
         const overlay = document.getElementById('glsl-color-picker-overlay');
         if (overlay) {
             overlay.remove();
-        }
-        const styles = document.getElementById('glsl-color-picker-styles');
-        if (styles) {
-            styles.remove();
         }
         const textareas = document.querySelectorAll('textarea[data-glsl-color-picker-attached]');
         textareas.forEach(textarea => {

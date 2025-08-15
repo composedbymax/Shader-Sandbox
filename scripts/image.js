@@ -11,49 +11,6 @@
     const num = parseFloat(value);
     return isNaN(num) ? '0.0' : (num % 1 === 0 ? num + '.0' : num.toString());
   }
-  const style = document.createElement('style');
-  style.textContent = `
-    #imgUploadBtn{z-index: 10;cursor: pointer;position: absolute;top: 42px;right: 10px;background: var(--d);color: var(--6);border: none;width: 2rem;height: 2rem;padding: 0.25rem;display: flex;align-items: center;justify-content: center;}
-    #imgUploadBtn svg{width: 1.25rem;height: 1.25rem;}
-    #imgUploadBtn:hover{background: var(--5);}
-    #baseImportBtn{background: var(--a);color: white;border: none;border-radius: 4px;padding: 10px 20px;margin: 10px;cursor: pointer;font-size: 14px;}
-    #baseImportBtn:hover{background: var(--ah);}
-    #imgCloseBtn{position: absolute;top: 10px;right: 15px;background: var(--r);color: white;border: none;border-radius: 50%;width: 30px;height: 30px;font-size: 18px;cursor: pointer;display: flex;align-items: center;justify-content: center;}
-    #imgCloseBtn:hover{background: var(--rh);}
-    #imgModal{position: fixed;top: 0;left: 0;right: 0;bottom: 0;display: none;align-items: center;justify-content: center;z-index: 99999;max-width: 50vw;margin: auto;}
-    #imgModal .modal-content{background: var(--4);padding: 20px;border-radius: 8px;max-width: 90vw;max-height: 90vh;overflow: auto;text-align: center;position: relative;width: 100%;box-sizing: border-box;}
-    #imgModal img{max-width: 100%;max-height: 40vh;display: block;margin: 10px auto;}
-    #imgDropButton{padding: 40px 60px;border: 2px dashed var(--6);background: var(--3);border-radius: 8px;cursor: pointer;font-size: 16px;color: var(--6);margin: 20px 0;transition: all 0.3s ease;}
-    #imgDropButton:hover{background: var(--5);border-color: var(--a);color:var(--7);}
-    #dragOverlay{position: fixed;top: 0;left: 0;right: 0;bottom: 0;background: var(--d);backdrop-filter: blur(5px);z-index: 2000;display: none;align-items: center;justify-content: center;flex-direction: column;color: white;font-size: 24px;text-align: center;}
-    #dragOverlay .filename{margin-top: 10px;font-size: 18px;opacity: 0.8;}
-    .modal-toggle{display: flex;background: var(--3);border-radius: 6px;margin: 10px 0;overflow: hidden;}
-    .modal-toggle button{background: none;border: none;padding: 10px 20px;cursor: pointer;color: var(--6);transition: all 0.3s ease;flex: 1;}
-    .modal-toggle button.active{background: var(--a);color: white;}
-    .modal-toggle button:hover:not(.active){background: var(--5);}
-    .modal-view{display: none;}
-    .modal-view.active{display: block;}
-    .effects-grid{display: grid;grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));gap: 15px;margin: 20px 0;}
-    .effect-card{background: var(--3);border: 2px solid var(--5);border-radius: 8px;padding: 15px;cursor: pointer;transition: all 0.3s ease;text-align: left;}
-    .effect-card:hover{border-color: var(--a);background: var(--5);}
-    .effect-card.active{border-color: var(--a);background: var(--ah);}
-    .effect-card h4{margin: 0 0 8px 0;color: var(--7);font-size: 14px;}
-    .effect-card p{margin: 0;color: var(--6);font-size: 12px;}
-    .effect-controls{margin-top: 20px;padding-top: 20px;border-top: 1px solid var(--5);}
-    .effect-control{display: flex;align-items: center;gap: 10px;margin: 10px 0;}
-    .effect-control label{color: var(--6);font-size: 14px;min-width: 80px;}
-    .effect-control input[type="range"]{flex: 1;height: 20px;}
-    .effect-control input[type="number"]{width: 60px;padding: 4px;border: 1px solid var(--5);background: var(--3);color: var(--6);border-radius: 4px;}
-    .active-effects{margin-top: 20px;padding-top: 20px;border-top: 1px solid var(--5);}
-    .active-effect{display: flex;align-items: center;justify-content: space-between;background: var(--3);padding: 8px 12px;border-radius: 4px;margin: 5px 0;}
-    .active-effect span{color: var(--6);font-size: 14px;}
-    .active-effect button{background: var(--r);color: white;border: none;border-radius: 4px;padding: 4px 8px;cursor: pointer;font-size: 12px;}
-    .active-effect button:hover{background: var(--rh);}
-    .apply-effects-btn{background: var(--a);color: white;border: none;border-radius: 4px;padding: 12px 24px;margin: 20px 0;cursor: pointer;font-size: 16px;width: 100%;}
-    .apply-effects-btn:hover{background: var(--ah);}
-    .apply-effects-btn:disabled{background: var(--5);cursor: not-allowed;}
-  `;
-  document.head.appendChild(style);
   const effects = {
     blur: {
       name: 'Blur',
@@ -261,7 +218,7 @@ void main() {
         <p>Select an image to use in your shader.</p>
         <button id="imgDropButton">Choose File or Drag and Drop</button>
         <div id="imgPreview"></div>
-        <p style="font-size:12px; color:#666;">Importing base shaders will delete current text area code</p>
+        <p class="loadmediawarn">Importing base shaders will delete current text area code</p>
         <button id="baseImportBtn">Import Base Shaders</button>
       </div>
       <div id="effectsView" class="modal-view">

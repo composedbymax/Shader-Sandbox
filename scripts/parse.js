@@ -1,11 +1,4 @@
 (function () {
-  const styleEl = document.createElement('style');
-  styleEl.textContent = `
-    #uploadHTMLBtn{position: absolute;bottom: 10px;right: 78px;background: var(--d);color: var(--l);border: none;cursor: pointer;height:39px;z-index:1;width:4.25rem}
-    #uploadHTMLBtn:hover{background: var(--5);}
-    #uploadHTMLInput{display: none;}
-  `;
-  document.head.appendChild(styleEl);
   function createEl(tag, attrs = {}, parent = document.body) {
     const el = document.createElement(tag);
     Object.entries(attrs).forEach(([k, v]) => el[k] = v);

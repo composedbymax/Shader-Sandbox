@@ -1,13 +1,4 @@
 (function() {
-    const CSS_STYLES = `
-        #jsToggleBtn{position: absolute;bottom: 49px;right: 10px;width: 40px;height: 40px;background: var(--d);color: var(--l);border: none;font-size: 12px;cursor: pointer;z-index: 1000;transition: all 0.3s ease;}
-        #jsToggleBtn:hover{background: var(--5);}
-        #jsToggleBtn.active{background: var(--a);}
-        #jsCanvas{width: 100%;height: 100%;display: block;background: #000000;position: absolute;top: 0;left: 0;}
-        .preview-panel-relative{position: relative;}
-
-    `;
-    const $ = id => document.getElementById(id);
     let jsMode = false;
     let savedShaderCode = { vertex: '', fragment: '' };
     let jsAnimationId = null;
@@ -76,12 +67,6 @@ if (mouse.x > 0 && mouse.y > 0) {
     ctx.lineWidth = 2;
     ctx.stroke();
 }`;
-    function injectCSS() {
-        const styleSheet = document.createElement('style');
-        styleSheet.type = 'text/css';
-        styleSheet.textContent = CSS_STYLES;
-        document.head.appendChild(styleSheet);
-    }
     function createToggleButton() {
         const toggleBtn = document.createElement('button');
         toggleBtn.id = 'jsToggleBtn';
@@ -120,6 +105,17 @@ if (mouse.x > 0 && mouse.y > 0) {
             jsMouse.isPressed = false;
         });
     }
+    function setupResizeObserver() {
+        if (!jsCanvas) return;
+        const resizeObserver = new ResizeObserver(() => {
+            if (jsMode) {
+                resizeJSCanvas();
+            }
+        });
+        const previewPanel = $('preview-panel');
+        resizeObserver.observe(previewPanel);
+        jsCanvas.resizeObserver = resizeObserver;
+    }
     function toggleMode() {
         const toggleBtn = $('jsToggleBtn');
         const vertPanel = $('vertPanel');
@@ -144,6 +140,7 @@ if (mouse.x > 0 && mouse.y > 0) {
             glCanvas.style.display = 'none';
             createJSCanvas();
             setupJSMouseEvents();
+            setupResizeObserver();
             startJSAnimation();
             console.log('JavaScript');
         } else {
@@ -178,6 +175,9 @@ if (mouse.x > 0 && mouse.y > 0) {
     }
     function removeJSCanvas() {
         if (jsCanvas) {
+            if (jsCanvas.resizeObserver) {
+                jsCanvas.resizeObserver.disconnect();
+            }
             jsCanvas.remove();
             jsCanvas = null;
             jsCtx = null;
@@ -187,8 +187,14 @@ if (mouse.x > 0 && mouse.y > 0) {
         if (!jsCanvas) return;
         const previewPanel = $('preview-panel');
         const rect = previewPanel.getBoundingClientRect();
-        jsCanvas.width = rect.width;
-        jsCanvas.height = rect.height;
+        const newWidth = rect.width;
+        const newHeight = rect.height;
+        if (jsCanvas.width !== newWidth || jsCanvas.height !== newHeight) {
+            jsCanvas.width = newWidth;
+            jsCanvas.height = newHeight;
+            jsMouse.x = 0;
+            jsMouse.y = 0;
+        }
     }
     function startJSAnimation() {
         jsStartTime = Date.now();
@@ -248,24 +254,8 @@ if (mouse.x > 0 && mouse.y > 0) {
                 setTimeout(checkReady, 100);
                 return;
             }
-            injectCSS();
             createToggleButton();
             setupCodeListener();
-            window.addEventListener('resize', () => {
-                if (jsMode) {
-                    resizeJSCanvas();
-                    setTimeout(() => {
-                        const vertPanel = $('vertPanel');
-                        const fragPanel = $('fragPanel');
-                        const rowDivider = $('rowDivider');
-                        if (vertPanel && fragPanel && rowDivider) {
-                            fragPanel.style.display = 'none';
-                            rowDivider.style.display = 'none';
-                            vertPanel.style.height = '100%';
-                        }
-                    }, 10);
-                }
-            });
             const observer = new MutationObserver(() => {
                 if (jsMode) {
                     const vertPanel = $('vertPanel');

@@ -42,7 +42,6 @@ class ShaderSearch {
       header.insertAdjacentElement('afterend', searchDiv);
     });
     this.EventListeners();
-    this.addCSS();
     this.setupTabObserver();
   }
   EventListeners() {
@@ -109,24 +108,11 @@ class ShaderSearch {
     if (show && !existing) {
       const noResultsDiv = document.createElement('div');
       noResultsDiv.className = 'no-results-message';
-      noResultsDiv.style.cssText = 'text-align: center; padding: 20px; color: #666; font-style: italic;';
-      noResultsDiv.innerHTML = `<p style="margin: 0;">No ${type} shaders found matching your search.</p>`;
+      noResultsDiv.innerHTML = `<p>No ${type} shaders found matching your search.</p>`;
       container.appendChild(noResultsDiv);
     } else if (!show && existing) {
       existing.remove();
     }
-  }
-  addCSS() {
-    const styles = document.createElement('style');
-    styles.textContent = `
-      .search-container{position: relative;margin: 10px 0;width: 100%;}
-      .search-input{width: 100%;padding: 8px 12px;padding-right: 35px;border: 1px solid var(--4);border-radius: 2px;font-size: 14px;background-color: var(--2);color: var(--7);box-sizing: border-box;}
-      .search-input:focus{outline: none;border-color: var(--a);}
-      .search-input::placeholder{color: var(--5);}
-      .clear-btn{position: absolute;right: 8px;top: 50%;transform: translateY(-50%);background: none;border: none;font-size: 16px;cursor: pointer;color: var(--6);width: 20px;height: 20px;display: none;align-items: center;justify-content: center;border-radius: 50%;line-height: 1;}
-      .clear-btn:hover{background-color: var(--r);color: var(--0);}
-    `;
-    document.head.appendChild(styles);
   }
   refresh() {
     this.contexts.forEach(ctx => {

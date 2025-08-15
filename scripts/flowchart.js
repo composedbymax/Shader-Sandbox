@@ -1,38 +1,5 @@
 (function() {
     'use strict';
-    const flowchartCSS = `
-        #flowchartWindow { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90vw; max-width: 1000px; height: 80vh; border-radius: 4px; z-index: 999999; display: none; flex-direction: column; }
-        #flowchartWindow.show { display: flex; }
-        .flowchart-header { background: var(--4); padding: 15px 20px; border-bottom: 1px solid var(--6); display: flex; justify-content: space-between; align-items: center; border-radius: 4px 4px 0 0; }
-        .flowchart-header h3 { margin: 0; color: var(--7); font-size: 18px; }
-        .flowchart-controls { display: flex; gap: 10px; align-items: center; }
-        .flowchart-controls button { padding: 8px 15px; background: var(--a); color: var(--0); border: none; border-radius: 2px; cursor: pointer; font-size: 14px; }
-        .flowchart-controls button:hover { background: var(--ah); }
-        .flowchart-controls .flowchartclose-btn { background: var(--r); margin-left: 10px; }
-        .flowchart-controls .flowchartclose-btn:hover { background: var(--rh); }
-        .export-dropdown { position: relative; display: inline-block; }
-        .export-dropdown-content { display: none; position: absolute; right: 0; background-color: var(--4); min-width: 120px; box-shadow: 0px 8px 16px rgba(0,0,0,0.2); z-index: 1; border-radius: 4px; overflow: hidden; }
-        .export-dropdown-content button { display: block; width: 100%; text-align: left; padding: 8px 12px; border: none; background: var(--4); color: var(--7); cursor: pointer; font-size: 14px; }
-        .export-dropdown-content button:hover { background: var(--5); }
-        .export-dropdown.show .export-dropdown-content { display: block; }
-        .flowchart-content { flex: 1; overflow: auto; display: flex; flex-direction: column; min-height: 0; }
-        #flowchartSVG { flex: 1; width: 100%; background: var(--3); overflow: auto; min-height: 300px; }
-        .flowchart-node { fill: var(--2); stroke: var(--3); stroke-width: 2px; filter: drop-shadow(2px 2px 4px var(--0)); cursor: pointer; }
-        .flowchart-node:hover { stroke-width: 3px; filter: drop-shadow(3px 3px 6px var(--1)); }
-        .flowchart-node.vertex { stroke: var(--a); }
-        .flowchart-node.fragment { stroke: var(--m); }
-        .flowchart-node.common { stroke: var(--b); }
-        .flowchart-label { font-size: 11px; text-anchor: middle; dominant-baseline: middle; fill: var(--7); font-weight: 500; pointer-events: none; }
-        .flowchart-line-number { font-size: 9px; text-anchor: middle; fill: var(--5); font-family: monospace; pointer-events: none; }
-        .flowchart-arrow { stroke: var(--5); stroke-width: 2px; fill: none; marker-end: url(#flowchart-arrow-marker); }
-        .flowchart-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--0); z-index: 99999; display: none; }
-        .flowchart-overlay.show { display: block; }
-        .flowchart-tooltip { position: absolute; background: var(--4); color: var(--7); padding: 8px 12px; border-radius: 4px; font-size: 12px; font-family: monospace; white-space: pre-wrap; max-width: 300px; z-index: 9999999; pointer-events: none; opacity: 0; transition: opacity 0.2s; }
-        .flowchart-tooltip.show { opacity: 1; }
-    `;
-    const styleEl = document.createElement('style');
-    styleEl.textContent = flowchartCSS;
-    document.head.appendChild(styleEl);
     let currentFlowchartData = null;
     const shaderPatterns = {
         vertex: {

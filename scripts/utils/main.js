@@ -7,6 +7,7 @@
     function r() {
         !function() {
             const e = document.createElement("style");
+            e.id = "loader-style";
             e.textContent = "#loader-overlay{position: fixed;inset: 0;background: rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;z-index:9999;}@keyframes spin{from{transform:rotate(0);}to{transform:rotate(360deg);}}#loader-spinner{width:60px;height:60px;border:6px solid #222;border-top:6px solid #0ff;border-radius:50%;animation:spin 1s linear infinite;}",
             document.head.appendChild(e);
             const n = document.createElement("div");
@@ -50,7 +51,11 @@
             o.onload = e;
             o.onerror = () => n(new Error(`Failed to load ${r}`));
             document.head.appendChild(o);
-        }))), Promise.resolve()).then(( () => console.log("Initialized"))).catch((e => console.error(e))).finally(n)
+        }))), Promise.resolve()).then(( () => console.log("Initialized"))).catch((e => console.error(e))).finally(() => {
+            n();
+            const style = document.getElementById("loader-style");
+            style && style.remove();
+        })
     }
     "loading" === document.readyState ? document.addEventListener("DOMContentLoaded", r) : r()
 }();
