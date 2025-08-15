@@ -51,52 +51,20 @@
     }
     container = document.createElement('div');
     container.id = 'toastContainer';
-    container.style.cssText = `
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10000;
-      pointer-events: none;
-    `;
     fullscreenRoot.appendChild(container);
   }
   function showToast(message, type = 'info') {
     createToastContainer();
     const toast = document.createElement('div');
-    const colors = {
-      success: { bg: 'var(--2)', border: 'var(--a)' },
-      error: { bg: 'var(--r)', border: 'var(--1)' },
-      info: { bg: 'var(--a)', border: 'var(--1)' },
-      warning: { bg: 'var(--r)', border: 'var(--1)' }
-    };
-    const color = colors[type] || colors.info;
-    toast.style.cssText = `
-      background: ${color.bg};
-      color: white;
-      padding: 10px 16px;
-      border-radius: 0;
-      border: 2px solid ${color.border};
-      box-shadow: 0 4px 12px var(--1);
-      margin-bottom: 10px;
-      font-weight: 500;
-      font-size: 14px;
-      max-width: 400px;
-      text-align: center;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: all 0.3s ease;
-      pointer-events: auto;
-    `;
+    toast.className = `toast ${type}`;
     toast.textContent = message;
     document.getElementById('toastContainer').appendChild(toast);
     requestAnimationFrame(() => {
-      toast.style.opacity = '1';
-      toast.style.transform = 'translateY(0)';
+      toast.classList.add('visible');
     });
     setTimeout(() => {
-      toast.style.opacity = '0';
-      toast.style.transform = 'translateY(-20px)';
+      toast.classList.add('hiding');
+      toast.classList.remove('visible');
       setTimeout(() => {
         if (toast.parentNode) {
           toast.parentNode.removeChild(toast);
@@ -333,11 +301,11 @@
   }
   function createPublicShaderCard(shader) {
     const div = document.createElement('div');
-    div.style = 'border:1px solid var(--4);padding:4px;margin-bottom:8px;';
+    div.className = 'shader-card';
     div.innerHTML = `
-      <div style="display:flex;align-items:center;gap:4px;">
-        <strong style="display:inline-block;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${shader.title}">${shader.title}</strong>
-        <span style="font-size:0.85em;color:var(--5);">by ${shader.user}</span>
+      <div class="shader-card-header">
+        <strong class="shader-title" title="${shader.title}">${shader.title}</strong>
+        <span class="shader-author">by ${shader.user}</span>
       </div>
       <img src="${shader.preview}" class="img"><br>
       <button class="ldbtn ellips" data-public-token="${shader.token}">Load</button>
@@ -346,10 +314,10 @@
   }
   function createLocalShaderCard(shader, key, index) {
     const div = document.createElement('div');
-    div.style = 'border:1px solid var(--4);padding:4px;margin-bottom:8px;';
+    div.className = 'shader-card';
     div.innerHTML = `
-      <div style="display:flex;align-items:center;gap:4px;">
-        <strong style="display:inline-block;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${shader.title}">${shader.title}</strong>
+      <div class="shader-card-header">
+        <strong class="shader-title" title="${shader.title}">${shader.title}</strong>
       </div>
       <img src="${shader.preview}" class="img"><br>
       <button class="ldbtn" data-local-index="${index}">Load</button>
@@ -418,7 +386,7 @@
   ['dragover', 'dragleave', 'drop'].forEach(evt =>
     uploadZone.addEventListener(evt, e => {
       e.preventDefault();
-      uploadZone.style.background = evt === 'dragover' ? 'var(--4)' : 'var(--3)';
+      uploadZone.classList.toggle('dragover', evt === 'dragover');
       if (evt === 'drop' && e.dataTransfer.files.length) {
         shaderImageInput.files = e.dataTransfer.files;
         fileNameDisplay.textContent = e.dataTransfer.files[0].name;

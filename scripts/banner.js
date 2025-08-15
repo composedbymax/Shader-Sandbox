@@ -16,60 +16,26 @@
   }
   function createLink(href, text) {
     const a = document.createElement('a');
-    Object.assign(a.style, {
-      color: 'var(--a)',
-      marginLeft: '4px',
-      textDecoration: 'underline',
-    });
+    a.className = 'banner-link';
     a.href = href;
     a.textContent = text;
     return a;
   }
   function createAuthButton(text) {
     const btn = document.createElement('button');
+    btn.className = 'banner-auth-button';
     btn.setAttribute('data-auth-open', '');
     btn.textContent = text;
-    Object.assign(btn.style, {
-      marginLeft: '4px',
-      background: 'var(--3)',
-      color:      'var(--7)',
-      padding:    '0.3rem 0.6rem',
-      border:     'none',
-      cursor:     'pointer',
-      fontSize:   '1rem',
-    });
     return btn;
   }
   function createBanner(message, actionLink) {
     const banner = document.createElement('div');
-    Object.assign(banner.style, {
-      position: 'fixed',
-      top: '0',
-      left: '0',
-      right: '0',
-      background: 'var(--2)',
-      color: 'var(--7)',
-      padding: '12px 16px',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      zIndex: '9999',
-      fontFamily: 'sans-serif',
-      fontSize: '16px',
-      transition: 'transform 0.3s ease, opacity 0.3s ease',
-    });
+    banner.className = 'banner';
     const text = document.createElement('span');
     text.textContent = message;
     text.appendChild(actionLink);
     const close = document.createElement('button');
-    Object.assign(close.style, {
-      background: 'none',
-      border: 'none',
-      color: 'var(--7)',
-      fontSize: '20px',
-      cursor: 'pointer',
-      marginLeft: '20px',
-    });
+    close.className = 'banner-close';
     close.textContent = '✕';
     close.addEventListener('click', dismiss);
     banner.appendChild(text);
@@ -86,14 +52,14 @@
         wheelDelta = 0;
         return;
       }
-      banner.style.transition = 'none';
+      banner.classList.add('banner-no-transition');
       banner.style.transform = `translateX(${wheelDelta}px)`;
       banner.style.opacity = `${1 - Math.min(Math.abs(wheelDelta) / banner.offsetWidth, 1)}`;
       clearTimeout(wheelTimeout);
       wheelTimeout = setTimeout(checkWheelEnd, 100);
     }
     function checkWheelEnd() {
-      banner.style.transition = '';
+      banner.classList.remove('banner-no-transition');
       if (Math.abs(wheelDelta) > THRESHOLD) {
         banner.style.transform = `translateX(${banner.offsetWidth}px)`;
         banner.style.opacity = '0';
@@ -109,7 +75,7 @@
     banner.addEventListener('touchstart', e => {
       isDragging = true;
       startX = e.touches[0].clientX;
-      banner.style.transition = 'none';
+      banner.classList.add('banner-no-transition');
     }, { passive: true });
     banner.addEventListener('touchmove', e => {
       if (!isDragging) return;
@@ -121,7 +87,7 @@
     }, { passive: true });
     banner.addEventListener('touchend', () => {
       const dx = currentX - startX;
-      banner.style.transition = '';
+      banner.classList.remove('banner-no-transition');
       if (dx > THRESHOLD) {
         banner.style.transform = `translateX(${banner.offsetWidth}px)`;
         banner.style.opacity = '0';
@@ -136,7 +102,7 @@
     banner.addEventListener('mousedown', e => {
       mouseDown = true;
       mouseStartX = e.clientX;
-      banner.style.transition = 'none';
+      banner.classList.add('banner-no-transition');
     });
     window.addEventListener('mousemove', e => {
       if (!mouseDown) return;
@@ -148,7 +114,7 @@
     window.addEventListener('mouseup', e => {
       if (!mouseDown) return;
       const dx = e.clientX - mouseStartX;
-      banner.style.transition = '';
+      banner.classList.remove('banner-no-transition');
       if (dx > THRESHOLD) {
         banner.style.transform = `translateX(${banner.offsetWidth}px)`;
         banner.style.opacity = '0';

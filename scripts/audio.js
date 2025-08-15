@@ -32,10 +32,10 @@ class AudioReactive {
     navigator.mediaDevices.addEventListener('devicechange', () => this.loadAudioDevices());
     this.loadAudioDevices();
   }
-  EL(tag, props = {}, styles = {}, html = '') {
+  EL(tag, props = {}, className = '', html = '') {
     const el = document.createElement(tag);
     Object.assign(el, props);
-    Object.assign(el.style, styles);
+    if (className) el.className = className;
     if (html) el.innerHTML = html;
     return el;
   }
@@ -43,28 +43,17 @@ class AudioReactive {
     Object.assign(el.style, styles);
   }
   button() {
-    const btnStyles = {
-      position: 'absolute', top:'50%', right:'10px',
-      transform:'translateY(-50%)', padding:'8px',
-      backgroundColor:'var(--d)', color:'var(--6)', border:'none',
-      borderRadius:'0', cursor:'pointer', fontSize:'12px',
-      display:'flex', transition:'all .2s ease', zIndex:'1',
-      height:'2rem', width: '2rem'
-    };
     this.button = this.EL('button', {
       innerHTML: this.SVG(),
       title: 'Audio Reactivity'
-    }, btnStyles);
-    this.button.addEventListener('mouseenter', ()=> {
-      this.style(this.button, { backgroundColor:'var(--5)' });
-    });
-    this.button.addEventListener('mouseleave', ()=> {
+    }, 'audio-reactive-button');
+    this.button.addEventListener('mouseleave', () => {
       this.style(this.button, {
-        backgroundColor: this.isActive? 'var(--a)' : 'var(--d)',
+        backgroundColor: this.isActive ? 'var(--a)' : 'var(--d)',
         transform: 'translateY(-50%) scale(1)'
       });
     });
-    this.button.onclick = ()=> this.show();
+    this.button.onclick = () => this.show();
     this.previewPanel.appendChild(this.button);
   }
   SVG() {
@@ -79,7 +68,6 @@ class AudioReactive {
                  c0-.55-.45-1-1-1s-1 .45-1 1z"/>
         <circle cx="12" cy="20" r="2" opacity="0.3"/>
       </svg>
-      </svg>
     `;
   }
   InfoSVG() {
@@ -92,154 +80,119 @@ class AudioReactive {
     `;
   }
   Modal() {
-    this.modal = this.EL(
-      'div', {}, {
-        position:'fixed', top:0, left:0, width:'100%', height:'100%',
-        backgroundColor:'none', display:'none', zIndex:'10000',
-      }
-    );
-    const wrap = this.EL('div', {}, {
-      position:'absolute', top:'50%', left:'50%',
-      transform:'translate(-50%,-50%)',
-      backgroundColor:'var(--3)', borderRadius:'2px',
-      padding:'24px',
-      border:'0.1px solid var(--4)', minWidth:'250px', maxWidth:'600px',
-      maxHeight:'80vh', overflowY:'auto'
-    });
-    const header = this.EL('div', {}, {}, 
-      `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-        <h3 style="margin:0;color:var(--7);display:flex;align-items:center;gap:8px;">
+    this.modal = this.EL('div', {}, 'audio-reactive-modal');
+    const wrap = this.EL('div', {}, 'audio-reactive-modal-wrap');
+    const header = this.EL('div', {}, '', 
+      `<div class="audio-reactive-header">
+        <h3 class="audio-reactive-title">
           ${this.SVG()} <span id="modal-title">Audio</span>
         </h3>
-        <div style="display:flex;gap:8px;">
-          <button id="info-toggle" style="
-            background:none;border:none;color:var(--7);font-size:16px;cursor:pointer;
-            padding:4px;border-radius:2px;transition:background .2s ease;
-          " title="Show Documentation">
+        <div class="audio-reactive-button-group">
+          <button id="info-toggle" class="audio-reactive-info-btn" title="Show Documentation">
             ${this.InfoSVG()}
           </button>
-          <button id="close-modal" style="
-            background:none;border:none;color:var(--7);font-size:30px;cursor:pointer;
-          ">×</button>
+          <button id="close-modal" class="audio-reactive-close-btn">×</button>
         </div>
       </div>`
     );
     wrap.appendChild(header);
-    this.settingsContent = this.EL('div', { id: 'settings-content' }, {});
-    this.settingsContent.appendChild(this.EL('div', {}, {}, 
-      `<div style="margin-bottom:15px;">
-        <span style="display:block;color:var(--7);margin-bottom:8px;font-size:14px;">
+    this.settingsContent = this.EL('div', { id: 'settings-content' });
+    this.settingsContent.appendChild(this.EL('div', {}, '', 
+      `<div class="audio-reactive-mic-section">
+        <span class="audio-reactive-label">
           Microphone Input:
         </span>
-        <select id="mic-select" style="
-          width:100%;padding:8px;background:var(--3);border:1px solid var(--4);
-          color:var(--7);border-radius:2px;font-size:14px;cursor:pointer;
-        ">
+        <select id="mic-select" class="audio-reactive-select">
           <option value="">Loading devices...</option>
         </select>
       </div>`
     ));
-    this.settingsContent.appendChild(this.EL('div', {}, {}, 
-      `<div style="margin-bottom:20px;padding:0px;background:var(--d);border-radius:2px">
-        <button id="audio-toggle" style="
-          width:100%;padding:12px;background:var(--3);border:none;color:var(--7);border-radius:2px;
-          cursor:pointer;transition:all .2s ease">
+    this.settingsContent.appendChild(this.EL('div', {}, '', 
+      `<div class="audio-reactive-toggle-section">
+        <button id="audio-toggle" class="audio-reactive-toggle-btn">
           Enable Audio Input
         </button>
-        <div id="audio-status" style="
-          margin-top:8px;font-size:12px;color:var(--7);text-align:center">
+        <div id="audio-status" class="audio-reactive-status">
           Click to enable microphone access
         </div>
       </div>`
     ));
     const sliders = ['bass','mid','treble','volume']
       .map(type => 
-        `<div style="margin-bottom:10px;">
-          <span style="display:block;color:white;margin-bottom:4px;">
+        `<div class="audio-reactive-slider-group">
+          <span class="audio-reactive-slider-label">
             ${type[0].toUpperCase() + type.slice(1)} Sensitivity:
-            <span id="${type}-value" style="color:${this.color(type)};margin-left:8px;">1.0</span>
+            <span id="${type}-value" class="audio-reactive-slider-value" style="color:${this.color(type)};">1.0</span>
           </span>
-          <input id="${type}-slider" type="range" min="0.1" max="3" step="0.1" value="1.0" 
-                 style="width:100%;"/>
+          <input id="${type}-slider" class="audio-reactive-slider" type="range" min="0.1" max="3" step="0.1" value="1.0" />
         </div>`
       ).join('');
-    this.settingsContent.appendChild(this.EL('div', {}, {}, `${sliders}`));
-    this.settingsContent.appendChild(this.EL('div', {}, {}, 
-      `<div style="margin-top:20px;padding:16px;background:var(--d);border-radius:0px">
-        <h4 style="margin:0 0 12px 0;color:white;font-size:14px">
+    this.settingsContent.appendChild(this.EL('div', {}, '', `${sliders}`));
+    this.settingsContent.appendChild(this.EL('div', {}, '', 
+      `<div class="audio-reactive-levels">
+        <h4 class="audio-reactive-levels-title">
           Audio Levels
         </h4>
-        <div id="audio-bars" style="display:flex;gap:8px;height:60px;align-items:end">
+        <div id="audio-bars" class="audio-reactive-bars">
           ${['bass','mid','treble','volume']
-            .map(type => `<div class="audio-bar" data-type="${type}"
-               style="flex:1;background:${this.color(type)};
-                      border-radius:2px;min-height:2px;
-                      transition:height .1s ease"></div>`)
+            .map(type => `<div class="audio-bar" data-type="${type}"></div>`)
             .join('')}
         </div>
-        <div style="display:flex;justify-content:space-between;color:var(--7);margin-top:8px;">
+        <div class="audio-reactive-bar-labels">
           ${['Bass','Mid','Treble','Volume']
-            .map(lbl => `<span style="font-size:12px;">${lbl}</span>`).join('')}
+            .map(lbl => `<span class="audio-reactive-bar-label">${lbl}</span>`).join('')}
         </div>
       </div>`
     ));
-    this.infoContent = this.EL('div', { id: 'info-content' }, { display: 'none' });
-    this.infoContent.appendChild(this.EL('div', {}, {}, 
-      `<div style="color:var(--7);line-height:1.6;">
-        <h4 style="color:white;margin:0 0 16px 0;">Audio-Reactive Shader Uniforms</h4>
-        <p style="margin:0 0 16px 0;">
+    this.infoContent = this.EL('div', { id: 'info-content' }, 'audio-reactive-info-content');
+    this.infoContent.appendChild(this.EL('div', {}, '', 
+      `<div>
+        <h4 class="audio-reactive-info-title">Audio-Reactive Shader Uniforms</h4>
+        <p class="audio-reactive-info-text">
           This system automatically passes audio data to your shaders as uniform variables. 
           Use these in your fragment shader code:
         </p>
-        <div style="background:var(--d);padding:16px;border-radius:4px;margin:16px 0;font-family:monospace;font-size:13px;">
-          <div style="color:#8be9fd;margin-bottom:8px;">// Available uniforms:</div>
-          <div style="color:#50fa7b;">uniform float</div> <span style="color:#f8f8f2;">u_bass;</span>    <span style="color:#6272a4;">// Bass frequencies (0.0-1.0)</span><br>
-          <div style="color:#50fa7b;">uniform float</div> <span style="color:#f8f8f2;">u_mid;</span>     <span style="color:#6272a4;">// Mid frequencies (0.0-1.0)</span><br>
-          <div style="color:#50fa7b;">uniform float</div> <span style="color:#f8f8f2;">u_treble;</span> <span style="color:#6272a4;">// High frequencies (0.0-1.0)</span><br>
-          <div style="color:#50fa7b;">uniform float</div> <span style="color:#f8f8f2;">u_volume;</span> <span style="color:#6272a4;">// Overall volume (0.0-1.0)</span>
+        <div class="audio-reactive-code-block">
+          <div class="audio-reactive-code-comment">// Available uniforms:</div>
+          <div class="audio-reactive-code-type">uniform float</div> <span class="audio-reactive-code-var">u_bass;</span>    <span class="audio-reactive-code-inline-comment">// Bass frequencies (0.0-1.0)</span><br>
+          <div class="audio-reactive-code-type">uniform float</div> <span class="audio-reactive-code-var">u_mid;</span>     <span class="audio-reactive-code-inline-comment">// Mid frequencies (0.0-1.0)</span><br>
+          <div class="audio-reactive-code-type">uniform float</div> <span class="audio-reactive-code-var">u_treble;</span> <span class="audio-reactive-code-inline-comment">// High frequencies (0.0-1.0)</span><br>
+          <div class="audio-reactive-code-type">uniform float</div> <span class="audio-reactive-code-var">u_volume;</span> <span class="audio-reactive-code-inline-comment">// Overall volume (0.0-1.0)</span>
         </div>
-        <h5 style="color:white;margin:20px 0 12px 0;">Example Usage:</h5>
-        <div style="background:var(--d);padding:16px;border-radius:4px;margin:16px 0;font-family:monospace;font-size:13px;">
-          <div style="color:#8be9fd;">// Pulse effect with bass</div><br>
-          <span style="color:#f8f8f2;">vec3 color = baseColor * (</span><span style="color:#ff79c6;">1.0</span><span style="color:#f8f8f2;"> + u_bass * </span><span style="color:#ff79c6;">2.0</span><span style="color:#f8f8f2;">);</span><br><br>
-          <div style="color:#8be9fd;">// Frequency-based color mixing</div><br>
-          <span style="color:#f8f8f2;">vec3 audioColor = vec3(u_bass, u_mid, u_treble);</span><br><br>
-          <div style="color:#8be9fd;">// Time modulation with volume</div><br>
-          <span style="color:#f8f8f2;">float speed = u_time * (</span><span style="color:#ff79c6;">1.0</span><span style="color:#f8f8f2;"> + u_volume * </span><span style="color:#ff79c6;">5.0</span><span style="color:#f8f8f2;">);</span><br><br>
-          <div style="color:#8be9fd;">// Scale transformations</div><br>
-          <span style="color:#f8f8f2;">vec2 scaledUV = uv * (</span><span style="color:#ff79c6;">1.0</span><span style="color:#f8f8f2;"> + u_bass * </span><span style="color:#ff79c6;">0.5</span><span style="color:#f8f8f2;">);</span>
+        <h5 class="audio-reactive-example-title">Example Usage:</h5>
+        <div class="audio-reactive-code-block">
+          <div class="audio-reactive-code-comment">// Pulse effect with bass</div><br>
+          <span class="audio-reactive-code-var">vec3 color = baseColor * (</span><span class="audio-code-span">1.0</span><span class="audio-reactive-code-var"> + u_bass * </span><span class="audio-code-span">2.0</span><span class="audio-reactive-code-var">);</span><br><br>
+          <div class="audio-reactive-code-comment">// Frequency-based color mixing</div><br>
+          <span class="audio-reactive-code-var">vec3 audioColor = vec3(u_bass, u_mid, u_treble);</span><br><br>
+          <div class="audio-reactive-code-comment">// Time modulation with volume</div><br>
+          <span class="audio-reactive-code-var">float speed = u_time * (</span><span class="audio-code-span">1.0</span><span class="audio-reactive-code-var"> + u_volume * </span><span class="audio-code-span">5.0</span><span class="audio-reactive-code-var">);</span><br><br>
+          <div class="audio-reactive-code-comment">// Scale transformations</div><br>
+          <span class="audio-reactive-code-var">vec2 scaledUV = uv * (</span><span class="audio-code-span">1.0</span><span class="audio-reactive-code-var"> + u_bass * </span><span class="audio-code-span">0.5</span><span class="audio-reactive-code-var">);</span>
         </div>
-        <h5 style="color:white;margin:20px 0 12px 0;">Notes:</h5>
-        <ul style="margin:0;padding-left:20px;">
-          <li style="margin-bottom:8px;">Bass frequencies are dampened to prevent overwhelming effects</li>
-          <li style="margin-bottom:8px;">Use sensitivity sliders to fine-tune responsiveness</li>
-          <li style="margin-bottom:8px;">Combine multiple frequencies for complex animations</li>
-          <li style="margin-bottom:8px;">Values are smoothed over time to reduce jitter</li>
+        <h5 class="audio-reactive-notes-title">Notes:</h5>
+        <ul class="audio-reactive-notes-list">
+          <li class="audio-reactive-notes-item">Bass frequencies are dampened to prevent overwhelming effects</li>
+          <li class="audio-reactive-notes-item">Use sensitivity sliders to fine-tune responsiveness</li>
+          <li class="audio-reactive-notes-item">Combine multiple frequencies for complex animations</li>
+          <li class="audio-reactive-notes-item">Values are smoothed over time to reduce jitter</li>
         </ul>
-        <div style="background:#1a4b32;padding:12px;border-radius:4px;margin:16px 0;border-left:4px solid var(--a);">
-          <strong style="color:var(--a);">Pro Tip:</strong> 
-          <span style="color:var(--7);">Try multiplying audio values by larger numbers (2.0-10.0) for more dramatic effects, or use them as offsets in noise functions.</span>
+        <div class="audio-reactive-tip-box">
+          <strong class="audio-reactive-tip-strong">Pro Tip:</strong> 
+          <span class="audio-reactive-tip-text">Try multiplying audio values by larger numbers (2.0-10.0) for more dramatic effects, or use them as offsets in noise functions.</span>
         </div>
       </div>`
     ));
-    const fileZone = this.EL('div', { id: 'file-drop' }, {
-      marginBottom: '20px',
-      padding: '20px',
-      background: 'var(--d)',
-      border: '2px dashed var(--4)',
-      textAlign: 'center',
-      cursor: 'pointer'
-    }, `
-      <p style="color:var(--7)">
+    const fileZone = this.EL('div', { id: 'file-drop' }, 'audio-reactive-file-drop', `
+      <p class="audio-reactive-file-text">
         Drag & drop an audio file here<br>
-        or <button id="file-upload-btn" style="background:var(--5);border-radius:2px;text-decoration:none;padding:0.5rem 1rem;border:none;color:var(--7);cursor:pointer">Browse files</button>
+        or <button id="file-upload-btn" class="audio-reactive-upload-btn">Browse files</button>
       </p>
-      <input id="file-input" type="file" accept="audio/mpeg, audio/mp3, audio/wav, audio/wave, audio/x-wav, audio/aac, audio/mp4, audio/x-m4a, audio/flac, audio/ogg, audio/opus, .mp3, .wav, .aac, .m4a, .flac, .ogg, .opus" style="display:none"/>
-      <audio id="file-audio" controls style="width:100%;display:none;margin-top:10px"></audio>
-      <button id="clear-file-btn" style="display:none;margin-top:10px;padding:6px 12px;background:var(--d);border:none;color:var(--7);cursor:pointer">Clear File</button>
+      <input id="file-input" class="audio-reactive-file-input" type="file" accept="audio/mpeg, audio/mp3, audio/wav, audio/wave, audio/x-wav, audio/aac, audio/mp4, audio/x-m4a, audio/flac, audio/ogg, audio/opus, .mp3, .wav, .aac, .m4a, .flac, .ogg, .opus"/>
+      <audio id="file-audio" class="audio-reactive-file-audio" controls></audio>
+      <button id="clear-file-btn" class="audio-reactive-clear-btn">Clear File</button>
     `);
     this.settingsContent.appendChild(fileZone);
-    wrap.appendChild(header);
     wrap.appendChild(this.settingsContent);
     wrap.appendChild(this.infoContent);
     this.modal.appendChild(wrap);
@@ -269,34 +222,32 @@ class AudioReactive {
     }
   }
   bindEvents() {
-  this.modal.querySelector('#close-modal').onclick = () => this.hide();
-  this.modal.onclick = e => { if (e.target === this.modal) this.hide(); };
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && this.modal.style.display !== 'none') {
-      this.hide();
-    }
-  }, { once: false });
-  const infoBtn    = this.modal.querySelector('#info-toggle');
-  const modalTitle = this.modal.querySelector('#modal-title');
-  infoBtn.onclick = () => {
-    this.showingInfo = !this.showingInfo;
-    if (this.showingInfo) {
-      this.settingsContent.style.display = 'none';
-      this.infoContent.style.display     = 'block';
-      modalTitle.textContent             = 'Documentation';
-      infoBtn.innerHTML                  = this.SVG();
-      infoBtn.title                      = 'Show Settings';
-    } else {
-      this.settingsContent.style.display = 'block';
-      this.infoContent.style.display     = 'none';
-      modalTitle.textContent             = 'Audio';
-      infoBtn.innerHTML                  = this.InfoSVG();
-      infoBtn.title                      = 'Show Documentation';
-    }
-  };
-  infoBtn.addEventListener('mouseenter', () => infoBtn.style.backgroundColor = 'var(--5)');
-  infoBtn.addEventListener('mouseleave', () => infoBtn.style.backgroundColor = 'transparent');
-  const micSelect = this.modal.querySelector('#mic-select');
+    this.modal.querySelector('#close-modal').onclick = () => this.hide();
+    this.modal.onclick = e => { if (e.target === this.modal) this.hide(); };
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.modal.style.display !== 'none') {
+        this.hide();
+      }
+    }, { once: false });
+    const infoBtn    = this.modal.querySelector('#info-toggle');
+    const modalTitle = this.modal.querySelector('#modal-title');
+    infoBtn.onclick = () => {
+      this.showingInfo = !this.showingInfo;
+      if (this.showingInfo) {
+        this.settingsContent.style.display = 'none';
+        this.infoContent.style.display     = 'block';
+        modalTitle.textContent             = 'Documentation';
+        infoBtn.innerHTML                  = this.SVG();
+        infoBtn.title                      = 'Show Settings';
+      } else {
+        this.settingsContent.style.display = 'block';
+        this.infoContent.style.display     = 'none';
+        modalTitle.textContent             = 'Audio';
+        infoBtn.innerHTML                  = this.InfoSVG();
+        infoBtn.title                      = 'Show Documentation';
+      }
+    };
+    const micSelect = this.modal.querySelector('#mic-select');
     micSelect.addEventListener('change', async () => {
       if (this.isActive && !this.fileActive) {
         await this.switchToMicrophone();
@@ -343,13 +294,13 @@ class AudioReactive {
     ['dragenter','dragover'].forEach(evt =>
       dropZone.addEventListener(evt, e => {
         e.preventDefault();
-        dropZone.style.borderColor = 'var(--7)';
+        dropZone.classList.add('dragover');
       })
     );
     ['dragleave','drop'].forEach(evt =>
       dropZone.addEventListener(evt, e => {
         e.preventDefault();
-        dropZone.style.borderColor = 'var(--4)';
+        dropZone.classList.remove('dragover');
       })
     );
     dropZone.addEventListener('drop', e => {
@@ -420,17 +371,19 @@ class AudioReactive {
       targetElement.appendChild(this.modal);
     }
     this.modal.style.display = 'block';
-      this.showingInfo = false;
-      this.settingsContent.style.display = 'block';
-      this.infoContent.style.display = 'none';
-      this.modal.querySelector('#modal-title').textContent = 'Audio';
-      this.modal.querySelector('#info-toggle').innerHTML = this.InfoSVG();
-      this.modal.querySelector('#info-toggle').title = 'Show Documentation';
-      this.barAnimation();
-    }
+    this.showingInfo = false;
+    this.settingsContent.style.display = 'block';
+    this.infoContent.style.display = 'none';
+    this.modal.querySelector('#modal-title').textContent = 'Audio';
+    this.modal.querySelector('#info-toggle').innerHTML = this.InfoSVG();
+    this.modal.querySelector('#info-toggle').title = 'Show Documentation';
+    this.barAnimation();
+  }
+  
   hide() {
     this.modal.style.display = 'none';
   }
+  
   barAnimation() {
     const loop = () => {
       if (this.modal.style.display === 'none') return;
@@ -453,6 +406,7 @@ class AudioReactive {
     };
     requestAnimationFrame(loop);
   }
+  
   cleanupMicrophone() {
     if (this.micStream) {
       this.micStream.getTracks().forEach(track => track.stop());
@@ -504,11 +458,8 @@ class AudioReactive {
       id: 'file-audio',
       controls: true,
       src: URL.createObjectURL(file)
-    }, {
-      width: '100%',
-      marginTop: '10px',
-      display: 'block'
-    });
+    }, 'audio-reactive-file-audio');
+    audioEl.style.display = 'block';
     const clearBtn = this.modal.querySelector('#clear-file-btn');
     clearBtn.style.display = 'block';
     this.modal.querySelector('#file-drop').appendChild(audioEl);
@@ -544,7 +495,8 @@ class AudioReactive {
     this.updateMicrophoneUI(false, 'Click to enable microphone access');
   }
   setGLContext(gl, program) {
-    this.gl = gl; this.program = program;
+    this.gl = gl; 
+    this.program = program;
   }
   update() {
     if (!this.analyser || !this.isActive || !this.gl || !this.program) return;

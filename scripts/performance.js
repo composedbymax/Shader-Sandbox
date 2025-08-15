@@ -27,56 +27,33 @@ class GLSLPerformanceMonitor {
   createUI() {
     (this.container = document.createElement("div")),
       (this.container.className = "glsl-performance-monitor-container"),
-      (this.container.style.position = "absolute"),
-      (this.container.style.zIndex = "1"),
       this.updateContainerPosition(),
       (this.toggleButton = document.createElement("button")),
       (this.toggleButton.className = "glsl-performance-monitor-toggle"),
-      (this.toggleButton.style.width = "2rem"),
-      (this.toggleButton.style.height = "2rem"),
-      (this.toggleButton.style.border = "none"),
-      (this.toggleButton.style.backgroundColor = "var(--d)"),
-      (this.toggleButton.style.cursor = "pointer"),
-      (this.toggleButton.style.padding = "7px"),
-      (this.toggleButton.style.display = "flex"),
-      (this.toggleButton.style.justifyContent = "center"),
-      (this.toggleButton.style.alignItems = "center"),
       this.toggleButton.title = "Performance Monitor";
       (this.toggleButton.innerHTML =
         '\n        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">\n          <path d="M3 13H10V3H3V13ZM3 21H10V15H3V21ZM12 21H19V11H12V21ZM12 3V9H19V3H12Z" fill="var(--6)"/>\n        </svg>\n      '),
-      (this.toggleButton.onmouseenter = () => {this.toggleButton.style.backgroundColor = "var(--5)";}),
-      (this.toggleButton.onmouseleave = () => {this.toggleButton.style.backgroundColor = "var(--d)";}),
       (this.overlay = document.createElement("div")),
       (this.overlay.className = "glsl-performance-monitor-panel"),
-      (this.overlay.style.display = "none"),
-      (this.overlay.style.padding = "12px"),
-      (this.overlay.style.backgroundColor = "var(--d)"),
-      (this.overlay.style.color = "var(--7)"),
-      (this.overlay.style.fontFamily = "monospace"),
-      (this.overlay.style.fontSize = "12px"),
-      (this.overlay.style.width = "60%");
+      (this.overlay.style.display = "none");
     const t = document.createElement("div");
-    (t.style.display = "flex"),
-      (t.style.justifyContent = "space-between"),
-      (t.style.alignItems = "center"),
-      (t.style.marginBottom = "10px");
+    t.className = "glsl-performance-monitor-header";
     const s = document.createElement("div");
     (s.textContent = "Performance Monitor"),
-      (s.style.fontWeight = "bold"),
-      (s.style.color = "var(--7)"),
+      (s.className = "glsl-performance-monitor-title"),
       t.appendChild(s),
       this.overlay.appendChild(t),
       this.options.showFPS &&
         ((this.fpsDisplay = document.createElement("div")),
-        (this.fpsDisplay.style.marginBottom = "6px"),
+        (this.fpsDisplay.className = "glsl-performance-monitor-display"),
         this.overlay.appendChild(this.fpsDisplay)),
       this.options.showDrawCalls &&
         ((this.drawCallsDisplay = document.createElement("div")),
-        (this.drawCallsDisplay.style.marginBottom = "6px"),
+        (this.drawCallsDisplay.className = "glsl-performance-monitor-display"),
         this.overlay.appendChild(this.drawCallsDisplay)),
       this.options.showMemory &&
         ((this.memoryDisplay = document.createElement("div")),
-        (this.memoryDisplay.style.marginBottom = "6px"),
+        (this.memoryDisplay.className = "glsl-performance-monitor-display"),
         this.overlay.appendChild(this.memoryDisplay)),
       this.options.showGPUInfo &&
         ((this.gpuInfoDisplay = document.createElement("div")),
@@ -93,29 +70,8 @@ class GLSLPerformanceMonitor {
       });
   }
   updateContainerPosition() {
-    switch (
-      ((this.container.style.top = "auto"),
-      (this.container.style.right = "auto"),
-      (this.container.style.bottom = "auto"),
-      (this.container.style.left = "auto"),
-      this.options.overlayPosition)
-    ) {
-      case "top-left":
-        (this.container.style.top = "10px"),
-          (this.container.style.left = "10px");
-        break;
-      case "top-right":
-        (this.container.style.top = "10px"),
-          (this.container.style.right = "10px");
-        break;
-      case "bottom-left":
-        (this.container.style.bottom = "10px"),
-          (this.container.style.left = "10px");
-        break;
-      case "bottom-right":
-        (this.container.style.bottom = "10px"),
-          (this.container.style.right = "10px");
-    }
+    this.container.classList.remove("top-left", "top-right", "bottom-left", "bottom-right");
+    this.container.classList.add(this.options.overlayPosition);
   }
   togglePanel() {
     (this.isPanelOpen = !this.isPanelOpen),
@@ -185,12 +141,12 @@ class GLSLPerformanceMonitor {
       if (
         (this.options.showFPS &&
           this.fpsDisplay &&
-          (this.fpsDisplay.innerHTML = `\n          <div><b>FPS:</b> <span style="color: var(--ah)">${this.metrics.fps.current}</span></div>\n          <div style="padding-left: 10px; color: var(--6)">\n            avg: ${this.metrics.fps.average}, \n            min: ${this.metrics.fps.min}, \n            max: ${this.metrics.fps.max}\n          </div>\n        `),
+          (this.fpsDisplay.innerHTML = `\n          <div><b>FPS:</b> <span class="glsl-performance-monitor-value">${this.metrics.fps.current}</span></div>\n          <div class="glsl-performance-monitor-details">\n            avg: ${this.metrics.fps.average}, \n            min: ${this.metrics.fps.min}, \n            max: ${this.metrics.fps.max}\n          </div>\n        `),
         this.options.showDrawCalls &&
           this.drawCallsDisplay &&
-          (this.drawCallsDisplay.innerHTML = `\n          <div><b>Draw calls:</b> <span style="color: var(--ah)">${
+          (this.drawCallsDisplay.innerHTML = `\n          <div><b>Draw calls:</b> <span class="glsl-performance-monitor-value">${
             this.metrics.drawCalls
-          }</span></div>\n          <div style="padding-left: 10px; color: var(--6)">\n            Triangles: ~<span style="color: var(--7)">${Math.round(
+          }</span></div>\n          <div class="glsl-performance-monitor-details">\n            Triangles: ~<span class="glsl-performance-monitor-highlight">${Math.round(
             this.metrics.triangleCount
           )}</span>\n          </div>\n        `),
         this.options.showMemory &&
@@ -199,9 +155,9 @@ class GLSLPerformanceMonitor {
           performance.memory)
       ) {
         const t = (t) => (t / 1048576).toFixed(2);
-        this.memoryDisplay.innerHTML = `\n          <div><b>Memory:</b> <span style="color: var(--ah)">${t(
+        this.memoryDisplay.innerHTML = `\n          <div><b>Memory:</b> <span class="glsl-performance-monitor-value">${t(
           this.metrics.memory.usedJSHeapSize
-        )} MB</span></div>\n          <div style="padding-left: 10px; color: var(--6)">\n            Total: ${t(
+        )} MB</span></div>\n          <div class="glsl-performance-monitor-details">\n            Total: ${t(
           this.metrics.memory.totalJSHeapSize
         )} MB\n            (Limit: ${t(
           this.metrics.memory.jsHeapSizeLimit
@@ -209,7 +165,7 @@ class GLSLPerformanceMonitor {
       }
       this.options.showGPUInfo &&
         this.gpuInfoDisplay &&
-        (this.gpuInfoDisplay.innerHTML = `\n          <div><b>GPU:</b> <span style="color: var(--ah)">${this.metrics.gpuInfo.vendor}</span></div>\n          <div style="padding-left: 10px; color: var(--6)">\n            ${this.metrics.gpuInfo.renderer}\n          </div>\n        `);
+        (this.gpuInfoDisplay.innerHTML = `\n          <div><b>GPU:</b> <span class="glsl-performance-monitor-value">${this.metrics.gpuInfo.vendor}</span></div>\n          <div class="glsl-performance-monitor-details">\n            ${this.metrics.gpuInfo.renderer}\n          </div>\n        `);
     }
   }
   collectGPUInfo() {

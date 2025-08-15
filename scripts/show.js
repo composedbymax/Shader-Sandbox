@@ -2,6 +2,7 @@
     'use strict';
     let isPerformanceMode = false;
     let originalStyles = new Map();
+    let originalClasses = new Map();
     function enterPerformanceMode() {
         const elementsToHide = [
             '#editors',
@@ -15,7 +16,7 @@
             const elements = document.querySelectorAll(selector);
             elements.forEach(element => {
                 originalStyles.set(element, element.style.display);
-                element.style.display = 'none';
+                element.classList.add('performance-mode-hidden');
             });
         });
         const canvas = document.getElementById('glcanvas');
@@ -41,20 +42,14 @@
             originalStyles.set('app', {
                 overflow: app.style.overflow
             });
-            canvas.style.position = 'fixed';
-            canvas.style.top = '0';
-            canvas.style.left = '0';
-            canvas.style.width = '100vw';
-            canvas.style.height = '100vh';
-            canvas.style.zIndex = '999999';
-            previewPanel.style.position = 'fixed';
-            previewPanel.style.top = '0';
-            previewPanel.style.left = '0';
-            previewPanel.style.width = '100vw';
-            previewPanel.style.height = '100vh';
-            previewPanel.style.zIndex = '999998';
-            app.style.overflow = 'hidden';
-            document.body.style.overflow = 'hidden';
+            originalClasses.set(canvas, canvas.className);
+            originalClasses.set(previewPanel, previewPanel.className);
+            originalClasses.set(app, app.className);
+            originalClasses.set(document.body, document.body.className);
+            canvas.classList.add('performance-mode-canvas');
+            previewPanel.classList.add('performance-mode-preview');
+            app.classList.add('performance-mode-app');
+            document.body.classList.add('performance-mode-body');
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             window.dispatchEvent(new Event('resize'));
@@ -64,11 +59,24 @@
     function exitPerformanceMode() {
         originalStyles.forEach((originalDisplay, element) => {
             if (typeof element === 'string') return;
+            element.classList.remove('performance-mode-hidden');
             element.style.display = originalDisplay;
         });
         const canvas = document.getElementById('glcanvas');
         const previewPanel = document.getElementById('preview-panel');
         const app = document.getElementById('app');
+        if (canvas && originalClasses.has(canvas)) {
+            canvas.className = originalClasses.get(canvas);
+        }
+        if (previewPanel && originalClasses.has(previewPanel)) {
+            previewPanel.className = originalClasses.get(previewPanel);
+        }
+        if (app && originalClasses.has(app)) {
+            app.className = originalClasses.get(app);
+        }
+        if (originalClasses.has(document.body)) {
+            document.body.className = originalClasses.get(document.body);
+        }
         if (canvas && originalStyles.has('canvas')) {
             const canvasStyles = originalStyles.get('canvas');
             Object.assign(canvas.style, canvasStyles);
@@ -80,13 +88,12 @@
         if (app && originalStyles.has('app')) {
             app.style.overflow = originalStyles.get('app').overflow;
         }
-        document.body.style.overflow = '';
         window.dispatchEvent(new Event('resize'));
         isPerformanceMode = false;
     }
     function togglePerformanceMode() {
         const editors = document.getElementById('editors');
-            if (editors && editors.style.display !== 'none') {
+        if (editors && editors.style.display !== 'none') {
             if (typeof window.showToast === 'function') {
                 window.showToast('Please close the text editor window to enter performance mode.');
             }

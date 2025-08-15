@@ -137,34 +137,10 @@
           <path d="M20.7 7.3a1 1 0 0 0 0-1.4L18.1 3.3a1 1 0 0 0-1.4 0l-9.3 9.3 2 2 9.3-9.3z"></path>
         </svg>
       `;
-      button.style.cssText = `
-        position: absolute;
-        top: 10px;
-        right: 42px;
-        z-index: 1;
-        background: var(--d);
-        border: none;
-        width: 2rem;
-        height: 2rem;
-        font-size: 20px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-        pointer-events: auto;
-      `;
-      button.onmouseover = () => {
-        button.style.backgroundColor = "var(--5)";
-      };
-      button.onmouseout = () => {
-        button.style.backgroundColor = "var(--d)";
-      };
       button.onclick = () => this.toggleModal();
       document.addEventListener('fullscreenchange', () => {
         const modal = document.getElementById('theme-modal');
-        const confirmModal = document.getElementById('confirm-modal');
+        const confirmModal = document.getElementById('theme-confirm-modal');
         if (document.fullscreenElement) {
           document.fullscreenElement.appendChild(button);
           if (modal) document.fullscreenElement.appendChild(modal);
@@ -179,52 +155,14 @@
     }
     createConfirmModal() {
       const confirmModal = document.createElement("div");
-      confirmModal.id = "confirm-modal";
-      confirmModal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: var(--d);
-        z-index: 1010;
-        display: none;
-        justify-content: center;
-        align-items: center;
-      `;
+      confirmModal.id = "theme-confirm-modal";
       confirmModal.innerHTML = `
-        <div style="
-          background: var(--2);
-          border: 1px solid var(--5);
-          border-radius: 6px;
-          padding: 20px;
-          max-width: 300px;
-          width: 90%;
-          text-align: center;
-        ">
-          <h4 style="margin: 0 0 15px 0; color: var(--6); font-size: 16px;">Delete Theme</h4>
-          <p id="confirm-message" style="margin: 0 0 20px 0; color: var(--6); font-size: 14px; line-height: 1.4;"></p>
-          <div style="display: flex; gap: 10px; justify-content: center;">
-            <button id="confirm-cancel" style="
-              padding: 8px 16px;
-              background: var(--4);
-              color: var(--6);
-              border: 1px solid var(--5);
-              border-radius: 4px;
-              cursor: pointer;
-              font-size: 12px;
-              transition: background-color 0.2s;
-            ">Cancel</button>
-            <button id="confirm-delete" style="
-              padding: 8px 16px;
-              background: var(--r);
-              color: white;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-              font-size: 12px;
-              transition: background-color 0.2s;
-            ">Delete</button>
+        <div class="theme-confirm-modal-content">
+          <h4 class="theme-confirm-theme-modal-title">Delete Theme</h4>
+          <p id="confirm-message" class="theme-confirm-modal-message"></p>
+          <div class="theme-confirm-modal-buttons">
+            <button id="confirm-cancel" class="theme-confirm-cancel-btn">Cancel</button>
+            <button id="confirm-delete" class="theme-confirm-delete-btn">Delete</button>
           </div>
         </div>
       `;
@@ -232,7 +170,7 @@
       this.setupConfirmModalEvents();
     }
     setupConfirmModalEvents() {
-      const confirmModal = document.getElementById("confirm-modal");
+      const confirmModal = document.getElementById("theme-confirm-modal");
       const cancelBtn = document.getElementById("confirm-cancel");
       const deleteBtn = document.getElementById("confirm-delete");
       const cancelConfirm = () => {
@@ -260,7 +198,7 @@
       });
     }
     showCustomConfirm(message, callback) {
-      const confirmModal = document.getElementById("confirm-modal");
+      const confirmModal = document.getElementById("theme-confirm-modal");
       const messageElement = document.getElementById("confirm-message");
       messageElement.textContent = message;
       this.confirmCallback = callback;
@@ -269,54 +207,39 @@
     createModal() {
       const modal = document.createElement("div");
       modal.id = "theme-modal";
-      modal.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 300px;
-        max-height: calc(100vh - 40px);
-        background: var(--3);
-        color: var(--1);
-        border-radius: 4px;
-        z-index: 1005;
-        display: none;
-        overflow: hidden;
-        border: 1px solid var(--2));
-      `;
       modal.innerHTML = `
-        <div style="padding: 20px; border-bottom: 1px solid var(--2); background: var(--2);">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0; color: var(--6); font-size: 18px;">Theme Manager</h3>
-            <button id="close-modal" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--r); padding: 0; width: 24px; height: 24px;" aria-label="Close Theme Manager">×</button>
+        <div class="theme-modal-header">
+          <div class="theme-modal-header-content">
+            <h3 class="theme-modal-title">Theme Manager</h3>
+            <button id="close-modal" class="theme-modal-close-btn" aria-label="Close Theme Manager">×</button>
           </div>
-          <div style="margin-top: 15px;">
-            <label for="theme-select" style="display: block; font-size: 11px; margin-bottom: 4px; color: var(--6);">Select Theme:</label>
-            <select id="theme-select" style="width: 100%; padding: 8px; background: var(--3); border: 1px solid var(--5); border-radius: 4px; cursor: pointer; font-size: 12px; box-sizing: border-box; color: var(--6);">
+          <div class="theme-select-container">
+            <label for="theme-select" class="theme-select-label">Select Theme:</label>
+            <select id="theme-select" class="theme-select">
               <option value="">Choose a theme...</option>
             </select>
           </div>
-          <div style="margin-top: 12px;">
-            <button id="toggle-editor" style="width: 100%; padding: 8px; background: var(--b); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+          <div class="theme-toggle-editor-container">
+            <button id="toggle-editor" class="theme-toggle-editor-btn">
               Color Editor
             </button>
           </div>
         </div>
         <div id="color-editor-section" style="display: none;">
-          <div style="padding: 15px; border-bottom: 1px solid var(--5); background: var(--4);">
-            <div style="margin-bottom: 12px;">
-              <label for="theme-name" style="display: block; font-size: 11px; margin-bottom: 4px; color: var(--6);">Theme Name:</label>
-              <input type="text" id="theme-name" placeholder="Enter custom theme name" style="width: 100%; padding: 6px 8px; border: 1px solid var(--5); border-radius: 4px; font-size: 12px; margin-bottom: 8px; box-sizing: border-box;">
-              <div style="display: flex; gap: 6px;">
-                <button id="save-theme" style="flex: 1; padding: 6px 8px; background: var(--a); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">Save</button>
-                <button id="delete-theme" style="padding: 6px 8px; background: var(--r); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">Delete</button>
+          <div class="color-editor-controls">
+            <div class="theme-name-container">
+              <label for="theme-name" class="theme-name-label">Theme Name:</label>
+              <input type="text" id="theme-name" placeholder="Enter custom theme name" class="theme-name-input">
+              <div class="theme-action-buttons">
+                <button id="save-theme" class="save-theme-btn">Save</button>
+                <button id="delete-theme" class="delete-theme-btn">Delete</button>
               </div>
             </div>
           </div>
-          <div id="color-inputs" style="max-height: calc(100vh - 300px); overflow-y: auto; padding: 15px;">
+          <div id="color-inputs" class="color-inputs-container">
           </div>
-          <div style="padding: 15px; border-top: 1px solid var(--5); background: var(--7);">
-            <button id="reset-colors" style="width: 100%; padding: 8px; background: var(--4); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Reset to Default</button>
+          <div class="reset-section">
+            <button id="reset-colors" class="theme-reset-btn">Reset to Default</button>
           </div>
         </div>
       `;
@@ -529,59 +452,27 @@
     }
     createCompactColorPicker(property, currentColor, onChange) {
       const container = document.createElement("div");
-      container.style.cssText = `
-        margin-bottom: 12px;
-        padding: 10px;
-        border: 1px solid var(--5);
-        border-radius: 2px;
-        background: var(--4);
-      `;
+      container.className = "theme-color-picker-container";
       const header = document.createElement("div");
-      header.style.cssText = `
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 8px;
-      `;
+      header.className = "theme-color-picker-header";
       const propertyLabel = document.createElement("span");
       propertyLabel.textContent = property;
-      propertyLabel.style.cssText = `
-        font-weight: bold;
-        font-size: 12px;
-        color: var(--1);
-      `;
+      propertyLabel.className = "property-label";
       const preview = document.createElement("div");
       preview.id = `preview-${property.replace("--", "")}`;
-      preview.style.cssText = `
-        width: 30px;
-        height: 20px;
-        border: 1px solid var(--5);
-        border-radius: 3px;
-        background: ${currentColor};
-      `;
+      preview.className = "theme-color-preview";
+      preview.style.background = currentColor;
       header.appendChild(propertyLabel);
       header.appendChild(preview);
       const colorLabel = document.createElement("label");
       colorLabel.setAttribute("for", `color-${property.replace("--", "")}`);
-      colorLabel.style.cssText = `
-        display: block;
-        font-size: 10px;
-        margin-bottom: 4px;
-        color: var(--1);
-      `;
+      colorLabel.className = "theme-color-input-label";
       colorLabel.textContent = "Color:";
       const colorInput = document.createElement("input");
       colorInput.type = "color";
       colorInput.id = `color-${property.replace("--", "")}`;
       colorInput.value = this.extractHexFromColor(currentColor);
-      colorInput.style.cssText = `
-        width: 100%;
-        height: 30px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        margin-bottom: 6px;
-      `;
+      colorInput.className = "theme-color-input";
       colorInput.addEventListener("input", (event) => {
         const hexColor = event.target.value;
         const alphaSlider = container.querySelector(`#alpha-${property.replace("--", "")}`);
@@ -604,12 +495,7 @@
         const alphaLabel = document.createElement("label");
         alphaLabel.setAttribute("for", `alpha-${property.replace("--", "")}`);
         alphaLabel.textContent = `α: ${colorRgb.a.toFixed(2)}`;
-        alphaLabel.style.cssText = `
-          display: block;
-          font-size: 10px;
-          margin-bottom: 4px;
-          color: var(--1);
-        `;
+        alphaLabel.className = "alpha-label";
         const alphaSlider = document.createElement("input");
         alphaSlider.type = "range";
         alphaSlider.min = "0";
@@ -617,10 +503,7 @@
         alphaSlider.step = "0.01";
         alphaSlider.value = colorRgb.a;
         alphaSlider.id = `alpha-${property.replace("--", "")}`;
-        alphaSlider.style.cssText = `
-          width: 100%;
-          height: 15px;
-        `;
+        alphaSlider.className = "alpha-slider";
         alphaSlider.addEventListener("input", () => {
           const alphaValue = parseFloat(alphaSlider.value);
           alphaLabel.textContent = `α: ${alphaValue.toFixed(2)}`;
@@ -674,6 +557,7 @@
         const value = getComputedStyle(root).getPropertyValue(property).trim();
         colors[property] = value || this.defaultColors[property];
       });
+
       try {
         const transaction = this.db.transaction([this.storeName], "readwrite");
         const store = transaction.objectStore(this.storeName);
