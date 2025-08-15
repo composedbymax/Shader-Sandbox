@@ -33,7 +33,7 @@ created by Max Warren
   <meta name="twitter:title" content="GLSL Editor Application">
   <meta name="twitter:description" content="Write and preview GLSL shaders in real-time. Audio reactive support, WebGL, and full HTML export.">
   <meta name="twitter:image" content="https://max.wuaze.com/assets/img/glsl.jpeg">
-  <meta name="twitter:site" content="@your_twitter_handle">
+  <meta name="twitter:site" content="@composedbymax">
   <meta property="og:title" content="GLSL Editor Application" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://max.wuaze.com/glsl" />
@@ -49,12 +49,14 @@ created by Max Warren
   <script>window.userLoggedIn = <?php echo isset($_SESSION['user']) ? 'true' : 'false'; ?>;window.userRole = <?php echo isset($_SESSION['user_role']) ? json_encode($_SESSION['user_role']) : 'null'; ?>;</script>
   <script>"serviceWorker"in navigator&&navigator.serviceWorker.register("/glsl/sw.js",{scope:"/glsl/"});</script>
   <link rel="preload" as="script" href="scripts/utils/cover.js">
+  <link rel="preload" href="css/style.css" as="style">
+  <link rel="preload" href="css/root.css" as="style">
   <script src="scripts/utils/cover.js"></script>
   <script src="scripts/utils/autosave.js"></script>
   <script src="scripts/utils/hidev.js" defer></script>
-  <link rel="preload" href="css/style.css" as="style">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/root.css">
+  <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
   <div id="app">
