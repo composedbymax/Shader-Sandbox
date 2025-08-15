@@ -8,8 +8,8 @@
         .flowchart-controls { display: flex; gap: 10px; align-items: center; }
         .flowchart-controls button { padding: 8px 15px; background: var(--a); color: var(--0); border: none; border-radius: 2px; cursor: pointer; font-size: 14px; }
         .flowchart-controls button:hover { background: var(--ah); }
-        .flowchart-controls .close-btn { background: var(--r); margin-left: 10px; }
-        .flowchart-controls .close-btn:hover { background: var(--rh); }
+        .flowchart-controls .flowchartclose-btn { background: var(--r); margin-left: 10px; }
+        .flowchart-controls .flowchartclose-btn:hover { background: var(--rh); }
         .export-dropdown { position: relative; display: inline-block; }
         .export-dropdown-content { display: none; position: absolute; right: 0; background-color: var(--4); min-width: 120px; box-shadow: 0px 8px 16px rgba(0,0,0,0.2); z-index: 1; border-radius: 4px; overflow: hidden; }
         .export-dropdown-content button { display: block; width: 100%; text-align: left; padding: 8px 12px; border: none; background: var(--4); color: var(--7); cursor: pointer; font-size: 14px; }
@@ -508,7 +508,7 @@
                             <button onclick="glslFlowchart.exportTXT()">Text Report</button>
                         </div>
                     </div>
-                    <button class="close-btn" onclick="glslFlowchart.close()">Close</button>
+                    <button class="flowchartclose-btn" onclick="glslFlowchart.close()">Close</button>
                 </div>
             </div>
             <div class="flowchart-content">
