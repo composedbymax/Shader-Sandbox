@@ -6,7 +6,7 @@ function initModelLoader() {
   (() => {
     function buildUI() {
       const css = `
-      #3dCanvas{position: absolute;top: 0;left: 0;width: 100%;height: 100%;z-index: 0;}
+      #canvas3D{position: absolute;top: 0;left: 0;width: 100%;height: 100%;z-index: 0;}
       #threeLoadBtn{position: absolute;bottom: 10px;right: 146px;z-index: 1;background: var(--d);color: var(--l);border: none;cursor: pointer;width:4.25rem;height:39px;}
       #threeLoadBtn:hover{background: var(--5);color: var(--l);}
       #threedModalBg{display: none;position: fixed;inset: 0;background: rgba(0, 0, 0, 0.5);z-index: 100;justify-content: center;align-items: center;}
@@ -34,7 +34,7 @@ function initModelLoader() {
       preview.style.position = "relative";
       const originalCanvas = document.getElementById("glcanvas");
       const canvas = document.createElement("canvas");
-      canvas.id = "3dCanvas";
+      canvas.id = "canvas3D";
       canvas.style.display = "none";
       preview.appendChild(canvas);
       const btn = document.createElement("button");

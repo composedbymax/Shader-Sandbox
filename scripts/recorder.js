@@ -3,7 +3,7 @@
     if (window.jsCanvasState && window.jsCanvasState.isJSMode()) {
         return window.jsCanvasState.getCanvas();
     }
-    const threedCanvas = document.getElementById('3dCanvas');
+    const threedCanvas = document.getElementById('canvas3D');
     if (threedCanvas && threedCanvas.style.display !== 'none') {
         return threedCanvas;
     }
