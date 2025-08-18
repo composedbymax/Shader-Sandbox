@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../../check_auth.php';
+include '../../check_premium.php';
 $json = json_decode(file_get_contents('php://input'), true);
 if (!$json || !isset($json['title'], $json['vert'], $json['frag'], $json['preview'])) {
   http_response_code(400);
