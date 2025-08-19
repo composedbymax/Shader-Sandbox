@@ -1,19 +1,24 @@
 <!-- 
-  ____   _       ____    _      
- / ___| | |     / ___|  | |     
-| |  _  | |___  \___ \  | |___  
- \____| |_____| |____/  |_____|
-created by Max Warren
- -->
+ ____  _   _    _    ____   _____  ____  
+/ ___|| | | |  /_\  |  _ \ | ____||  _ \ 
+\___ \| |_| | / _ \ | | | ||  _|  | |_) |
+|____/|_| |_|/_/ \_\|____/ |_____||_| \_\
+
+                  Sandbox
+
+Created By Max Warren
+https://max.x10.mx/
+-->
 <?php require '../session.php' ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>CODEVANILLA - GLSL</title>
+  <title>CODEVANILLA - SHADER</title>
   <meta charset="UTF-8">
-  <meta name="description" content="A browser-based GLSL editor for writing, previewing, and exporting real-time WebGL shaders with audio-reactive support, video recording, and full HTML export">
-  <meta name="keywords" content="GLSL, WebGL, shader editor, live coding, Max, browser shader tool, WebGL editor, visual coding, audio reactive shader">
+  <meta name="description" content="A browser-based shader editor for writing, previewing, and exporting real-time WebGL, WebGPU and javascript shaders with audio-reactive support, mouse support, video recording, and full HTML export">
+  <meta name="keywords" content="GLSL, WebGL, WebGPU, shader editor, live coding, Max, browser shader tool, WebGL editor, visual coding, audio reactive shader">
   <meta name="author" content="github.com/composedbymax">
+  <meta name="language" content="English">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#252525">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">

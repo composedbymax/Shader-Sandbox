@@ -1,16 +1,14 @@
 ```
-   _____ _   ______ _
-  / ____| | / ____ | |
- | |  __| || (___  | |
- | | |_ | | \__  \ | |
- | |__| | |____) | | |___ 
-  \_____|_______/  |_____|
-                            
-       G   L   S   L 
+ ____  _   _    _    ____   _____  ____  
+/ ___|| | | |  /_\  |  _ \ | ____||  _ \ 
+\___ \| |_| | / _ \ | | | ||  _|  | |_) |
+|____/|_| |_|/_/ \_\|____/ |_____||_| \_\
+
+                  Sandbox
 
 ```
 
-# GLSL Editor - Max Warren
+# Shader Sandbox - Created by Max Warren
 
 A browser-based GLSL + WGSL editor for writing, testing, recording, and exporting or loading vertex and fragment shaders, as well as standalone .html animations. Users can interactively build shaders and preview them in real time using WebGL or WebGPU.
 
@@ -34,36 +32,35 @@ This application is built entirely with native PHP, HTML5, CSS, and JavaScript. 
 
 ## Features
 
-- **Real-Time Shader Preview**: Visualize your GLSL code on a canvas as you write.
+- **Real-Time Shader Preview**: Visualize your GLSL or WGSL code on a canvas as you write.
 - **Vertex & Fragment Shaders**: Edit vertex and fragment shaders in separate panels.
-- **File Support**: Load and edit `.vert`, `.frag`, `.vs`, `.fs`, and `.txt` files, including full HTML animations.
+- **Syntax Linting**: View and copy error messages with line numbers to catch syntax issues.
+- **Responsive Layout**: Adjustable editor layout with drag-and-drop resizing for the panels.
+- **Public Shader Gallery**: Browse, save publicly or locally (via server or IndexedDB).
+- **Share Links**: Compress shader code into shareable URLs without requiring server storage.
+- **File Support**: Load or Export `.vert`, `.frag`, `.vs`, `.fs`, `.txt`, and `html` files, or generate a full .html file to run your shaders externally.
 - **Fullscreen Preview**: Toggle fullscreen mode for a larger preview area.
-- **Load & Export Options**: Load or export shaders as `.vert` or `.frag` files, or generate a full HTML file to run your shaders externally.
 - **Record WebM/MP4**: Record and preview your animation as a video file including audio, with adjustable dimensions and quality.
 - **Audio Reactive Support**: React animations to microphone input, internal system audio, or uploaded audio files, with adjustable sensitivity and separated frequency bands.
 - **Runtime Metrics**: Monitor WebGL canvas performance by tracking FPS, memory usage, GPU details, and draw calls.
-- **Syntax Linting**: View and copy error messages with line numbers to catch syntax issues.
-- **Responsive Layout**: Adjustable editor layout with drag-and-drop resizing for the panels.
+- **Theme Manager**: Customize editor colors with presets or individual color variables.  
 - **Generative Reports**: Generate flowchart visualizations or reports (`.json` or `.txt`) for shader analysis and export.
 - **Color Adjustment**: Use a modal slider to convert vec3/vec4 values into RGB sliders for real-time color control.
-- **Theme Manager**: Customize editor colors with presets or individual color variables.  
 - **Code Formatting**: Minify or format your code easily.
-- **Text Editor Tools**: Context menu via right-click or mobile long-hold for line numbering, change all occurrences, undo/redo, etc.
+- **Text Editor Tools**: Context menu via right-click or mobile long-hold for line numbering, change all occurrences, undo/redo, adjust value etc.
 - **GLSL Library Finder**: Search and insert code snippets from a server-hosted GLSL snippet library by keyword.
-- **Flowchart Modal**: Visualize shader code flow with exportable PNG, JSON, or TXT packages.
-- **WebRTC Collaboration**: Real-time text editor collaboration and animation sharing using Google STUN servers.
+- **WebRTC Collaboration**: Real-time text editor collaboration enabling remote shader compilation using Google STUN servers.
 - **Image Editor**: Apply custom JavaScript GLSL effects to images inside the editor.
-- **Hotkeys**: Navigate public animations with P + ←/→ or switch local animations using L + ←/→ .
+- **Perform Animations**: Navigate public animations with P + ←/→ or switch local animations using L + ←/→ hotkeys.
 - **Mouse Support**: Mouse movement uniforms to influence animation interactively.
-- **Public Shader Gallery**: Browse, save publicly or locally (via server or IndexedDB).
-- **Share Links**: Compress shader code into shareable URLs without requiring server storage.
 
 ---
 
 ## Core Technologies
 
-- **WebGL**: Rendering the shader preview on canvas.  
-- **HTML5 & CSS3**: Structuring the UI and ensuring responsiveness.  
+- **WebGL**: Rendering the shader preview on canvas.
+- **WebGPU**: Render WGSL animations.
+- **HTML5 & CSS3**: Structuring the UI and ensuring responsiveness.
 - **JavaScript**: Shader compilation, rendering, file handling, and UI logic.  
 - **PHP**: APIs for public posting, authentication, p2p connections, and code snippet retrevial
 
@@ -73,11 +70,12 @@ This application is built entirely with native PHP, HTML5, CSS, and JavaScript. 
 
 For full functionality, this application requires browsers that support:
 
-- WebGL (for rendering)  
+- WebGL (for rendering)
+- WebGPU (for rendering)
 - File API (for file upload)  
-- Fullscreen API (for fullscreen support)  
-- MediaRecorder API (for recording WebM/MP4 videos)  
-- Media Capture API (`navigator.mediaDevices.getUserMedia`) for microphone and internal audio input  
+- Fullscreen API (for fullscreen support)
+- MediaRecorder API (for recording WebM/MP4 videos)
+- Media Capture API (`navigator.mediaDevices.getUserMedia`) for microphone and internal audio input
 - WebRTC API (for live collaboration features)
 
 ---
