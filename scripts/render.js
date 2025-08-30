@@ -166,6 +166,7 @@ function compileShader(src, type) {
     return { shader: s, error: null };
 }
 function rebuildProgram() {
+    if (window.jsCanvasState && window.jsCanvasState.isJSMode()) {return;}
     resizeCanvas();
     const lintDiv = document.getElementById('lint');
     const lintContent = document.getElementById('lintContent');
