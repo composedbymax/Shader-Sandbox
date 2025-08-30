@@ -13,59 +13,101 @@
         isPressed: false,
         lastClickTime: 0
     };
+    let audioData = {
+        bass: 0,
+        mid: 0,
+        treble: 0,
+        volume: 0
+    };
     window.jsCanvasState = {
         isJSMode: () => jsMode,
         getCanvas: () => jsCanvas,
-        getContext: () => jsCtx
+        getContext: () => jsCtx,
+        getAudioData: () => audioData
     };
-    const defaultJSAnimation = `// JavaScript Canvas Animation
-// Available variables: ctx, width, height, time, mouse
+    const defaultJSAnimation = `// JavaScript Canvas Animation with Audio Reactivity
+// Available variables: ctx, width, height, time, mouse, audio
 // ctx - 2D canvas context
-// width, height - canvas dimensions
+// width, height - canvas dimensions  
 // time - elapsed time in seconds
 // mouse - {x, y, clickX, clickY, isPressed, lastClickTime}
-ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+// audio - {bass, mid, treble, volume} (0.0-1.0)
+// Clear with audio-reactive transparency
+ctx.fillStyle = \`rgba(0, 0, 0, \${0.05 + audio.volume * 0.15})\`;
 ctx.fillRect(0, 0, width, height);
+// Audio-reactive gradient
+const centerX = width / 2 + Math.sin(time + audio.bass * 10) * (50 + audio.treble * 100);
+const centerY = height / 2 + Math.cos(time * 0.7 + audio.mid * 8) * (40 + audio.bass * 80);
 const gradient = ctx.createRadialGradient(
-    width / 2 + Math.sin(time) * 100,
-    height / 2 + Math.cos(time * 0.7) * 80,
-    50,
-    width / 2,
-    height / 2,
-    Math.max(width, height) / 2
+    centerX, centerY, 20 + audio.volume * 80,
+    width / 2, height / 2, 
+    Math.max(width, height) / 2 * (1 + audio.volume * 0.5)
 );
-gradient.addColorStop(0, \`hsl(\${time * 20 % 360}, 70%, 60%)\`);
-gradient.addColorStop(1, \`hsl(\${(time * 20 + 180) % 360}, 50%, 20%)\`);
+gradient.addColorStop(0, \`hsl(\${(time * 20 + audio.bass * 180) % 360}, \${70 + audio.mid * 30}%, \${60 + audio.treble * 30}%)\`);
+gradient.addColorStop(1, \`hsl(\${(time * 20 + 180 + audio.treble * 180) % 360}, \${50 + audio.volume * 30}%, 20%)\`);
 ctx.fillStyle = gradient;
 ctx.fillRect(0, 0, width, height);
-for (let i = 0; i < 8; i++) {
-    const angle = (time + i * 0.5) * 0.8;
-    const x = width / 2 + Math.cos(angle) * (100 + i * 20);
-    const y = height / 2 + Math.sin(angle) * (80 + i * 15);
-    const radius = 20 + Math.sin(time * 2 + i) * 10;
+// Audio-reactive particles
+const particleCount = 8 + Math.floor(audio.volume * 12);
+for (let i = 0; i < particleCount; i++) {
+    const angle = (time + i * 0.5 + audio.bass * 5) * (0.8 + audio.mid * 2);
+    const distance = 100 + i * 20 + audio.treble * 150;
+    const x = width / 2 + Math.cos(angle) * distance;
+    const y = height / 2 + Math.sin(angle) * distance * 0.8;
+    const radius = 20 + Math.sin(time * 2 + i + audio.volume * 10) * (10 + audio.bass * 20);
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.fillStyle = \`hsla(\${(time * 30 + i * 45) % 360}, 80%, 70%, 0.8)\`;
+    ctx.fillStyle = \`hsla(\${(time * 30 + i * 45 + audio.treble * 120) % 360}, \${80 + audio.mid * 20}%, \${70 + audio.volume * 20}%, \${0.6 + audio.volume * 0.4})\`;
     ctx.fill();
+    // Audio-reactive glow effect
+    if (audio.volume > 0.3) {
+        ctx.shadowColor = ctx.fillStyle;
+        ctx.shadowBlur = 20 + audio.volume * 30;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
 }
+// Mouse interaction with audio influence
 if (mouse.isPressed) {
     const rippleTime = (Date.now() - mouse.lastClickTime) / 1000;
-    const rippleRadius = rippleTime * 200;
+    const baseRadius = rippleTime * 200;
+    const audioRadius = baseRadius * (1 + audio.volume * 2);
     const alpha = Math.max(0, 1 - rippleTime);
     if (alpha > 0) {
         ctx.beginPath();
-        ctx.arc(mouse.clickX, mouse.clickY, rippleRadius, 0, Math.PI * 2);
-        ctx.strokeStyle = \`rgba(255, 255, 255, \${alpha})\`;
-        ctx.lineWidth = 3;
+        ctx.arc(mouse.clickX, mouse.clickY, audioRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = \`rgba(255, 255, 255, \${alpha * (0.5 + audio.volume * 0.5)})\`;
+        ctx.lineWidth = 3 + audio.bass * 5;
+        ctx.stroke();
+        // Secondary ripple with different frequency
+        ctx.beginPath();
+        ctx.arc(mouse.clickX, mouse.clickY, audioRadius * 0.6, 0, Math.PI * 2);
+        ctx.strokeStyle = \`rgba(\${255 * audio.bass}, \${255 * audio.mid}, \${255 * audio.treble}, \${alpha * 0.3})\`;
+        ctx.lineWidth = 1;
         ctx.stroke();
     }
 }
+// Mouse cursor with audio visualization
 if (mouse.x > 0 && mouse.y > 0) {
+    const cursorRadius = 30 + Math.sin(time * 3) * 10 + audio.volume * 40;
     ctx.beginPath();
-    ctx.arc(mouse.x, mouse.y, 30 + Math.sin(time * 3) * 10, 0, Math.PI * 2);
-    ctx.strokeStyle = \`hsla(\${time * 50 % 360}, 100%, 80%, 0.6)\`;
-    ctx.lineWidth = 2;
+    ctx.arc(mouse.x, mouse.y, cursorRadius, 0, Math.PI * 2);
+    ctx.strokeStyle = \`hsla(\${(time * 50 + audio.bass * 180) % 360}, 100%, \${80 + audio.treble * 20}%, \${0.6 + audio.mid * 0.4})\`;
+    ctx.lineWidth = 2 + audio.volume * 4;
     ctx.stroke();
+    // Inner audio visualization
+    for (let i = 0; i < 4; i++) {
+        const audioValue = [audio.bass, audio.mid, audio.treble, audio.volume][i];
+        const angle = (time * 2 + i * Math.PI / 2) + audioValue * 10;
+        const innerRadius = 10 + audioValue * 15;
+        const innerX = mouse.x + Math.cos(angle) * innerRadius;
+        const innerY = mouse.y + Math.sin(angle) * innerRadius;
+        ctx.beginPath();
+        ctx.arc(innerX, innerY, 3 + audioValue * 5, 0, Math.PI * 2);
+        const colors = ['#ff4444', '#44ff44', '#4444ff', '#ffff44'];
+        ctx.fillStyle = colors[i];
+        ctx.fill();
+    }
 }`;
     function createToggleButton() {
         const toggleBtn = document.createElement('button');
@@ -206,8 +248,28 @@ if (mouse.x > 0 && mouse.y > 0) {
             jsAnimationId = null;
         }
     }
+    function updateAudioData() {
+        if (window.audioReactiveInstance && window.audioReactiveInstance.analyser && window.audioReactiveInstance.isActive) {
+            const analyser = window.audioReactiveInstance.analyser;
+            const sensitivity = window.audioReactiveInstance.sensitivity;
+            const data = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(data);
+            const calc = (from, to, sens, dampening = 1) =>
+                Math.min(1, data.slice(from, to).reduce((a, b) => a + b) / (to - from) / 255 * sens * dampening);
+            
+            audioData = {
+                bass: calc(0, 20, sensitivity.bass, 0.4),
+                mid: calc(20, 60, sensitivity.mid),
+                treble: calc(60, 120, sensitivity.treble),
+                volume: calc(0, data.length, sensitivity.volume)
+            };
+        } else {
+            audioData = { bass: 0, mid: 0, treble: 0, volume: 0 };
+        }
+    }
     function renderJSAnimation() {
         if (!jsMode || !jsCanvas || !jsCtx) return;
+        updateAudioData();
         const vertTA = $('vertCode');
         const time = (Date.now() - jsStartTime) / 1000;
         const width = jsCanvas.width;
@@ -227,8 +289,8 @@ if (mouse.x > 0 && mouse.y > 0) {
                     console.error('Animation error:', e);
                 }
             `;
-            const animateFunction = new Function('ctx', 'width', 'height', 'time', 'mouse', wrappedCode);
-            animateFunction(jsCtx, width, height, time, jsMouse);
+            const animateFunction = new Function('ctx', 'width', 'height', 'time', 'mouse', 'audio', wrappedCode);
+            animateFunction(jsCtx, width, height, time, jsMouse, audioData);
         } catch (error) {
             jsCtx.fillStyle = '#ff0000';
             jsCtx.font = '14px monospace';
