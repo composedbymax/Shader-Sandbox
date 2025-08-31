@@ -270,8 +270,14 @@ class AudioReactive {
         }
       } else {
         this.isActive = !this.isActive;
-        this.updateMicrophoneUI(this.isActive, this.isActive ? 'Microphone active' : 'Microphone paused');
-        this.button.style.backgroundColor = this.isActive ? 'var(--a)' : 'var(--d)';
+        if (this.isActive) {
+          this.updateMicrophoneUI(true, 'Microphone active');
+          this.button.style.backgroundColor = 'var(--a)';
+        } else {
+          this.cleanupMicrophone();
+          this.updateMicrophoneUI(false, 'Click to enable microphone access');
+          this.button.style.backgroundColor = 'var(--d)';
+        }
       }
     };
     ['bass','mid','treble','volume'].forEach(type => {
