@@ -64,28 +64,16 @@
     ];
     const shortcuts = [
         { 
-            desc: 'Format/minify code', 
-            keys: 'Option + M', 
-            highlight: ['alt', 'm'],
-            id: 'format'
+            desc: 'Close any modal (hold to exit fullscreen)', 
+            keys: 'Esc', 
+            highlight: ['escape'],
+            id: 'close'
         },
         { 
-            desc: 'Visualize code with flowchart modal', 
-            keys: 'Option + V', 
-            highlight: ['alt', 'v'],
-            id: 'visualize'
-        },
-        { 
-            desc: 'Find code snippets', 
+            desc: 'Fullscreen/Open + Close Editor panel', 
             keys: 'Control + F', 
-            highlight: ['ctrl', 'f'],
-            id: 'find'
-        },
-        { 
-            desc: 'Performance mode (hide buttons)', 
-            keys: 'Control + Shift + D', 
-            highlight: ['ctrl', 'shift', 'd'],
-            id: 'performance'
+            highlight: ['ctrl', 's'],
+            id: 'Open'
         },
         { 
             desc: 'Enable / Disable Window Focus', 
@@ -94,10 +82,10 @@
             id: 'focus'
         },
         { 
-            desc: 'Close any modal (hold to exit fullscreen)', 
-            keys: 'Esc', 
-            highlight: ['escape'],
-            id: 'close'
+            desc: 'Performance mode (hide buttons)', 
+            keys: 'Control + Shift + D', 
+            highlight: ['ctrl', 'shift', 'd'],
+            id: 'performance'
         },
         {
             desc: 'Switch between local shaders',
@@ -110,6 +98,24 @@
             keys: 'P + Arrow Keys',
             highlight: ['p', 'arrow-right', 'arrow-left'],
             id: 'public-shaders'
+        },
+        { 
+            desc: 'Format/minify code', 
+            keys: 'Option + M', 
+            highlight: ['alt', 'm'],
+            id: 'format'
+        },
+        {
+            desc: 'Visualize code with flowchart modal', 
+            keys: 'Option + V', 
+            highlight: ['alt', 'v'],
+            id: 'visualize'
+        },
+        { 
+            desc: 'Find code snippets', 
+            keys: 'Control + S', 
+            highlight: ['ctrl', 's'],
+            id: 'find'
         }
     ];
     function createHTML() {
