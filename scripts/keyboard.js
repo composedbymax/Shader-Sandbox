@@ -110,14 +110,17 @@
             keys: 'Option + V', 
             highlight: ['alt', 'v'],
             id: 'visualize'
-        },
-        { 
+        }
+    ];
+    if (window.userLoggedIn) {
+        shortcuts.push(
+        {
             desc: 'Find code snippets', 
             keys: 'Control + S', 
             highlight: ['ctrl', 's'],
             id: 'find'
         }
-    ];
+    );}
     function createHTML() {
         return `
         <div class="shortcut-modal" id="shortcut-modal">
