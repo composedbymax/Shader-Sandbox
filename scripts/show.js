@@ -92,13 +92,6 @@
         isPerformanceMode = false;
     }
     function togglePerformanceMode() {
-        const editors = document.getElementById('editors');
-        if (editors && editors.style.display !== 'none') {
-            if (typeof window.showToast === 'function') {
-                window.showToast('Please close the text editor window to enter performance mode.');
-            }
-            return;
-        }
         if (isPerformanceMode) {
             exitPerformanceMode();
         } else {
