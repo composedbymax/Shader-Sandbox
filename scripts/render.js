@@ -120,6 +120,24 @@ document.addEventListener('keydown', (e) => {
         e.preventDefault();
         pauseOnBlurEnabled = !pauseOnBlurEnabled;
         showToast(`Window Focus ${pauseOnBlurEnabled ? 'enabled' : 'disabled'}`);
+        return;
+    }
+    if (e.ctrlKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        const now = performance.now();
+        fsClickTimestamps.push(now);
+        fsClickTimestamps.length > 2 && fsClickTimestamps.shift();
+        if (fsClickTimestamps.length === 2 && now - fsClickTimestamps[0] < 600) {
+            fsClickTimestamps = [];
+            const el = app,
+                  enter = el.requestFullscreen   || el.webkitRequestFullscreen   || el.mozRequestFullScreen   || el.msRequestFullscreen,
+                  exit  = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen,
+                  fn   = document.fullscreenElement ? exit : enter,
+                  ctx  = document.fullscreenElement ? document : el;
+            fn.call(ctx);
+        } else {
+            toggleEditors();
+        }
     }
 });
 function initSplit() {

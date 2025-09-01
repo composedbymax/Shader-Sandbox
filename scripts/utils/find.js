@@ -43,7 +43,7 @@
       searchTimeout = setTimeout(() => performSearch(searchInput.value.trim()), 300);
     });
     document.addEventListener('keydown', e => {
-      if (e.ctrlKey && e.key === 'f') { e.preventDefault(); openFindModal(); }
+      if (e.ctrlKey && e.key === 's') { e.preventDefault(); openFindModal(); }
       if (e.key === 'Escape' && findModal.style.display === 'block') closeFindModal();
     });
     findModal.addEventListener('click', e => { if (e.target === findModal) closeFindModal(); });
@@ -75,7 +75,7 @@
     if (!query) return showInitialMessage();
     resultsContainer.innerHTML = `<div class="initial-message"><div class="spinner">⟳</div><p>Searching...</p></div>`;
     try {
-      const res = await fetch(`/glsl/api/find.php?q=${encodeURIComponent(query)}`);
+      const res = await fetch(`/shader/api/find.php?q=${encodeURIComponent(query)}`);
       const { success, results, error } = await res.json();
       success ? displayResults(results) : showError(error || 'Search failed');
     } catch {
