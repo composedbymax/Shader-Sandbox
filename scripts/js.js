@@ -159,6 +159,12 @@ if (mouse.x > 0 && mouse.y > 0) {
         jsCanvas.resizeObserver = resizeObserver;
     }
     function toggleMode() {
+        if (!jsMode && window.webgpuState && window.webgpuState.isWebGPUMode()) {
+            const webgpuBtn = document.getElementById('webgpuToggle');
+            if (webgpuBtn) webgpuBtn.click();
+            setTimeout(() => toggleMode(), 200);
+            return;
+        }
         const toggleBtn = $('jsToggleBtn');
         const vertPanel = $('vertPanel');
         const fragPanel = $('fragPanel');

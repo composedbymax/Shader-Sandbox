@@ -471,6 +471,12 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
         return false;
     };
     const toggleWebGPU = async () => {
+        if (!isWebGPUMode && window.jsCanvasState && window.jsCanvasState.isJSMode()) {
+            const jsBtn = document.getElementById('jsToggleBtn');
+            if (jsBtn) jsBtn.click();
+            setTimeout(() => toggleWebGPU(), 200);
+            return;
+        }
         const toggleBtn = document.getElementById('webgpuToggle');
         const setToggleState = (text, className) => {
             toggleBtn.textContent = text;
