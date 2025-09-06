@@ -12,7 +12,8 @@ $entry = [
   'vert' => json_decode($json['vert']),
   'frag' => json_decode($json['frag']),
   'preview' => $json['preview'],
-  'user' => htmlspecialchars($_SESSION['user'])
+  'user' => htmlspecialchars($_SESSION['user']),
+  'animationType' => isset($json['animationType']) ? $json['animationType'] : 'webgl'
 ];
 $file = 'list.json';
 $shaders = file_exists($file) ? json_decode(file_get_contents($file), true) : [];

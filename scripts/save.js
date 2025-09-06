@@ -39,6 +39,15 @@
       return false;
     }
   };
+  function getCurrentAnimationType() {
+    if (window.jsCanvasState && window.jsCanvasState.isJSMode()) {
+      return 'js';
+    } else if (window.webgpuState && window.webgpuState.isWebGPUMode()) {
+      return 'webgpu';
+    } else {
+      return 'webgl';
+    }
+  }
   function createToastContainer() {
     const fullscreenRoot = document.fullscreenElement || document.documentElement;
     let container = document.getElementById('toastContainer');
@@ -198,7 +207,11 @@
     if (!img) return showToast("Please upload a preview image", 'warning');
     compressImage(img, (compressedDataUrl) => {
       localStorage.setItem(`shader_${title}`, JSON.stringify({
-        title, vert: vertCode.value, frag: fragCode.value, preview: compressedDataUrl
+        title, 
+        vert: vertCode.value, 
+        frag: fragCode.value, 
+        preview: compressedDataUrl,
+        animationType: getCurrentAnimationType()
       }));
       showToast(`Saved "${title}" locally`, 'success');
     });
@@ -208,7 +221,7 @@
     if (!title) return showToast("Please provide a title", 'warning');
     if (!img) return showToast("Please upload a preview image", 'warning');
     compressImage(img, (compressedDataUrl) => {
-      fetch('../glsl/api/save.php', {
+      fetch('../shader/api/save.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -216,8 +229,9 @@
           vert: JSON.stringify(vertCode.value),
           frag: JSON.stringify(fragCode.value),
           preview: compressedDataUrl,
-          user: "<?php echo htmlspecialchars($_SESSION['user']); ?>"
-        })      
+          user: "<?php echo htmlspecialchars($_SESSION['user']); ?>",
+          animationType: getCurrentAnimationType()
+        })
       })
       .then(r => r.text())
       .then(msg => {
@@ -243,7 +257,7 @@
       }
     }
     console.log('Fetch');
-    fetch('../glsl/api/fetch.php?action=list')
+    fetch('../shader/api/fetch.php?action=list')
       .then(r => r.json())
       .then(async list => {
         if (list.error) {
@@ -264,7 +278,7 @@
     console.log('DB FETCH');
     try {
       await shaderCache.clearCache();
-      const response = await fetch('../glsl/api/fetch.php?action=list');
+      const response = await fetch('../shader/api/fetch.php?action=list');
       const list = await response.json();
       if (list.error) {
         container.innerHTML = `<div>Error: ${list.error}</div>`;
@@ -325,46 +339,85 @@
     `;
     return div;
   }
-  function loadPublicShader(token) {
-    fetch(`../glsl/api/fetch.php?action=load&token=${token}`)
-      .then(r => r.json())
-      .then(shader => {
-        if (shader.error) {
-          showToast(`Error loading shader: ${shader.error}`, 'error');
-          if (errorTracker.addError()) {
-            console.log('DB ERROR');
-            showToast('Error detected - reloading...', 'warning');
-            setTimeout(() => forceRefreshPublicShaders(), 1000);
-          }
-          return;
-        }
-        loadShaderData(shader);
-        showToast(`Loaded "${shader.title}"`, 'success');
-        errorTracker.reset();
-      })
-      .catch(err => {
-        showToast(`Error loading shader: ${err.message}`, 'error');
-        if (errorTracker.addError()) {
-          console.log('DB ERROR');
-          showToast('Error detected - reloading...', 'warning');
-          setTimeout(() => forceRefreshPublicShaders(), 1000);
-        }
-      });
-  }
-  function loadLocalShader(index) {
-    const shader = window._localShaderList[index];
-    if (shader) {
+  async function loadPublicShader(token) {
+    function handleShaderError(msg) {
+      if (errorTracker.addError()) {
+        console.log('DB ERROR');
+        showToast('Error detected - reloading...', 'warning');
+        setTimeout(() => forceRefreshPublicShaders(), 1000);
+      }
+    }
+    try {
+      const res = await fetch(`../shader/api/fetch.php?action=load&token=${token}`);
+      const shader = await res.json();
+      if (shader.error) {
+        handleShaderError(shader.error);
+        return;
+      }
       loadShaderData(shader);
       showToast(`Loaded "${shader.title}"`, 'success');
+      errorTracker.reset();
+    } catch (err) {
+      handleShaderError(err.message);
     }
   }
   function loadShaderData(shader) {
-    shaderTitle.value = shader.title;
-    vertCode.value = shader.vert;
-    fragCode.value = shader.frag;
-    window.rebuildProgram();
-    window.render();
-    closeShaderWindow();
+    if (shader.animationType) {
+      switchToAnimationType(shader.animationType);
+      const delay = shader.animationType === 'webgl' ? 500 : 300;
+      setTimeout(() => {
+        shaderTitle.value = shader.title;
+        vertCode.value = shader.vert;
+        fragCode.value = shader.frag;
+        if (window.rebuildProgram) {
+          window.rebuildProgram();
+        }
+        if (window.render) {
+          window.render();
+        }
+        closeShaderWindow();
+      }, delay);
+    } else {
+      shaderTitle.value = shader.title;
+      vertCode.value = shader.vert;
+      fragCode.value = shader.frag;
+      if (window.rebuildProgram) {
+        window.rebuildProgram();
+      }
+      if (window.render) {
+        window.render();
+      }
+      closeShaderWindow();
+    }
+  }
+  function switchToAnimationType(type) {
+    const currentType = getCurrentAnimationType();
+    if (currentType === type) {
+      return;
+    }
+    switch (type) {
+      case 'js':
+        if (currentType !== 'js') {
+          const jsBtn = document.getElementById('jsToggleBtn');
+          if (jsBtn) jsBtn.click();
+        }
+        break;
+      case 'webgpu':
+        if (currentType !== 'webgpu') {
+          const webgpuBtn = document.getElementById('webgpuToggle');
+          if (webgpuBtn) webgpuBtn.click();
+        }
+        break;
+      case 'webgl':
+        if (currentType === 'js') {
+          const jsBtn = document.getElementById('jsToggleBtn');
+          if (jsBtn) jsBtn.click();
+        } else if (currentType === 'webgpu') {
+          const webgpuBtn = document.getElementById('webgpuToggle');
+          if (webgpuBtn) webgpuBtn.click();
+        }
+        break;
+    }
   }
   function deleteLocal(key) {
     const shaderName = key.replace('shader_', '');
@@ -401,6 +454,13 @@
         loadPublicShader(publicToken);
       } else if (localIndex !== null) {
         loadLocalShader(parseInt(localIndex));
+      }
+      function loadLocalShader(index) {
+        if (index >= 0 && index < window._localShaderList.length) {
+          const shader = window._localShaderList[index];
+          loadShaderData(shader);
+          showToast(`Loaded "${shader.title}"`, 'success');
+        }
       }
     }
   });
