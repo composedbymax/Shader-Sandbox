@@ -114,7 +114,7 @@ self.onmessage = async function(e) {
                 worker.removeEventListener('message', handleInit);
             }
         });
-return worker;
+        return worker;
     }
     function initDB() {
         worker = createWorker();
@@ -197,54 +197,62 @@ return worker;
             console.error('LocalStorage load failed:', error);
         }
     }
+    function getCurrentEditorContent() {
+        const vertCodeEl = document.getElementById('vertCode');
+        const fragCodeEl = document.getElementById('fragCode');
+        if (!vertCodeEl || !fragCodeEl) {
+            return { vertCode: '', fragCode: '' };
+        }
+        return {
+            vertCode: vertCodeEl.value || '',
+            fragCode: fragCodeEl.value || ''
+        };
+    }
+    function isCodeDifferent(savedData, currentData) {
+        const normalize = (str) => str.trim().replace(/\s+/g, ' ');
+        const savedVert = normalize(savedData.vertCode || '');
+        const savedFrag = normalize(savedData.fragCode || '');
+        const currentVert = normalize(currentData.vertCode || '');
+        const currentFrag = normalize(currentData.fragCode || '');
+        return savedVert !== currentVert || savedFrag !== currentFrag;
+    }
     function handleSavedData(data) {
         if (!data) return;
         const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
         if (Date.now() - data.timestamp < SEVEN_DAYS) {
-            showLoadPrompt(data);
+            const currentContent = getCurrentEditorContent();
+            if (isCodeDifferent(data, currentContent)) {
+                showLoadPrompt(data);
+            } else {
+                console.log('No save found');
+            }
         }
     }
     function showLoadPrompt(data) {
-        const create = (tag, props = {}, styles = {}, children = []) => {
+        const create = (tag, props = {}, className = '', children = []) => {
             const el = document.createElement(tag);
             Object.assign(el, props);
-            Object.assign(el.style, styles);
+            if (className) el.className = className;
             children.forEach(child => el.appendChild(child));
             return el;
         };
-        const overlay = create('div', {}, {
-            position: 'fixed',bottom: '20px',right: '20px',zIndex: 10000,pointerEvents: 'none'
-        });
-        const title = create('h3', { textContent: 'Load Autosaved Data?' }, {
-            marginBottom: '16px', color: 'var(--7)', fontSize: '18px', fontWeight: 600
-        });
+        const overlay = create('div', {}, 'autosave-overlay');
+        const title = create('h3', { 
+            textContent: 'Load Autosaved Data?' 
+        }, 'autosave-title');
         const timeAgo = getTimeAgo(data.timestamp);
         const message = create('p', {
             textContent: `We found autosaved shader code from ${timeAgo}. Would you like to load it?`
-        }, { marginBottom: '24px', color: 'var(--6)', lineHeight: 1.5 });
-        const btnStyle = {
-            padding: '8px 16px', borderRadius: '2px', cursor: 'pointer',
-            fontSize: '14px', transition: 'all 0.2s ease'
-        };
-        const noBtn = create('button', { textContent: 'No, Start Fresh' }, {
-            ...btnStyle, border: '1px solid var(--4)', backgroundColor: 'var(--3)', color: 'var(--6)'
-        });
-        const yesBtn = create('button', { textContent: 'Yes, Load Data' }, {
-            ...btnStyle, fontWeight: 500, border: '1px solid var(--a)', backgroundColor: 'var(--a)', color: 'var(--l)'
-        });
-        const buttonContainer = create('div', {}, {
-            display: 'flex', gap: '12px', justifyContent: 'flex-end'
-        }, [noBtn, yesBtn]);
-        const dialog = create('div', {}, {
-            backgroundColor: 'var(--2)',border: '1px solid var(--4)',borderRadius: '2px',padding: '16px',maxWidth: '320px',width: '100%',animation: 'slideIn 0.3s ease-out',pointerEvents: 'auto'
-        }, [title, message, buttonContainer]);
+        }, 'autosave-message');
+        const noBtn = create('button', { 
+            textContent: 'No, Start Fresh' 
+        }, 'autosave-btn autosave-btn-no');
+        const yesBtn = create('button', { 
+            textContent: 'Yes, Load Data' 
+        }, 'autosave-btn autosave-btn-yes');
+        const buttonContainer = create('div', {}, 'autosave-button-container', [noBtn, yesBtn]);
+        const dialog = create('div', {}, 'autosave-dialog', [title, message, buttonContainer]);
         overlay.appendChild(dialog);
-        const hover = (el, enterStyles, leaveStyles) => {
-            el.addEventListener('mouseenter', () => Object.assign(el.style, enterStyles));
-            el.addEventListener('mouseleave', () => Object.assign(el.style, leaveStyles));
-        };
-        hover(noBtn, { backgroundColor: 'var(--4)', color: 'var(--7)' }, { backgroundColor: 'var(--3)', color: 'var(--6)' });
-        hover(yesBtn, { backgroundColor: 'var(--ah)' }, { backgroundColor: 'var(--a)' });
         const handleKey = e => {
             if (e.key === 'Enter') restoreEditors(data);
             if (e.key === 'Enter' || e.key === 'Escape') {
@@ -262,16 +270,6 @@ return worker;
             }
         };
         document.addEventListener('keydown', handleEscape);
-        if (!document.querySelector('#autosave-animations')) {
-            const style = create('style', { id: 'autosave-animations' });
-            style.textContent = `
-                @keyframes slideIn {
-                    from { opacity: 0; transform: translateY(-20px) scale(0.95); }
-                    to { opacity: 1; transform: translateY(0) scale(1); }
-                }
-            `;
-            document.head.appendChild(style);
-        }
         document.body.appendChild(overlay);
     }
     function getTimeAgo(timestamp) {
