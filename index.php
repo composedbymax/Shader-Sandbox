@@ -15,10 +15,9 @@ https://max.x10.mx/
 <head>
   <title>CODEVANILLA - SHADER</title>
   <meta charset="UTF-8">
-  <meta name="description" content="A browser-based shader editor for writing, previewing, and exporting real-time WebGL, WebGPU and javascript shaders with audio-reactive support, mouse support, video recording, and full HTML export">
-  <meta name="keywords" content="GLSL, WebGL, WebGPU, shader editor, live coding, Max, browser shader tool, WebGL editor, visual coding, audio reactive shader">
+  <meta name="description" content="A browser-based GLSL editor for writing, previewing, and exporting real-time WebGL shaders with audio-reactive support, video recording, and full HTML export">
+  <meta name="keywords" content="GLSL, WebGL, shader editor, live coding, Max, browser shader tool, WebGL editor, visual coding, audio reactive shader">
   <meta name="author" content="github.com/composedbymax">
-  <meta name="language" content="English">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#252525">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -29,8 +28,12 @@ https://max.x10.mx/
   <meta name="application-name" content="GLSL Editor">
   <meta name="HandheldFriendly" content="true">
   <meta name="apple-touch-fullscreen" content="yes">
+  <link rel="icon" sizes="192x192" href="/assets/img/icon-192.png">
+  <link rel="icon" sizes="512x512" href="/assets/img/icon-512.png">
   <link rel="apple-touch-icon" href="/assets/img/icon-192.png">
   <link rel="apple-touch-startup-image" href="/assets/img/icon-512.png">
+  <meta name="msapplication-TileColor" content="#252525">
+  <meta name="msapplication-TileImage" content="/assets/img/icon-192.png">
   <link rel="shortcut icon" href="/favicon.ico">
   <meta name="robots" content="index, nofollow">
   <meta name="referrer" content="no-referrer">
@@ -45,14 +48,14 @@ https://max.x10.mx/
   <meta property="og:image" content="https://max.wuaze.com/assets/img/glsl.jpeg" />
   <meta property="og:description" content="An interactive GLSL editor for experimenting with shaders directly in your browser." />
   <meta property="og:site_name" content="GLSL Editor by Max Wuaze" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self';script-src 'self' 'unsafe-inline' 'unsafe-eval';worker-src 'self' blob:;style-src 'self' 'unsafe-inline';img-src 'self' data:;connect-src 'self';font-src 'self';object-src 'none';media-src 'self' blob:;">
+  <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'none'; default-src 'self';script-src 'self' 'unsafe-inline' 'unsafe-eval';worker-src 'self' blob:;style-src 'self' 'unsafe-inline';img-src 'self' data:;connect-src 'self';font-src 'self';object-src 'none';media-src 'self' blob:;">
   <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(self), camera=(), fullscreen=(self), clipboard-read=(self), clipboard-write=(self)">
   <meta http-equiv="X-XSS-Protection" content="1; mode=block">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <script>window.userLoggedIn = <?php echo isset($_SESSION['user']) ? 'true' : 'false'; ?>;window.userRole = <?php echo isset($_SESSION['user_role']) ? json_encode($_SESSION['user_role']) : 'null'; ?>;</script>
-  <script>"serviceWorker"in navigator&&navigator.serviceWorker.register("/glsl/sw.js",{scope:"/glsl/"});</script>
+  <script>"serviceWorker"in navigator&&navigator.serviceWorker.register("/shader/sw.js",{scope:"/shader/"});</script>
   <link rel="preload" as="script" href="scripts/utils/cover.js">
   <link rel="preload" href="css/style.css" as="style">
   <link rel="preload" href="css/root.css" as="style">
@@ -64,6 +67,7 @@ https://max.x10.mx/
   <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
+  <?php if (!isset($_SESSION['user'])) {require $_SERVER['DOCUMENT_ROOT'] . '/auth/modal.php';}?>
   <div id="app">
     <div id="editors">
       <button class="lbtn" onclick="openShaderWindow()" title="Save shaders and browse public gallery">Save / Browse</button>
