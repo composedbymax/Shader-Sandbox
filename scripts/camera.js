@@ -1,32 +1,39 @@
 (function() {
     'use strict';
+    const CAMERA_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <rect x="3" y="7" width="18" height="13" rx="2"/>
+  <path d="M8 7l1.5-2h5L16 7"/>
+  <circle cx="12" cy="13.5" r="3.5"/>
+</svg>
+`;
     const style = document.createElement('style');
     style.textContent = `
-        .camera-btn{position: absolute;top: 10px;right: 60px;background: #333;color: white;border: none;padding: 8px 12px;border-radius: 4px;cursor: pointer;font-size: 14px;z-index: 1000;transition: background 0.2s;}
-        .camera-btn:hover{background: #555;}
-        .camera-btn.active{background: #e74c3c;}
-        .camera-modal{display: none;position: fixed;top: 0;left: 0;width: 100%;height: 100%;background: rgba(0, 0, 0, 0.8);z-index: 10000;justify-content: center;align-items: center;}
+        .camera-btn{position: absolute;top: 42px;right: 42px;background: var(--d);color: var(--6);border: none;width: 2rem;height: 2rem;cursor: pointer;font-size: 14px;z-index: 10;transition: background 0.2s;}
+        .camera-btn:hover{background: var(--5);}
+        .camera-btn.active{background: var(--r);}
+        .camera-modal{display: none;position: fixed;top: 0;left: 0;width: 100%;height: 100%;z-index: 100;justify-content: center;align-items: center;}
         .camera-modal.show{display: flex;}
-        .camera-content{background: #222;padding: 20px;border-radius: 8px;max-width: 600px;width: 90%;max-height: 90%;overflow-y: auto;position: relative;}
-        .camera-header{display: flex;justify-content: space-between;align-items: center;margin-bottom: 20px;color: white;}
-        .camera-close{background: none;border: none;color: #ccc;font-size: 24px;cursor: pointer;padding: 0;width: 30px;height: 30px;display: flex;align-items: center;justify-content: center;}
-        .camera-close:hover{color: white;}
-        .camera-preview{width: 100%;max-width: 400px;height: 300px;background: #111;border: 2px solid #444;border-radius: 4px;margin: 0 auto 20px;display: block;object-fit: cover;}
+        .camera-content{background: var(--4);padding: 20px;border-radius: 8px;max-width: 600px;width: 90%;max-height: 90%;overflow-y: auto;position: relative;}
+        .camera-header{display: flex;justify-content: space-between;align-items: center;margin-bottom: 20px;color: var(--l);}
+        .camera-close{background: none;border: none;color: var(--l);font-size: 24px;cursor: pointer;padding: 0;width: 30px;height: 30px;display: flex;align-items: center;justify-content: center;}
+        .camera-close:hover{color: var(--l);}
+        .camera-preview{width: 100%;max-width: 400px;height: 300px;background: var(--2);border: 2px solid var(--5);border-radius: 4px;margin: 0 auto 20px;display: block;object-fit: cover;}
         .camera-controls{display: flex;flex-direction: column;gap: 10px;align-items: center;}
-        .camera-device-select{width: 100%;max-width: 300px;padding: 8px 12px;background: #333;color: white;border: 1px solid #555;border-radius: 4px;margin-bottom: 15px;}
+        .camera-device-select{width: 100%;max-width: 300px;padding: 8px 12px;background: var(--4);color: var(--l);border: 1px solid var(--5);border-radius: 4px;margin-bottom: 15px;}
         .camera-buttons{display: flex;gap: 10px;flex-wrap: wrap;justify-content: center;}
-        .camera-control-btn{background: #4CAF50;color: white;border: none;padding: 10px 20px;border-radius: 4px;cursor: pointer;font-size: 14px;min-width: 100px;}
-        .camera-control-btn:hover{background: #45a049;}
-        .camera-control-btn:disabled{background: #666;cursor: not-allowed;}
-        .camera-control-btn.stop{background: #e74c3c;}
-        .camera-control-btn.stop:hover{background: #c0392b;}
-        .camera-status{color: #ccc;text-align: center;margin-top: 10px;font-size: 14px;}
-        .camera-error{color: #e74c3c;text-align: center;margin-top: 10px;font-size: 14px;}
-        .camera-info{background: #333;padding: 15px;border-radius: 4px;margin-top: 20px;color: #ccc;font-size: 13px;line-height: 1.4;}
-        .camera-info h4{margin: 0 0 10px 0;color: white;}
-        .camera-info code{background: #444;padding: 2px 4px;border-radius: 2px;color: #4CAF50;}
+        .camera-control-btn{background: var(--a);color: var(--l);border: none;padding: 10px 20px;border-radius: 4px;cursor: pointer;font-size: 14px;min-width: 100px;}
+        .camera-control-btn:hover{background: var(--ah);}
+        .camera-control-btn:disabled{background: var(--3);cursor: not-allowed;}
+        .camera-control-btn.stop{background: var(--r);}
+        .camera-control-btn.stop:hover{background: var(--rh);}
+        .camera-status{color: var(--l);text-align: center;margin-top: 10px;font-size: 14px;}
+        .camera-error{color: var(--r);text-align: center;margin-top: 10px;font-size: 14px;}
+        .camera-info{background: var(--2);padding: 15px;border-radius: 4px;margin-top: 20px;color: var(--7);font-size: 13px;line-height: 1.4;}
+        .camera-info h4{margin: 0 0 10px 0;color: var(--l);}
+        .camera-info code{background: var(--4);padding: 2px 4px;border-radius: 2px;color: var(--a);}
         .camera-auto-inject{margin-top: 10px;}
-        .camera-auto-inject label{display: flex;align-items: center;gap: 8px;color: #ccc;cursor: pointer;}
+        .camera-auto-inject label{display: flex;align-items: center;gap: 8px;color: var(--l);cursor: pointer;}
         .camera-auto-inject input[type="checkbox"]{margin: 0;}
     `;
     document.head.appendChild(style);
@@ -65,8 +72,8 @@ void main() {
             const previewPanel = document.getElementById('preview-panel');
             this.cameraBtn = document.createElement('button');
             this.cameraBtn.className = 'camera-btn';
-            this.cameraBtn.textContent = '📷 Camera';
-            this.cameraBtn.title = 'Enable webcam for shader input';
+            this.cameraBtn.innerHTML = `${CAMERA_SVG}`;
+            this.cameraBtn.title = 'Webcam Support';
             previewPanel.appendChild(this.cameraBtn);
             this.modal = document.createElement('div');
             this.modal.className = 'camera-modal';
@@ -205,7 +212,7 @@ void main() {
                 await this.preview.play();
                 this.isActive = true;
                 this.cameraBtn.classList.add('active');
-                this.cameraBtn.textContent = '📷 Camera ON';
+                this.cameraBtn.innerHTML = `${CAMERA_SVG}`;
                 this.startBtn.disabled = true;
                 this.stopBtn.disabled = false;
                 this.status.textContent = `Camera active (${this.preview.videoWidth}x${this.preview.videoHeight})`;
@@ -231,7 +238,7 @@ void main() {
                 this.status.className = 'camera-error';
                 this.isActive = false;
                 this.cameraBtn.classList.remove('active');
-                this.cameraBtn.textContent = '📷 Camera';
+                this.cameraBtn.innerHTML = `${CAMERA_SVG}`;
             }
         }
         stopCamera() {
@@ -243,7 +250,7 @@ void main() {
             this.preview.srcObject = null;
             this.isActive = false;
             this.cameraBtn.classList.remove('active');
-            this.cameraBtn.textContent = '📷 Camera';
+            this.cameraBtn.innerHTML = `${CAMERA_SVG}`;
             this.startBtn.disabled = false;
             this.stopBtn.disabled = true;
             this.status.textContent = 'Camera stopped';
