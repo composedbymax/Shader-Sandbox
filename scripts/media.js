@@ -3,7 +3,11 @@
   if (!canvas) return;
   const gl = window.gl || canvas.getContext('webgl2') || canvas.getContext('webgl');
   const uniforms = window.uniforms || {};
-  let imageTexture = null;
+  let mediaTexture = null;
+  let mediaElement = null;
+  let mediaType = null;
+  let isPlaying = false;
+  let animationId = null;
   let activeEffects = [];
   let currentView = 'upload';
   const previewPanel = document.getElementById('preview-panel');
@@ -25,7 +29,7 @@ vec4 blur(vec4 color, vec2 uv, float strength) {
   float off = strength * 0.01;
   for (int i = -2; i <= 2; i++) {
     for (int j = -2; j <= 2; j++) {
-      sum += texture2D(u_image, uv + vec2(float(i), float(j)) * off);
+      sum += texture2D(u_texture, uv + vec2(float(i), float(j)) * off);
     }
   }
   vec4 blurred = sum / 25.0;
@@ -75,9 +79,9 @@ vec4 vignette(vec4 color, vec2 uv, float intensity, float radius) {
 vec4 chromatic(vec4 color, vec2 uv, float strength) {
   vec2 off = vec2(strength, 0.0);
   vec3 ca;
-  ca.r = texture2D(u_image, uv - off).r;
-  ca.g = texture2D(u_image, uv).g;
-  ca.b = texture2D(u_image, uv + off).b;
+  ca.r = texture2D(u_texture, uv - off).r;
+  ca.g = texture2D(u_texture, uv).g;
+  ca.b = texture2D(u_texture, uv + off).b;
   return vec4(mix(color.rgb, ca, strength), color.a);
 }
       `
@@ -92,7 +96,7 @@ vec4 chromatic(vec4 color, vec2 uv, float strength) {
       shader: `
 vec4 pixelate(vec4 color, vec2 uv, float pixelSize) {
   vec2 gridUV = floor(uv * pixelSize) / pixelSize;
-  vec4 p = texture2D(u_image, gridUV);
+  vec4 p = texture2D(u_texture, gridUV);
   return p;
 }
       `
@@ -119,7 +123,7 @@ void main() {
   v_uv       = a_position * 0.5 + 0.5;
   gl_Position = vec4(a_position, 0.0, 1.0);
 }`;
-  const baseFragmentShader = `
+  const baseImageFragmentShader = `
 precision mediump float;
 uniform sampler2D u_image;
 varying   vec2      v_uv;
@@ -127,23 +131,34 @@ void main() {
   vec4 color = texture2D(u_image, v_uv);
   gl_FragColor = color;
 }`;
+  const baseVideoFragmentShader = `
+precision mediump float;
+uniform sampler2D u_video;
+varying   vec2      v_uv;
+void main() {
+  vec4 color = texture2D(u_video, v_uv);
+  gl_FragColor = color;
+}`;
   function generateEffectShader() {
     if (activeEffects.length === 0) {
-      return baseFragmentShader;
+      return mediaType === 'video' ? baseVideoFragmentShader : baseImageFragmentShader;
     }
     let src = `
 precision mediump float;
-uniform sampler2D u_image;
-varying   vec2      v_uv;
-  `;
+uniform sampler2D ${mediaType === 'video' ? 'u_video' : 'u_image'};
+`;
+    src += `
+#define u_texture ${mediaType === 'video' ? 'u_video' : 'u_image'}
+`;
+    src += `varying vec2 v_uv;\n`;
     activeEffects.forEach(e => {
       src += effects[e.type].shader + "\n";
     });
     src += `
 void main() {
   vec2 uv    = v_uv;
-  vec4 color = texture2D(u_image, uv);
-  `;
+  vec4 color = texture2D(${mediaType === 'video' ? 'u_video' : 'u_image'}, uv);
+`;
     activeEffects.forEach(e => {
       const p = { ...effects[e.type].params, ...e.params };
       switch (e.type) {
@@ -168,8 +183,8 @@ void main() {
       }
     });
     src += `
-    gl_FragColor = color;
-  }`;
+  gl_FragColor = color;
+}`;
     return src;
   }
   function updateShaderCode() {
@@ -182,8 +197,43 @@ void main() {
       fragTA.dispatchEvent(new Event('input', { bubbles: true }));
     }
   }
+  function updateMediaTexture() {
+    if (!mediaElement || !mediaTexture) return;
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, mediaTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, mediaElement);
+    const uniformName = mediaType === 'video' ? 'u_video' : 'u_image';
+    const altUniformName = mediaType === 'video' ? 'uVideo' : 'uImage';
+    const loc = (uniforms[uniformName] || uniforms[altUniformName] || {}).loc;
+    if (loc != null) {
+      gl.useProgram(window.program);
+      gl.uniform1i(loc, 0);
+    }
+  }
+  function renderLoop() {
+    if (isPlaying && mediaElement && !mediaElement.paused) {
+      updateMediaTexture();
+      updateProgressBar();
+    }
+    if (isPlaying) {
+      animationId = requestAnimationFrame(renderLoop);
+    }
+  }
+  function updateProgressBar() {
+    const progressBar = document.getElementById('videoProgressBar');
+    const timeInfo = document.getElementById('videoTimeInfo');
+    if (progressBar && timeInfo && mediaElement && mediaType === 'video') {
+      const progress = (mediaElement.currentTime / mediaElement.duration) * 100;
+      progressBar.style.width = progress + '%';
+      const currentMin = Math.floor(mediaElement.currentTime / 60);
+      const currentSec = Math.floor(mediaElement.currentTime % 60);
+      const totalMin = Math.floor(mediaElement.duration / 60);
+      const totalSec = Math.floor(mediaElement.duration % 60);
+      timeInfo.textContent = `${currentMin}:${currentSec.toString().padStart(2, '0')} / ${totalMin}:${totalSec.toString().padStart(2, '0')}`;
+    }
+  }
   const uploadBtn = document.createElement('button');
-  uploadBtn.id = 'imgUploadBtn';
+  uploadBtn.id = 'mediaUploadBtn';
   uploadBtn.innerHTML = `
     <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none"
         xmlns="http://www.w3.org/2000/svg">
@@ -196,57 +246,66 @@ void main() {
         <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
     </svg>
   `;
-  uploadBtn.title = 'Upload Image';
+  uploadBtn.title = 'Upload Image/Video';
   document.body.appendChild(uploadBtn);
   const fileInput = document.createElement('input');
   fileInput.type = 'file';
-  fileInput.accept = 'image/*';
-  fileInput.id = 'imageFileInput';
+  fileInput.accept = 'image/*,video/*';
+  fileInput.id = 'mediaFileInput';
   fileInput.style.display = 'none';
   document.body.appendChild(fileInput);
   const modal = document.createElement('div');
-  modal.id = 'imgModal';
+  modal.id = 'mediaModal';
   modal.innerHTML = `
     <div class="modal-content">
-      <button id="imgCloseBtn">×</button>
-      <h3>Image & Effects Editor</h3>
+      <button id="mediaCloseBtn">×</button>
+      <h3>Media & Effects Editor</h3>
       <div class="modal-toggle">
-        <button id="uploadTab" class="active">Upload Image</button>
+        <button id="uploadTab" class="active">Upload Media</button>
         <button id="effectsTab">Add Effects</button>
       </div>
       <div id="uploadView" class="modal-view active">
-        <p>Select an image to use in your shader.</p>
-        <button id="imgDropButton">Choose File or Drag and Drop</button>
-        <div id="imgPreview"></div>
+        <p>Select an image or video to use in your shader.</p>
+        <button id="mediaDropButton">Choose File or Drag and Drop</button>
+        <div id="mediaPreview"></div>
+        <div class="video-controls" id="videoControls" style="display:none;">
+          <button id="playPauseBtn">Play</button>
+          <div class="time-info" id="videoTimeInfo">0:00 / 0:00</div>
+        </div>
+        <div class="video-progress" id="videoProgress" style="display:none;">
+          <div class="video-progress-bar" id="videoProgressBar"></div>
+        </div>
         <p class="loadmediawarn">Importing base shaders will delete current text area code</p>
         <button id="baseImportBtn">Import Base Shaders</button>
       </div>
       <div id="effectsView" class="modal-view">
-        <p>Select effects to apply to your image:</p>
-        <div class="effects-grid" id="effectsGrid"></div>
-        <div class="effect-controls" id="effectControls" style="display:none;">
-          <h4>Effect Parameters</h4>
-          <div id="controlsContainer"></div>
-        </div>
-        <div class="active-effects" id="activeEffectsContainer">
-          <h4>Active Effects</h4>
-          <div id="activeEffectsList"></div>
-          <button class="apply-effects-btn" id="applyEffectsBtn">Apply Effects to Shader</button>
+        <div id="effectsContent">
+          <p>Select effects to apply to your ${mediaType || 'media'}:</p>
+          <div class="effects-grid" id="effectsGrid"></div>
+          <div class="effect-controls" id="effectControls" style="display:none;">
+            <h4>Effect Parameters</h4>
+            <div id="controlsContainer"></div>
+          </div>
+          <div class="active-effects" id="activeEffectsContainer">
+            <h4>Active Effects</h4>
+            <div id="activeEffectsList"></div>
+            <button class="apply-effects-btn" id="applyEffectsBtn">Apply Effects to Shader</button>
+          </div>
         </div>
       </div>
     </div>
   `;
   document.body.appendChild(modal);
   const dragOverlay = document.createElement('div');
-  dragOverlay.id = 'vidDragOverlay';
+  dragOverlay.id = 'mediaDragOverlay';
   dragOverlay.innerHTML = `
-    <div>Drop video to upload</div>
+    <div>Drop media to upload</div>
     <div class="filename"></div>
   `;
   previewPanel.appendChild(dragOverlay);
-  const dropButton = modal.querySelector('#imgDropButton');
-  const preview = modal.querySelector('#imgPreview');
-  const closeBtn = modal.querySelector('#imgCloseBtn');
+  const dropButton = modal.querySelector('#mediaDropButton');
+  const preview = modal.querySelector('#mediaPreview');
+  const closeBtn = modal.querySelector('#mediaCloseBtn');
   const baseImportBtn = modal.querySelector('#baseImportBtn');
   const uploadTab = modal.querySelector('#uploadTab');
   const effectsTab = modal.querySelector('#effectsTab');
@@ -257,6 +316,9 @@ void main() {
   const controlsContainer = modal.querySelector('#controlsContainer');
   const activeEffectsList = modal.querySelector('#activeEffectsList');
   const applyEffectsBtn = modal.querySelector('#applyEffectsBtn');
+  const videoControls = modal.querySelector('#videoControls');
+  const playPauseBtn = modal.querySelector('#playPauseBtn');
+  const videoProgress = modal.querySelector('#videoProgress');
   const filenameDiv = dragOverlay.querySelector('.filename');
   let dragCounter = 0;
   let selectedEffectType = null;
@@ -273,7 +335,14 @@ void main() {
     uploadTab.classList.remove('active');
     effectsView.classList.add('active');
     uploadView.classList.remove('active');
+    updateEffectsDescription();
   });
+  function updateEffectsDescription() {
+    const desc = effectsView.querySelector('p');
+    if (desc) {
+      desc.textContent = `Select effects to apply to your ${mediaType || 'media'}:`;
+    }
+  }
   function populateEffectsGrid() {
     effectsGrid.innerHTML = '';
     Object.keys(effects).forEach(effectType => {
@@ -376,32 +445,96 @@ void main() {
     updateActiveEffectsList();
     updateShaderCode();
   };
-  function handleImageFile(file) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const img = new Image();
-      img.onload = function() {
-        if (imageTexture) gl.deleteTexture(imageTexture);
-        imageTexture = gl.createTexture();
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, imageTexture);
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-        const loc = (uniforms.u_image || uniforms.uImage || {}).loc;
-        if (loc != null) {
-          gl.useProgram(window.program);
-          gl.uniform1i(loc, 0);
-        }
+  function handleMediaFile(file) {
+    if (mediaElement) {
+      if (mediaType === 'video') {
+        mediaElement.pause();
+        mediaElement.src = '';
+      }
+    }
+    const isVideo = file.type.startsWith('video/');
+    const isImage = file.type.startsWith('image/');
+    if (!isVideo && !isImage) return;
+    mediaType = isVideo ? 'video' : 'image';
+    if (mediaType === 'video') {
+      mediaElement = document.createElement('video');
+      mediaElement.crossOrigin = 'anonymous';
+      mediaElement.loop = true;
+      mediaElement.muted = true;
+      mediaElement.controls = false;
+      const url = URL.createObjectURL(file);
+      mediaElement.src = url;
+      mediaElement.addEventListener('loadeddata', function() {
+        setupMediaTexture();
         preview.innerHTML = '';
-        preview.appendChild(img);
+        preview.appendChild(mediaElement);
+        videoControls.style.display = 'flex';
+        videoProgress.style.display = 'block';
+        updateProgressBar();
+      });
+      mediaElement.addEventListener('timeupdate', updateProgressBar);
+    } else {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        mediaElement = new Image();
+        mediaElement.onload = function() {
+          setupMediaTexture();
+          preview.innerHTML = '';
+          preview.appendChild(mediaElement);
+          videoControls.style.display = 'none';
+          videoProgress.style.display = 'none';
+        };
+        mediaElement.src = e.target.result;
       };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+      reader.readAsDataURL(file);
+    }
+    updateEffectsDescription();
   }
+  function setupMediaTexture() {
+    if (mediaTexture) gl.deleteTexture(mediaTexture);
+    mediaTexture = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, mediaTexture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    if (mediaType === 'video') {
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    }
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, mediaElement);
+    const uniformName = mediaType === 'video' ? 'u_video' : 'u_image';
+    const altUniformName = mediaType === 'video' ? 'uVideo' : 'uImage';
+    const loc = (uniforms[uniformName] || uniforms[altUniformName] || {}).loc;
+    if (loc != null) {
+      gl.useProgram(window.program);
+      gl.uniform1i(loc, 0);
+    }
+  }
+  playPauseBtn.addEventListener('click', () => {
+    if (!mediaElement || mediaType !== 'video') return;
+    if (mediaElement.paused) {
+      mediaElement.play();
+      playPauseBtn.textContent = 'Pause';
+      isPlaying = true;
+      renderLoop();
+    } else {
+      mediaElement.pause();
+      playPauseBtn.textContent = 'Play';
+      isPlaying = false;
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+    }
+  });
+  videoProgress.addEventListener('click', (e) => {
+    if (!mediaElement || mediaType !== 'video') return;
+    const rect = videoProgress.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percentage = clickX / rect.width;
+    mediaElement.currentTime = percentage * mediaElement.duration;
+  });
   baseImportBtn.addEventListener('click', () => {
     activeEffects = [];
     updateActiveEffectsList();
@@ -423,8 +556,9 @@ void main() {
     }
   });
   dropButton.addEventListener('click', () => fileInput.click());
+  
   fileInput.addEventListener('change', () => {
-    if (fileInput.files[0]) handleImageFile(fileInput.files[0]);
+    if (fileInput.files[0]) handleMediaFile(fileInput.files[0]);
   });
   ['dragenter','dragover'].forEach(evt => {
     dropButton.addEventListener(evt, e => {
@@ -432,6 +566,7 @@ void main() {
       dropButton.classList.add('dragover');
     });
   });
+
   ['dragleave','drop'].forEach(evt => {
     dropButton.addEventListener(evt, e => {
       e.preventDefault();
@@ -440,8 +575,8 @@ void main() {
   });
   dropButton.addEventListener('drop', e => {
     const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-      handleImageFile(file);
+    if (file && (file.type.startsWith('image/') || file.type.startsWith('video/'))) {
+      handleMediaFile(file);
     }
   });
   function isOverPreviewPanel(e) {
@@ -454,11 +589,15 @@ void main() {
     if (
       modal.style.display !== 'flex' &&
       e.dataTransfer.items &&
-      [...e.dataTransfer.items].some(item => item.kind === 'file' && item.type.startsWith('image/')) &&
+      [...e.dataTransfer.items].some(item => 
+        item.kind === 'file' && (item.type.startsWith('image/') || item.type.startsWith('video/'))
+      ) &&
       isOverPreviewPanel(e)
     ) {
-      const imageItem = [...e.dataTransfer.items].find(item => item.type.startsWith('image/'));
-      filenameDiv.textContent = imageItem?.getAsFile()?.name || 'Image file';
+      const mediaItem = [...e.dataTransfer.items].find(item => 
+        item.kind === 'file' && (item.type.startsWith('image/') || item.type.startsWith('video/'))
+      );
+      filenameDiv.textContent = mediaItem?.getAsFile()?.name || 'Media file';
       dragOverlay.style.display = 'flex';
     }
   });
@@ -475,8 +614,8 @@ void main() {
     dragOverlay.style.display = 'none';
     dragCounter = 0;
     const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/') && isOverPreviewPanel(e)) {
-      handleImageFile(file);
+    if (file && (file.type.startsWith('image/') || file.type.startsWith('video/')) && isOverPreviewPanel(e)) {
+      handleMediaFile(file);
       modal.style.display = 'flex';
     }
   });
@@ -484,5 +623,19 @@ void main() {
   document.addEventListener('fullscreenchange', () => {
     const parent = document.fullscreenElement || document.body;
     [uploadBtn, modal, dragOverlay].forEach(el => parent.appendChild(el));
+  });
+  window.addEventListener('beforeunload', () => {
+    if (mediaElement && mediaType === 'video') {
+      mediaElement.pause();
+      if (mediaElement.src) {
+        URL.revokeObjectURL(mediaElement.src);
+      }
+    }
+    if (animationId) {
+      cancelAnimationFrame(animationId);
+    }
+    if (mediaTexture) {
+      gl.deleteTexture(mediaTexture);
+    }
   });
 })();

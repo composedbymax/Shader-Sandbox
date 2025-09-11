@@ -18,8 +18,7 @@
         const build = [
             "scripts/save.js",
             "scripts/gpu.js",
-            "scripts/video.js",
-            "scripts/image.js",
+            "scripts/media.js",
             "scripts/link.js",
             "scripts/theme.js",
             "scripts/audio.js",
