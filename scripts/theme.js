@@ -346,6 +346,10 @@
       if (!select) return;
       try {
         select.innerHTML = '<option value="">Choose a theme...</option>';
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "default";
+        defaultOption.textContent = "Default";
+        select.appendChild(defaultOption);
         const presetGroup = document.createElement("optgroup");
         presetGroup.label = "Presets";
         Object.keys(this.presetThemes).forEach(themeName => {
@@ -366,6 +370,7 @@
           const customGroup = document.createElement("optgroup");
           customGroup.label = "Custom";
           themes.forEach((theme) => {
+            if (theme.name === "default") return;
             const option = document.createElement("option");
             option.value = theme.name;
             option.textContent = theme.name;

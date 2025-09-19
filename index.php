@@ -48,7 +48,7 @@ https://max.x10.mx/
   <meta property="og:image" content="https://max.wuaze.com/assets/img/glsl.jpeg" />
   <meta property="og:description" content="An interactive GLSL editor for experimenting with shaders directly in your browser." />
   <meta property="og:site_name" content="GLSL Editor by Max Wuaze" />
-  <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'none'; default-src 'self';script-src 'self' 'unsafe-inline' 'unsafe-eval';worker-src 'self' blob:;style-src 'self' 'unsafe-inline';img-src 'self' data:;connect-src 'self';font-src 'self';object-src 'none';media-src 'self' blob:;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self';script-src 'self' 'unsafe-inline' 'unsafe-eval';worker-src 'self' blob:;style-src 'self' 'unsafe-inline';img-src 'self' data:;connect-src 'self';font-src 'self';object-src 'none';media-src 'self' blob:;">
   <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(self), camera=(), fullscreen=(self), clipboard-read=(self), clipboard-write=(self)">
@@ -70,7 +70,7 @@ https://max.x10.mx/
   <?php if (!isset($_SESSION['user'])) {require $_SERVER['DOCUMENT_ROOT'] . '/auth/modal.php';}?>
   <div id="app">
     <div id="editors">
-      <button class="lbtn" onclick="openShaderWindow()" title="Save shaders and browse public gallery">Save / Browse</button>
+      <button class="lbtn ellips" onclick="openShaderWindow()" title="Save shaders and browse public gallery">Save / Browse</button>
       <div id="shaderWindow" class="savew">
         <div class="toggles">
           <button id="tabSaveBtn" onclick="showTab('save')" class="togbtn">Save</button>
@@ -87,9 +87,9 @@ https://max.x10.mx/
           </div>
           <input type="text" id="shaderTitle" placeholder="Shader Title" class="saveinput"><br>
           <button class="sharebtn" onclick="saveLink()">Share Link</button>
-          <button class="savebtn" onclick="saveLocally()">Save Locally</button>
+          <button class="sharebtn" onclick="saveLocally()">Save Locally</button>
           <?php if (isset($_SESSION['user_role']) && ($_SESSION['user_role'] === 'admin' || $_SESSION['user_role'] === 'premium')): ?>
-          <button class="savebtn" onclick="savePublic()">Save Publicly</button>
+          <button class="sharebtn" onclick="savePublic()">Save Publicly</button>
           <?php endif; ?>
         </div>
         <div id="tabPublic" class="savesct">
