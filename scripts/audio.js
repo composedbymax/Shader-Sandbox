@@ -48,10 +48,7 @@ class AudioReactive {
       title: 'Audio Reactivity'
     }, 'audio-reactive-button');
     this.button.addEventListener('mouseleave', () => {
-      this.style(this.button, {
-        backgroundColor: this.isActive ? 'var(--a)' : 'var(--d)',
-        transform: 'translateY(-50%) scale(1)'
-      });
+      this.button.classList.toggle('active', this.isActive);
     });
     this.button.onclick = () => this.show();
     this.previewPanel.appendChild(this.button);
@@ -264,7 +261,7 @@ class AudioReactive {
           this.updateMicrophoneUI(true, 'Microphone active');
           this.isActive = true;
           this.fileActive = false;
-          this.button.style.backgroundColor = 'var(--a)';
+          this.button.classList.add('active');
         } catch {
           this.updateMicrophoneUI(false, 'Microphone access denied', true);
         }
@@ -272,11 +269,11 @@ class AudioReactive {
         this.isActive = !this.isActive;
         if (this.isActive) {
           this.updateMicrophoneUI(true, 'Microphone active');
-          this.button.style.backgroundColor = 'var(--a)';
+          this.button.classList.add('active');
         } else {
           this.cleanupMicrophone();
           this.updateMicrophoneUI(false, 'Click to enable microphone access');
-          this.button.style.backgroundColor = 'var(--d)';
+          this.button.classList.remove('active');
         }
       }
     };

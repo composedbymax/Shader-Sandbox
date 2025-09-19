@@ -1,32 +1,5 @@
 (function(){
   if (document.getElementById('pm-root')) return;
-  const css = `
-    #pm-toggle-btn{position: absolute;top: 10px;right: 74px;background: var(--d);color: var(--6);border: none;width: 2rem;height: 2rem;cursor: pointer;z-index: 10;display: flex;align-items: center;justify-content: center;}
-    #pm-toggle-btn svg{width: 60%;height: 60%;}
-    #pm-root{position: fixed;right: 12px;top: 10px;width: 90%;max-width: calc(100% - 24px);height: 420px;background: var(--4);color: var(--7);border-radius: 4px;padding: 12px;box-shadow: 0 12px 36px var(--1);z-index: 11;display: flex;flex-direction: column;gap: 8px}
-    #pm-root .pm-header{display:flex;align-items:center;justify-content:space-between;gap:8px;}
-    #pm-controls{display:flex;gap:8px;align-items:center;}
-    .pm-btn{background:var(--5);color:var(--l);border:1px solid var(--5);padding:6px 8px;border-radius:4px;cursor:pointer;font-size:13px;}
-    .pm-btn:active{transform: translateY(1px);}
-    #pm-body{display:flex;gap:12px;height: calc(100% - 58px);}
-    #pm-steps-area{flex: 1 1 420px;background:var(--4);border-radius: 8px;padding:10px;overflow:auto;display:flex;align-items:center;}
-    .pm-steps-row{display:flex;align-items:flex-start;gap:10px;padding-bottom:6px;}
-    .pm-step{width: 250px;min-width: 200px;background: var(--2);border: 1px solid var(--5);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px}
-    .pm-step.pm-future{opacity: 0.45;filter: grayscale(20%);pointer-events: none;}
-    .pm-step.pm-active{outline: 2px solid var(--a);opacity: 1;pointer-events: auto;}
-    .pm-step .pm-header{display:flex;gap:6px;align-items:center;justify-content:space-between;}
-    .pm-step label{font-size:12px;color:#aaa;}
-    .pm-step textarea{width:100%;height:88px;background:var(--1);color:#cfe;border:1px solid var(--5);resize:vertical;font-family: monospace;font-size:12px;padding:6px;}
-    .pm-step input.pm-delay{width: 70px;padding:6px;border-radius:6px;border:1px solid var(--6);background:#111;color:var(--l);font-size:13px;}
-    .pm-step .pm-actions{display:flex;gap:6px;justify-content:flex-end;align-items:center;}
-    .pm-arrow{width:40px;height:40px;display:flex;align-items:center;justify-content:center;user-select:none;opacity:0.9;}
-    .pm-small{font-size:12px;padding:5px 8px;}
-    .pm-step .pm-step-title{font-size:13px;color:var(--l);font-weight:600;}
-  `;
-  const style = document.createElement('style');
-  style.id = 'pm-styles';
-  style.appendChild(document.createTextNode(css));
-  document.head.appendChild(style);
   const toggleBtn = document.createElement('button');
   toggleBtn.id = 'pm-toggle-btn';
   toggleBtn.title = 'Performance Manager';
