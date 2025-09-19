@@ -446,15 +446,17 @@ void main() {
     updateShaderCode();
   };
   function handleMediaFile(file) {
-    if (mediaElement) {
-      if (mediaType === 'video') {
-        mediaElement.pause();
-        mediaElement.src = '';
-      }
-    }
     const isVideo = file.type.startsWith('video/');
     const isImage = file.type.startsWith('image/');
-    if (!isVideo && !isImage) return;
+    const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (isImage && !allowedImageTypes.includes(file.type)) {
+      window.showToast(`Unsupported image format: ${file.name}`, 'error');
+      return;
+    }
+    if (!isVideo && !isImage) {
+      window.showToast(`Unsupported media type: ${file.name}`, 'error');
+      return;
+    }
     mediaType = isVideo ? 'video' : 'image';
     if (mediaType === 'video') {
       mediaElement = document.createElement('video');
@@ -556,7 +558,6 @@ void main() {
     }
   });
   dropButton.addEventListener('click', () => fileInput.click());
-  
   fileInput.addEventListener('change', () => {
     if (fileInput.files[0]) handleMediaFile(fileInput.files[0]);
   });
@@ -566,7 +567,6 @@ void main() {
       dropButton.classList.add('dragover');
     });
   });
-
   ['dragleave','drop'].forEach(evt => {
     dropButton.addEventListener(evt, e => {
       e.preventDefault();
@@ -575,9 +575,19 @@ void main() {
   });
   dropButton.addEventListener('drop', e => {
     const file = e.dataTransfer.files[0];
-    if (file && (file.type.startsWith('image/') || file.type.startsWith('video/'))) {
-      handleMediaFile(file);
+    if (!file) return;
+    const isVideo = file.type.startsWith('video/');
+    const isImage = file.type.startsWith('image/');
+    const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (isImage && !allowedImageTypes.includes(file.type)) {
+      window.showToast(`Unsupported image format: ${file.name}`, 'error');
+      return;
     }
+    if (!isVideo && !isImage) {
+      window.showToast(`Unsupported media type: ${file.name}`, 'error');
+      return;
+    }
+    handleMediaFile(file);
   });
   function isOverPreviewPanel(e) {
     const rect = previewPanel.getBoundingClientRect();
