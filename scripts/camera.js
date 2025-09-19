@@ -18,6 +18,7 @@
             this.gl = null;
             this.program = null;
             this.originalFragCode = null;
+            this.originalVertCode = null;
             this.autoInjectShader = true;
             this.createUI();
             this.setupEventListeners();
@@ -32,10 +33,16 @@ uniform vec2 u_resolution;
 uniform sampler2D u_camera;
 void main() {
     vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-    uv.x = 1.0 - uv.x;  // mirror horizontally
-    uv.y = 1.0 - uv.y;  // flip vertically
+    uv.x = 1.0 - uv.x;
+    uv.y = 1.0 - uv.y;
     vec4 cameraColor = texture2D(u_camera, uv);
     gl_FragColor = vec4(cameraColor.rgb, 1.0);
+}`;
+        }
+        getCameraVertexShader() {
+    return `attribute vec2 a_position;
+void main() {
+  gl_Position = vec4(a_position, 0., 1.);
 }`;
         }
         createUI() {
@@ -132,10 +139,18 @@ void main() {
         }
         injectCameraShader() {
             const fragTA = document.getElementById('fragCode');
+            const vertTA = document.getElementById('vertCode');
             if (fragTA && this.autoInjectShader) {
-                this.originalFragCode = fragTA.value;
-                const cameraShader = this.getCameraFragmentShader();
-                fragTA.value = cameraShader;
+                if (this.originalFragCode === null) {
+                    this.originalFragCode = fragTA.value;
+                }
+                if (vertTA && this.originalVertCode === null) {
+                    this.originalVertCode = vertTA.value;
+                }
+                fragTA.value = this.getCameraFragmentShader();
+                if (vertTA) {
+                    vertTA.value = this.getCameraVertexShader();
+                }
                 this.uniformWarningShown = false;
                 if (window.rebuildProgram) {
                     window.rebuildProgram();
@@ -150,15 +165,17 @@ void main() {
         }
         restoreOriginalShader() {
             const fragTA = document.getElementById('fragCode');
+            const vertTA = document.getElementById('vertCode');
             if (fragTA && this.originalFragCode !== null && this.autoInjectShader) {
                 fragTA.value = this.originalFragCode;
                 this.originalFragCode = null;
-                if (this.gl && this.texture) {
-                    this.gl.bindTexture(this.gl.TEXTURE_2D, null);
-                }
-                if (window.rebuildProgram) {
-                    window.rebuildProgram();
-                }
+            }
+            if (vertTA && this.originalVertCode !== null && this.autoInjectShader) {
+                vertTA.value = this.originalVertCode;
+                this.originalVertCode = null;
+            }
+            if (window.rebuildProgram) {
+                window.rebuildProgram();
             }
         }
         async startCamera() {
@@ -232,9 +249,6 @@ void main() {
                 this.gl.deleteTexture(this.texture);
                 this.texture = null;
             }
-            if (window.render) {
-                setTimeout(() => window.render(), 50);
-            }
         }
         openModal() {
             this.modal.classList.add('show');
@@ -290,15 +304,15 @@ void main() {
         }
         setupShaderIntegration() {
             const originalRender = window.render;
-            if (originalRender) {
-                window.render = () => {
-                    if (this.isActive && this.gl && this.program && this.texture) {
-                        this.updateTexture();
-                        this.bindTexture();
-                    }
-                    originalRender();
-                };
-            }
+                if (originalRender) {
+                    window.render = () => {
+                        if (this.isActive && this.gl && this.program) {
+                            this.updateTexture();
+                            this.bindTexture();
+                        }
+                        originalRender();
+                    };
+                }
             const originalRebuildProgram = window.rebuildProgram;
             if (originalRebuildProgram) {
                 window.rebuildProgram = () => {
