@@ -1,3 +1,4 @@
+//render.js for reference.
 (function(){
 const $ = id => document.getElementById(id);
 const app = $('app'), 
@@ -374,4 +375,6 @@ window.rebuildProgram = rebuildProgram;
 window.$ = id => document.getElementById(id);
 window.render = render;
 window.editorsVisible = true;
+window.pauseAnimation = pauseAnimation;
+window.resumeAnimation = resumeAnimation;
 })();
