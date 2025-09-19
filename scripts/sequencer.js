@@ -1,26 +1,27 @@
 (function(){
   if (document.getElementById('pm-root')) return;
   const css = `
-    #pm-toggle-btn{position: absolute;top: 10px;right: 74px;background: var(--d);color: var(--6);border: none;width: 2rem;height: 2rem;cursor: pointer;z-index: 10;}
-    #pm-root{position: fixed;right: 12px;top: 10px;width: 90%;max-width: calc(100% - 24px);height: 420px;background: rgba(20,20,20,0.98);color: #ddd;border-radius: 10px;padding: 12px;box-shadow: 0 12px 36px rgba(0,0,0,0.6);z-index: 11;display: flex;flex-direction: column;gap: 8px;font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+    #pm-toggle-btn{position: absolute;top: 10px;right: 74px;background: var(--d);color: var(--6);border: none;width: 2rem;height: 2rem;cursor: pointer;z-index: 10;display: flex;align-items: center;justify-content: center;}
+    #pm-toggle-btn svg{width: 60%;height: 60%;}
+    #pm-root{position: fixed;right: 12px;top: 10px;width: 90%;max-width: calc(100% - 24px);height: 420px;background: var(--4);color: var(--7);border-radius: 4px;padding: 12px;box-shadow: 0 12px 36px var(--1);z-index: 11;display: flex;flex-direction: column;gap: 8px}
     #pm-root .pm-header{display:flex;align-items:center;justify-content:space-between;gap:8px;}
     #pm-controls{display:flex;gap:8px;align-items:center;}
-    .pm-btn{background:#222;color:#fff;border:1px solid rgba(255,255,255,0.06);padding:6px 8px;border-radius:6px;cursor:pointer;font-size:13px;}
+    .pm-btn{background:var(--5);color:var(--l);border:1px solid var(--5);padding:6px 8px;border-radius:4px;cursor:pointer;font-size:13px;}
     .pm-btn:active{transform: translateY(1px);}
     #pm-body{display:flex;gap:12px;height: calc(100% - 58px);}
-    #pm-steps-area{flex: 1 1 420px;background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius: 8px;padding:10px;overflow:auto;display:flex;align-items:center;}
+    #pm-steps-area{flex: 1 1 420px;background:var(--4);border-radius: 8px;padding:10px;overflow:auto;display:flex;align-items:center;}
     .pm-steps-row{display:flex;align-items:flex-start;gap:10px;padding-bottom:6px;}
-    .pm-step{width: 250px;min-width: 200px;background: #0f0f10;border: 1px solid rgba(255,255,255,0.04);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;box-shadow: 0 2px 8px rgba(0,0,0,0.5);}
+    .pm-step{width: 250px;min-width: 200px;background: var(--2);border: 1px solid var(--5);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px}
     .pm-step.pm-future{opacity: 0.45;filter: grayscale(20%);pointer-events: none;}
-    .pm-step.pm-active{outline: 2px solid rgba(0,160,255,0.9);box-shadow: 0 6px 18px rgba(0,160,255,0.06);opacity: 1;pointer-events: auto;}
+    .pm-step.pm-active{outline: 2px solid var(--a);opacity: 1;pointer-events: auto;}
     .pm-step .pm-header{display:flex;gap:6px;align-items:center;justify-content:space-between;}
     .pm-step label{font-size:12px;color:#aaa;}
-    .pm-step textarea{width:100%;height:88px;background:#050507;color:#cfe;border:1px solid rgba(255,255,255,0.03);resize:vertical;font-family: monospace;font-size:12px;padding:6px;}
-    .pm-step input.pm-delay{width: 70px;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:#111;color:#fff;font-size:13px;}
+    .pm-step textarea{width:100%;height:88px;background:var(--1);color:#cfe;border:1px solid var(--5);resize:vertical;font-family: monospace;font-size:12px;padding:6px;}
+    .pm-step input.pm-delay{width: 70px;padding:6px;border-radius:6px;border:1px solid var(--6);background:#111;color:var(--l);font-size:13px;}
     .pm-step .pm-actions{display:flex;gap:6px;justify-content:flex-end;align-items:center;}
     .pm-arrow{width:40px;height:40px;display:flex;align-items:center;justify-content:center;user-select:none;opacity:0.9;}
     .pm-small{font-size:12px;padding:5px 8px;}
-    .pm-step .pm-step-title{font-size:13px;color:#fff;font-weight:600;}
+    .pm-step .pm-step-title{font-size:13px;color:var(--l);font-weight:600;}
   `;
   const style = document.createElement('style');
   style.id = 'pm-styles';
@@ -29,7 +30,12 @@
   const toggleBtn = document.createElement('button');
   toggleBtn.id = 'pm-toggle-btn';
   toggleBtn.title = 'Performance Manager';
-  toggleBtn.innerText = 'P';
+  toggleBtn.innerHTML = `
+    <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none"
+        xmlns="http://www.w3.org/2000/svg">
+      <path fill="currentColor" d="M8 5v14l11-7z"/>
+    </svg>
+  `;
   document.body.appendChild(toggleBtn);
   const root = document.createElement('div');
   root.id = 'pm-root';
@@ -103,16 +109,15 @@
           <button class="pm-btn pm-small pm-remove">✕</button>
         </div>
       </div>
-      <label>Vertex shader (step)</label>
-      <textarea class="pm-vert" spellcheck="false"></textarea>
-      <label>Fragment shader (step)</label>
-      <textarea class="pm-frag" spellcheck="false"></textarea>
+      <label for="pm-vert-${stepObj.id}">Vertex shader (step)</label>
+      <textarea id="pm-vert-${stepObj.id}" name="pm-vert-${stepObj.id}" class="pm-vert" spellcheck="false"></textarea>
+      <label for="pm-frag-${stepObj.id}">Fragment shader (step)</label>
+      <textarea id="pm-frag-${stepObj.id}" name="pm-frag-${stepObj.id}" class="pm-frag" spellcheck="false"></textarea>
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div>
-          <label style="font-size:12px;color:#aaa">Delay (s)</label>
-          <input class="pm-delay" type="number" min="0" step="0.1" value="${stepObj.delay}">
+          <label for="pm-delay-${stepObj.id}" style="font-size:12px;color:#aaa">Delay (s)</label>
+          <input id="pm-delay-${stepObj.id}" name="pm-delay-${stepObj.id}" class="pm-delay" type="number" min="0" step="0.1" value="${stepObj.delay}">
         </div>
-        <div style="font-size:12px;color:#999">ID: ${stepObj.id}</div>
       </div>
     `;
     wrapper.querySelector('.pm-vert').value = stepObj.vert || '';
