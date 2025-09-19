@@ -20,6 +20,9 @@
             this.originalFragCode = null;
             this.originalVertCode = null;
             this.autoInjectShader = true;
+            this.cameraRenderLoopId = null;
+            this.originalRenderFn = null;
+            this.originalRebuildFn = null;
             this.createUI();
             this.setupEventListeners();
             this.enumerateDevices();
@@ -178,6 +181,31 @@ void main() {
                 window.rebuildProgram();
             }
         }
+        forceAnimationReset() {
+            if (window.pauseAnimation && typeof window.pauseAnimation === 'function') {
+                window.pauseAnimation();
+            }
+            if (this.gl) {
+                this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+                this.gl.flush();
+                this.gl.finish();
+            }
+            setTimeout(() => {
+                if (window.resumeAnimation && typeof window.resumeAnimation === 'function') {
+                    window.resumeAnimation();
+                } else {
+                    if (window.render && typeof window.render === 'function') {
+                        window.render();
+                    }
+                }
+            }, 150);
+        }
+        cancelCameraRenderLoop() {
+            if (this.cameraRenderLoopId) {
+                cancelAnimationFrame(this.cameraRenderLoopId);
+                this.cameraRenderLoopId = null;
+            }
+        }
         async startCamera() {
             try {
                 if (this.stream) {
@@ -213,15 +241,18 @@ void main() {
                 this.createTexture();
                 this.injectCameraShader();
                 const renderCamera = () => {
-                    if (!this.isActive) return;
+                    if (!this.isActive) {
+                        this.cameraRenderLoopId = null;
+                        return;
+                    }
                     this.updateTexture();
                     this.bindTexture();
                     if (window.render) {
                         window.render();
                     }
-                    requestAnimationFrame(renderCamera);
+                    this.cameraRenderLoopId = requestAnimationFrame(renderCamera);
                 };
-                requestAnimationFrame(renderCamera);
+                this.cameraRenderLoopId = requestAnimationFrame(renderCamera);
             } catch (error) {
                 console.error("Camera error:", error);
                 this.status.textContent = `Error: ${error.message}`;
@@ -232,23 +263,31 @@ void main() {
             }
         }
         stopCamera() {
-            this.restoreOriginalShader();
+            this.cancelCameraRenderLoop();
+            this.isActive = false;
+            if (this.texture && this.gl) {
+                this.gl.deleteTexture(this.texture);
+                this.texture = null;
+            }
             if (this.stream) {
-                this.stream.getTracks().forEach(track => track.stop());
+                this.stream.getTracks().forEach(track => {
+                    track.stop();
+                });
                 this.stream = null;
             }
-            this.preview.srcObject = null;
-            this.isActive = false;
+            if (this.preview) {
+                this.preview.srcObject = null;
+            }
             this.cameraBtn.classList.remove('active');
             this.cameraBtn.innerHTML = `${CAMERA_SVG}`;
             this.startBtn.disabled = false;
             this.stopBtn.disabled = true;
             this.status.textContent = 'Camera stopped';
             this.status.className = 'camera-status';
-            if (this.texture && this.gl) {
-                this.gl.deleteTexture(this.texture);
-                this.texture = null;
-            }
+            this.restoreOriginalShader();
+            setTimeout(() => {
+                this.forceAnimationReset();
+            }, 50);
         }
         openModal() {
             this.modal.classList.add('show');
@@ -303,20 +342,20 @@ void main() {
             return false;
         }
         setupShaderIntegration() {
-            const originalRender = window.render;
-                if (originalRender) {
-                    window.render = () => {
-                        if (this.isActive && this.gl && this.program) {
-                            this.updateTexture();
-                            this.bindTexture();
-                        }
-                        originalRender();
-                    };
-                }
-            const originalRebuildProgram = window.rebuildProgram;
-            if (originalRebuildProgram) {
+            this.originalRenderFn = window.render;
+            this.originalRebuildFn = window.rebuildProgram;
+            if (this.originalRenderFn) {
+                window.render = () => {
+                    if (this.isActive && this.gl && this.program) {
+                        this.updateTexture();
+                        this.bindTexture();
+                    }
+                    this.originalRenderFn();
+                };
+            }
+            if (this.originalRebuildFn) {
                 window.rebuildProgram = () => {
-                    originalRebuildProgram();
+                    this.originalRebuildFn();
                     setTimeout(() => {
                         this.gl = window.gl || document.getElementById('glcanvas').getContext('webgl2') || document.getElementById('glcanvas').getContext('webgl');
                         this.program = window.program;
@@ -331,6 +370,21 @@ void main() {
             const canvas = document.getElementById('glcanvas');
             this.gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
             this.program = window.program;
+        }
+        destroy() {
+            this.stopCamera();
+            if (this.originalRenderFn) {
+                window.render = this.originalRenderFn;
+            }
+            if (this.originalRebuildFn) {
+                window.rebuildProgram = this.originalRebuildFn;
+            }
+            if (this.cameraBtn && this.cameraBtn.parentNode) {
+                this.cameraBtn.parentNode.removeChild(this.cameraBtn);
+            }
+            if (this.modal && this.modal.parentNode) {
+                this.modal.parentNode.removeChild(this.modal);
+            }
         }
     }
     function initCamera() {
@@ -348,7 +402,7 @@ void main() {
     }
     window.addEventListener('beforeunload', () => {
         if (window.cameraSystem) {
-            window.cameraSystem.stopCamera();
+            window.cameraSystem.destroy();
         }
     });
 })();
