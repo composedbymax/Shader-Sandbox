@@ -388,11 +388,11 @@
   pm.loopChk.addEventListener('change', () => { loopEnabled = pm.loopChk.checked; });
   pm.closeBtn.addEventListener('click', () => { root.style.display = 'none'; });
   pm.toggleBtn.addEventListener('click', () => {
-    if (root.style.display === 'none') {
-      root.style.display = 'flex';
-    } else {
-      root.style.display = 'none';
-    }
+    [toggleBtn, root].forEach(el => {
+      const container = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || document.body;
+      if (!container.contains(el)) container.appendChild(el);
+    });
+    root.style.display = root.style.display === 'none' ? 'flex' : 'none';
   });
   root.addEventListener('keydown', (e) => {
     if (e.code === 'Space') {
@@ -400,6 +400,12 @@
       if (!isPlaying) pm.playBtn.click();
       else if (isPaused) resumePlayback();
       else pm.pauseBtn.click();
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Escape' && root.style.display !== 'none') {
+      e.preventDefault();
+      root.style.display = 'none';
     }
   });
   pm.toggleBtn.addEventListener('dblclick', () => {
@@ -468,6 +474,14 @@
   };
   window.addEventListener('beforeunload', () => {
     clearPendingTimeout();
+  });
+  ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'msfullscreenchange'].forEach(event => {
+    document.addEventListener(event, () => {
+      [toggleBtn, root].forEach(el => {
+        const container = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || document.body;
+        if (!container.contains(el)) container.appendChild(el);
+      });
+    });
   });
   root.style.display = 'none';
 })();

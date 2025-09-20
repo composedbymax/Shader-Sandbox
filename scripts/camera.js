@@ -118,6 +118,11 @@ void main() {
                 }
             });
             this.setupShaderIntegration();
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && this.modal.classList.contains('show')) {
+                    this.closeModal();
+                }
+            });
         }
         async enumerateDevices() {
             try {
@@ -290,10 +295,14 @@ void main() {
             }, 50);
         }
         openModal() {
+            this.modal.remove();
+            (document.fullscreenElement ||
+            document.webkitFullscreenElement ||
+            document.mozFullScreenElement ||
+            document.msFullscreenElement ||
+            document.body).appendChild(this.modal);
             this.modal.classList.add('show');
-            if (this.devices.length === 0) {
-                this.enumerateDevices();
-            }
+            if (!this.devices.length) this.enumerateDevices();
         }
         closeModal() {
             this.modal.classList.remove('show');
