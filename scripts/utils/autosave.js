@@ -4,12 +4,51 @@
     const KEY = 'autosave_data';
     let db = null;
     let worker = null;
+    function getCurrentAnimationType() {
+        if (window.jsCanvasState && window.jsCanvasState.isJSMode()) {
+            return 'js';
+        } else if (window.webgpuState && window.webgpuState.isWebGPUMode()) {
+            return 'webgpu';
+        } else {
+            return 'webgl';
+        }
+    }
+    function switchToAnimationType(type) {
+        const currentType = getCurrentAnimationType();
+        if (currentType === type) {
+            return;
+        }
+        switch (type) {
+            case 'js':
+                if (currentType !== 'js') {
+                    const jsBtn = document.getElementById('jsToggleBtn');
+                    if (jsBtn) jsBtn.click();
+                }
+                break;
+            case 'webgpu':
+                if (currentType !== 'webgpu') {
+                    const webgpuBtn = document.getElementById('webgpuToggle');
+                    if (webgpuBtn) webgpuBtn.click();
+                }
+                break;
+            case 'webgl':
+                if (currentType === 'js') {
+                    const jsBtn = document.getElementById('jsToggleBtn');
+                    if (jsBtn) jsBtn.click();
+                } else if (currentType === 'webgpu') {
+                    const webgpuBtn = document.getElementById('webgpuToggle');
+                    if (webgpuBtn) webgpuBtn.click();
+                }
+                break;
+        }
+    }
     function createWorker() {
         const workerScript = `
 let db = null;
 const DB_NAME = 'ShaderEditorDB';
 const STORE_NAME = 'shaders';
 const KEY = 'autosave_data';
+
 function initWorkerDB() {
     return new Promise((resolve, reject) => {
         if ('indexedDB' in self) {
@@ -161,7 +200,12 @@ self.onmessage = async function(e) {
         }
         const vertCode = vertCodeEl.value;
         const fragCode = fragCodeEl.value;
-        const data = { vertCode, fragCode };
+        const canvasType = getCurrentAnimationType();
+        const data = { 
+            vertCode, 
+            fragCode, 
+            canvasType
+        };
         try {
             if (worker) {
                 worker.postMessage({ type: 'save', data });
@@ -241,8 +285,9 @@ self.onmessage = async function(e) {
             textContent: 'Load Autosaved Data?' 
         }, 'autosave-title');
         const timeAgo = getTimeAgo(data.timestamp);
+        const canvasTypeText = data.canvasType ? ` (${data.canvasType.toUpperCase()} mode)` : '';
         const message = create('p', {
-            textContent: `We found autosaved shader code from ${timeAgo}. Would you like to load it?`
+            textContent: `We found autosaved shader code from ${timeAgo}${canvasTypeText}. Would you like to load it?`
         }, 'autosave-message');
         const noBtn = create('button', { 
             textContent: 'No, Start Fresh' 
@@ -288,6 +333,17 @@ self.onmessage = async function(e) {
             console.log('No data to restore');
             return;
         }
+        if (data.canvasType) {
+            const currentType = getCurrentAnimationType();
+            if (currentType !== data.canvasType) {
+                switchToAnimationType(data.canvasType);
+                setTimeout(() => restoreCode(data), 100);
+                return;
+            }
+        }
+        restoreCode(data);
+    }
+    function restoreCode(data) {
         const vertCodeEl = document.getElementById('vertCode');
         const fragCodeEl = document.getElementById('fragCode');
         if (!vertCodeEl || !fragCodeEl) {
@@ -298,6 +354,7 @@ self.onmessage = async function(e) {
         fragCodeEl.value = data.fragCode || '';
         vertCodeEl.dispatchEvent(new Event('input', { bubbles: true }));
         fragCodeEl.dispatchEvent(new Event('input', { bubbles: true }));
+        console.log('Restored', data.canvasType || 'unknown','animation');
     }
     function setupAutoSave() {
         setTimeout(saveData, 30000);
@@ -308,7 +365,8 @@ self.onmessage = async function(e) {
                 try {
                     const vertCode = document.getElementById('vertCode')?.value || '';
                     const fragCode = document.getElementById('fragCode')?.value || '';
-                    const data = { vertCode, fragCode, timestamp: Date.now() };
+                    const canvasType = getCurrentAnimationType();
+                    const data = { vertCode, fragCode, canvasType, timestamp: Date.now() };
                     localStorage.setItem(KEY, JSON.stringify(data));
                 } catch (error) {
                     console.error('Beforeunload save failed:', error);
