@@ -240,7 +240,14 @@
     recStats.style.display = 'none';
   });
   const checkCodecSupport = (codec, withAudio) => {
-    const bases = {
+    const iOSCombinations = {
+      h264: [
+        'video/mp4; codecs="avc1.42E01E"',
+        'video/mp4; codecs=avc1.42E01E',
+        'video/mp4'
+      ]
+    };
+    const standardCombinations = {
       vp8: [
         'video/webm; codecs=vp8',
         'video/webm;codecs=vp8',
@@ -259,9 +266,34 @@
         'video/mp4; codecs="avc1.42E01E"',
         'video/mp4;codecs="avc1.42E01E"',
         'video/webm; codecs=h264',
-        'video/webm;codecs=h264'
+        'video/webm;codecs=h264',
+        'video/mp4'
       ]
-    }[codec] || [];
+    };
+    const ua = navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+    const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+    const bases = (isIOS && isSafari) ? (iOSCombinations[codec] || standardCombinations[codec]) : standardCombinations[codec];
+    if (!bases) return null;
+    if (isIOS && isSafari && withAudio) {
+      for (const base of bases) {
+        if (MediaRecorder.isTypeSupported(base)) {
+          return base;
+        }
+      }
+      const audioCodecs = ['mp4a.40.2', 'aac'];
+      for (const audioCodec of audioCodecs) {
+        for (const base of bases) {
+          if (base.includes('codecs=')) {
+            const withAudioCodec = base.replace(/codecs="?([^"]+)"?/, `codecs="$1,${audioCodec}"`);
+            if (MediaRecorder.isTypeSupported(withAudioCodec)) {
+              return withAudioCodec;
+            }
+          }
+        }
+      }
+      return null;
+    }
     const suffixes = withAudio ? [',opus', ', opus'] : [''];
     return suffixes
       .flatMap(s => bases.map(b =>
@@ -282,19 +314,59 @@
     hiddenCtx = hiddenCanvas.getContext('2d', { alpha: false });
     const videoStream = hiddenCanvas.captureStream(fps);
     let audioStream = includeAudio.checked && getAudioStream();
+    const ua = navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+    const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
     if (audioStream && !audioStream.getAudioTracks().length) audioStream = null;
+    if (isIOS && isSafari && includeAudio.checked && !audioStream) {
+      console.warn('Audio not available on iOS Safari, continuing with video-only recording');
+      audioStatus.textContent = 'Audio: Not available on iOS';
+    }
     const finalStream = audioStream
       ? new MediaStream([...videoStream.getVideoTracks(), ...audioStream.getAudioTracks()])
       : videoStream;
     const bits = recQuality.value * 1000;
     const want = recCodec.value;
-    const mime = checkCodecSupport(want, !!audioStream)
-      || ['h264','vp9','vp8'].reduce((found, c) => found || checkCodecSupport(c, !!audioStream) && (recCodec.value = c, checkCodecSupport(c, !!audioStream)), null);
+    let mime = checkCodecSupport(want, !!audioStream);
+    if (!mime && isIOS && isSafari) {
+      console.log('Trying iOS fallback codecs...');
+      mime = checkCodecSupport('h264', false);
+      if (mime) {
+        recCodec.value = 'h264';
+        if (audioStream) {
+          console.warn('iOS Safari: Falling back to video-only recording');
+          finalStream.getAudioTracks().forEach(track => {
+            finalStream.removeTrack(track);
+            track.stop();
+          });
+          audioStream = null;
+        }
+      }
+    }
     if (!mime) {
-      return alert('No supported codecs for your config.');
+      mime = ['h264','vp9','vp8'].reduce((found, c) => {
+        return found || checkCodecSupport(c, !!audioStream) && (recCodec.value = c, checkCodecSupport(c, !!audioStream));
+      }, null);
+    }
+    if (!mime) {
+      if (audioStream) {
+        console.log('Trying video-only as final fallback...');
+        finalStream.getAudioTracks().forEach(track => {
+          finalStream.removeTrack(track);
+          track.stop();
+        });
+        mime = checkCodecSupport(want, false) || checkCodecSupport('h264', false);
+        if (mime) {
+          alert('Audio recording not supported on this device. Recording video only.');
+        }
+      }
+      if (!mime) {
+        return alert('No supported codecs found for video recording on this device.');
+      }
     }
     if (mime && mime !== checkCodecSupport(want, !!audioStream)) {
-      alert(`Falling back to ${recCodec.value} (+audio: ${!!audioStream}).`);
+      const hasAudioInFinal = finalStream.getAudioTracks().length > 0;
+      alert(`Using ${recCodec.value} codec${hasAudioInFinal ? ' with audio' : ' (video only)'}.`);
     }
     startRecording(finalStream, mime, bits, w, h, recCodec.value, currentCanvas);
   });
