@@ -10,7 +10,7 @@
 
 # Shader Sandbox - Created by Max Warren
 
-A browser-based GLSL + WGSL editor for writing, testing, recording, and exporting or loading vertex and fragment shaders, as well as standalone .html animations. Users can interactively build shaders and preview them in real time using WebGL or WebGPU.
+A browser-based GLSL + WGSL + JS editor for writing, testing, recording, and exporting or loading vertex and fragment shaders, as well as standalone .html animations. Users can interactively build shaders and preview them in real time using WebGL or WebGPU.
 
 [Go to App](https://max.wuaze.com/glsl)
 
@@ -18,7 +18,7 @@ A browser-based GLSL + WGSL editor for writing, testing, recording, and exportin
 
 ## Purpose
 
-While there are several WebGL, GLSL, and Three.js coding sandboxes available, I struggled to find audio-reactive capabilities within a web-based GLSL editor. It was also difficult to find existing tools that allow for clean WebGL animation exports in common video formats like MP4.
+While there are several WebGL, GLSL, and Three.js coding sandboxes available, I struggled to find audio-reactive capabilities within a web-based animation editor. It was also difficult to find existing tools that allow for clean WebGL animation exports in common video formats like MP4 (Although my implementation is still not cleanly supported in Webkit based browsers).
 
 This application was developed to address those limitations. It provides a browser-based, open-source editor intended for users who need more control when creating audio-reactive visuals, without relying on proprietary software or paid platforms.
 
@@ -26,13 +26,13 @@ This application was developed to address those limitations. It provides a brows
 
 ## Development
 
-This application is built entirely with native PHP, HTML5, CSS, and JavaScript. It uses the WebGL and WebGPU API directly for rendering and shader compilation, without relying on any third-party libraries or frameworks. Aside from minimal server-side functionality for public posting, code retrieval, authentication and p2p signaling via PHP endpoints, the entire application runs client-side.
+This application is built entirely with native PHP, HTML5, CSS, and JavaScript. It uses the WebGL and WebGPU API directly for rendering and shader compilation, without relying on any third-party libraries or frameworks. Aside from minimal server-side functionality for public posting and code retrieval, authentication and p2p signaling via PHP endpoints, the entire application runs client-side.
 
 ---
 
 ## Features
 
-- **Real-Time Shader Preview**: Visualize your GLSL or WGSL code on a canvas as you write.
+- **Real-Time Shader Preview**: Visualize your GLSL, WGSL or Javascript code on a canvas as you write.
 - **Vertex & Fragment Shaders**: Edit vertex and fragment shaders in separate panels.
 - **Syntax Linting**: View and copy error messages with line numbers to catch syntax issues.
 - **Responsive Layout**: Adjustable editor layout with drag-and-drop resizing for the panels.

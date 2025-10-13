@@ -1,4 +1,3 @@
-//render.js for reference.
 (function(){
 const $ = id => document.getElementById(id);
 const app = $('app'), 
