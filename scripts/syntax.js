@@ -1,21 +1,29 @@
 (function() {
   const style = document.createElement('style');
   style.textContent = `
-    .glsl-editor-wrapper{position: relative;box-sizing: border-box;}
+    .glsl-editor-wrapper{position: relative;box-sizing: border-box;width: 100%;height: 100%;}
     .glsl-editor{position: relative;width: 100%;height: 100%;box-sizing: border-box;font-family: inherit;font-size: inherit;line-height: inherit;border: inherit;outline: none;background: transparent;color: var(--6);overflow: auto;white-space: pre-wrap;word-wrap: break-word;caret-color: var(--caret, #ffffff);}
     .glsl-hidden-textarea{display: none !important;}
     .token-comment{color: #6A9955;}
     .token-keyword{color: #569CD6;}
+    .token-type{color: #4EC9B0;}
     .token-number{color: #B5CEA8;}
     .token-function{color: #DCDCAA;}
+    .token-builtin{color: #DCDCAA;}
+    .token-variable{color: #9CDCFE;}
   `;
   document.head.appendChild(style);
-  document.addEventListener('DOMContentLoaded', () => {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+  function init() {
     ['vertCode','fragCode'].forEach(id => {
       const ta = document.getElementById(id);
       if (ta) replaceTextareaWithEditor(ta);
     });
-  });
+  }
   function replaceTextareaWithEditor(textarea) {
     const computed = window.getComputedStyle(textarea);
     const wrapper = document.createElement('div');
@@ -57,18 +65,31 @@
       textarea.value = raw;
       editor.innerHTML = syntaxHighlightGLSL(escapeHtml(raw));
       restoreSelectionFromOffsets(editor, selStart, selEnd);
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    const observer = new MutationObserver(mutations => {
-      mutations.forEach(m => {
-        if (m.type === 'characterData' || m.type === 'childList' || m.type === 'attributes') {
-          const newVal = textarea.value || '';
-          if (editor.innerText !== newVal) {
-            editor.innerHTML = syntaxHighlightGLSL(escapeHtml(newVal));
-          }
-        }
-      });
+    const observer = new MutationObserver(() => {
+      const newVal = textarea.value || '';
+      if (editor.innerText.replace(/\r\n/g, '\n') !== newVal) {
+        const [selStart, selEnd] = getSelectionCharacterOffsets(editor);
+        editor.innerHTML = syntaxHighlightGLSL(escapeHtml(newVal));
+        restoreSelectionFromOffsets(editor, selStart, selEnd);
+      }
     });
-    observer.observe(textarea, { characterData: true, childList: true, subtree: true, attributes: true });
+    observer.observe(textarea, { 
+      characterData: true, 
+      childList: true, 
+      subtree: true, 
+      attributes: true 
+    });
+    let lastValue = textarea.value;
+    setInterval(() => {
+      if (textarea.value !== lastValue) {
+        lastValue = textarea.value;
+        const [selStart, selEnd] = getSelectionCharacterOffsets(editor);
+        editor.innerHTML = syntaxHighlightGLSL(escapeHtml(textarea.value));
+        restoreSelectionFromOffsets(editor, selStart, selEnd);
+      }
+    }, 100);
   }
   function copyComputedStyle(fromElem, toElem, properties) {
     const computed = window.getComputedStyle(fromElem);
@@ -86,28 +107,49 @@
       .replace(/>/g, '&gt;');
   }
   function syntaxHighlightGLSL(escapedCode) {
-    const kws = [
+    const keywords = [
       'precision','uniform','attribute','varying','layout','const',
-      'in','out','inout','void','if','else','for','while','do','return',
-      'break','continue','discard',
-      'bool','int','float','vec2','vec3','vec4','mat2','mat3','mat4',
-      'sampler2D','samplerCube'
+      'in','out','inout','if','else','for','while','do','return',
+      'break','continue','discard'
     ];
-    const kwPattern = '\\b(?:' + kws.join('|') + ')\\b';
+    const types = [
+      'void','bool','int','float','vec2','vec3','vec4','mat2','mat3','mat4',
+      'bvec2','bvec3','bvec4','ivec2','ivec3','ivec4',
+      'sampler2D','samplerCube','lowp','mediump','highp'
+    ];
+    const builtins = [
+      'gl_Position','gl_FragCoord','gl_FragColor','gl_PointSize',
+      'radians','degrees','sin','cos','tan','asin','acos','atan',
+      'pow','exp','log','exp2','log2','sqrt','inversesqrt',
+      'abs','sign','floor','ceil','fract','mod','min','max','clamp',
+      'mix','step','smoothstep','length','distance','dot','cross',
+      'normalize','faceforward','reflect','refract',
+      'texture2D','textureCube','texture2DProj','texture2DLod',
+      'dFdx','dFdy','fwidth'
+    ];
+    const kwPattern = '\\b(?:' + keywords.join('|') + ')\\b';
+    const typePattern = '\\b(?:' + types.join('|') + ')\\b';
+    const builtinPattern = '\\b(?:' + builtins.join('|') + ')\\b';
     const re = new RegExp(
       '(\\/\\*[\\s\\S]*?\\*\\/)|' +
       '(\\/\\/.*)|' +
       '(' + kwPattern + ')|' +
+      '(' + typePattern + ')|' +
+      '(' + builtinPattern + ')|' +
       '(\\b\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b)|' +
+      '(\\b[ua]_[A-Za-z0-9_]+\\b)|' +
       '(\\b[A-Za-z_]\\w*)(?=\\s*\\()',
       'g'
     );
-    return escapedCode.replace(re, (match, g1, g2, g3, g4, g5) => {
+    return escapedCode.replace(re, (match, g1, g2, g3, g4, g5, g6, g7, g8) => {
       if (g1) return `<span class="token-comment">${g1}</span>`;
       if (g2) return `<span class="token-comment">${g2}</span>`;
       if (g3) return `<span class="token-keyword">${g3}</span>`;
-      if (g4) return `<span class="token-number">${g4}</span>`;
-      if (g5) return `<span class="token-function">${g5}</span>`;
+      if (g4) return `<span class="token-type">${g4}</span>`;
+      if (g5) return `<span class="token-builtin">${g5}</span>`;
+      if (g6) return `<span class="token-number">${g6}</span>`;
+      if (g7) return `<span class="token-variable">${g7}</span>`;
+      if (g8) return `<span class="token-function">${g8}</span>`;
       return match;
     });
   }
