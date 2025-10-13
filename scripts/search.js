@@ -75,7 +75,7 @@ class ShaderSearch {
     if (!ctx) return;
     const listContainer = document.getElementById(ctx.listId);
     if (!listContainer) return;
-    const shaderItems = listContainer.querySelectorAll('div[style*="border"]');
+    const shaderItems = listContainer.querySelectorAll('.shader-card');
     let visibleCount = 0;
     shaderItems.forEach(item => {
       const title = this.getTitle(item);
@@ -98,7 +98,7 @@ class ShaderSearch {
     return strongEl ? (strongEl.textContent || strongEl.innerText || '') : '';
   }
   getAuthor(item) {
-    const spanEl = item.querySelector('span[style*="color"]');
+    const spanEl = item.querySelector('.shader-author');
     if (!spanEl) return '';
     const text = spanEl.textContent || spanEl.innerText || '';
     return text.replace(/^by\s+/i, '');
