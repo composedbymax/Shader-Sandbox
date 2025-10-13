@@ -1,18 +1,4 @@
 (function() {
-  const style = document.createElement('style');
-  style.textContent = `
-    .glsl-editor-wrapper{position: relative;box-sizing: border-box;width: 100%;height: 100%;}
-    .glsl-editor{position: relative;width: 100%;height: 100%;box-sizing: border-box;font-family: inherit;font-size: inherit;line-height: inherit;border: inherit;outline: none;background: transparent;color: var(--6);overflow: auto;white-space: pre-wrap;word-wrap: break-word;caret-color: var(--caret, #ffffff);}
-    .glsl-hidden-textarea{display: none !important;}
-    .token-comment{color: #6A9955;}
-    .token-keyword{color: #569CD6;}
-    .token-type{color: #4EC9B0;}
-    .token-number{color: #B5CEA8;}
-    .token-function{color: #DCDCAA;}
-    .token-builtin{color: #DCDCAA;}
-    .token-variable{color: #9CDCFE;}
-  `;
-  document.head.appendChild(style);
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
