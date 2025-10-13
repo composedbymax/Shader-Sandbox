@@ -43,6 +43,7 @@
             "scripts/js.js",
             "scripts/camera.js",
             "scripts/sequencer.js",
+            "scripts/syntax.js",
             ...(window.userLoggedIn ? ["scripts/utils/find.js"] : []),
             ...(window.userLoggedIn ? ["scripts/utils/p2p.js"] : []),
         ];
