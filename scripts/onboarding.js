@@ -1,7 +1,7 @@
 (function() {
   'use strict';
   const CSS = `
-    .tutorial-overlay{position: fixed;top: 0;left: 0;width: 100%;height: 100%;background: var(--3);z-index: 999998;pointer-events: none;}
+    .tutorial-overlay{position: fixed;top: 0;left: 0;width: 100%;height: 100%;z-index: 999998;pointer-events: none;}
     .tutorial-overlay-clickable{pointer-events: auto;}
     .tutorial-controls{position: fixed;top: 20px;left: 50%;transform: translateX(-50%);z-index: 1000000;pointer-events: auto;}
     .tutorial-skip-btn{background: linear-gradient(135deg, var(--a) 0%, var(--ah) 100%);color: var(--l);border: none;padding: 12px 32px;border-radius: 8px;font-size: 16px;font-weight: 600;cursor: pointer;box-shadow: 0 4px 15px var(--5);transition: all 0.3s ease;}

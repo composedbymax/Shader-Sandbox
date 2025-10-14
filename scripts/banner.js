@@ -1,5 +1,7 @@
 (function () {
   function showBanner() {
+    if (document.querySelector('.banner')) return;
+    if (window.bannerDismissed) return;
     const isLoggedIn = window.userLoggedIn === true;
     const role = window.userRole;
     if (!isLoggedIn) {
@@ -129,6 +131,7 @@
       function dismiss() {
         banner.remove();
         banner.removeEventListener('wheel', onWheel);
+        window.bannerDismissed = true;
       }
     }
   }
