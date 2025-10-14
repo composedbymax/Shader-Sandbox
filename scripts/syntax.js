@@ -26,11 +26,8 @@
       'border','border-radius',
       'flex','flex-grow','flex-shrink','flex-basis',
       'min-width','min-height','max-width','max-height',
-      'background-color','background','background-image',
       'box-shadow'
     ]);
-    wrapper.style.background = computed.getPropertyValue('background');
-    wrapper.style.backgroundColor = computed.getPropertyValue('background-color');
     editor.style.fontFamily = computed.getPropertyValue('font-family');
     editor.style.fontSize   = computed.getPropertyValue('font-size');
     editor.style.lineHeight = computed.getPropertyValue('line-height');
@@ -76,6 +73,18 @@
         restoreSelectionFromOffsets(editor, selStart, selEnd);
       }
     }, 100);
+    editor.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const [selStart, selEnd] = getSelectionCharacterOffsets(editor);
+        let raw = editor.innerText.replace(/\r\n/g, '\n');
+        raw = raw.slice(0, selStart) + '\n' + raw.slice(selEnd);
+        textarea.value = raw;
+        editor.innerHTML = syntaxHighlightGLSL(escapeHtml(raw));
+        restoreSelectionFromOffsets(editor, selStart + 1, selStart + 1);
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
   }
   function copyComputedStyle(fromElem, toElem, properties) {
     const computed = window.getComputedStyle(fromElem);
@@ -113,9 +122,11 @@
       'texture2D','textureCube','texture2DProj','texture2DLod',
       'dFdx','dFdy','fwidth'
     ];
+    const specialVars = ['time','mouse','resolution','iTime','iResolution'];
     const kwPattern = '\\b(?:' + keywords.join('|') + ')\\b';
     const typePattern = '\\b(?:' + types.join('|') + ')\\b';
     const builtinPattern = '\\b(?:' + builtins.join('|') + ')\\b';
+    const specialPattern = '\\b(?:' + specialVars.join('|') + ')\\b';
     const re = new RegExp(
       '(\\/\\*[\\s\\S]*?\\*\\/)|' +
       '(\\/\\/.*)|' +
@@ -123,11 +134,12 @@
       '(' + typePattern + ')|' +
       '(' + builtinPattern + ')|' +
       '(\\b\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b)|' +
-      '(\\b[ua]_[A-Za-z0-9_]+\\b)|' +
-      '(\\b[A-Za-z_]\\w*)(?=\\s*\\()',
-      'g'
+      '(' + specialPattern + ')|' +
+      '(\\b[ua][A-Za-z0-9_]*\\b)|' +
+      '(\\b[A-Za-z_]\\w*)(?=\\s*\\()'
+      , 'g'
     );
-    return escapedCode.replace(re, (match, g1, g2, g3, g4, g5, g6, g7, g8) => {
+    return escapedCode.replace(re, (match, g1, g2, g3, g4, g5, g6, g7, g8, g9) => {
       if (g1) return `<span class="token-comment">${g1}</span>`;
       if (g2) return `<span class="token-comment">${g2}</span>`;
       if (g3) return `<span class="token-keyword">${g3}</span>`;
@@ -135,7 +147,8 @@
       if (g5) return `<span class="token-builtin">${g5}</span>`;
       if (g6) return `<span class="token-number">${g6}</span>`;
       if (g7) return `<span class="token-variable">${g7}</span>`;
-      if (g8) return `<span class="token-function">${g8}</span>`;
+      if (g8) return `<span class="token-variable">${g8}</span>`;
+      if (g9) return `<span class="token-function">${g9}</span>`;
       return match;
     });
   }
