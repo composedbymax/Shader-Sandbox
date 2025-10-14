@@ -188,6 +188,7 @@
     if (elements.style) {
       elements.style.remove();
     }
+    window.dispatchEvent(new Event('tutorial:end'));
   }
   let resizeTimeout;
   window.addEventListener('resize', () => {
