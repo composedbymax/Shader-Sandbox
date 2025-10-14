@@ -29,6 +29,10 @@
       btn.className = 'banner-auth-button';
       btn.setAttribute('data-auth-open', '');
       btn.textContent = text;
+      btn.addEventListener('click', () => {
+        const modal = document.getElementById('authModal');
+        if (modal) modal.style.display = 'block';
+      });
       return btn;
     }
     function createBanner(message, actionLink) {
