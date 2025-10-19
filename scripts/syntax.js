@@ -38,7 +38,7 @@
     wrapper.appendChild(textarea);
     wrapper.appendChild(editor);
     const initialText = textarea.value || '';
-    editor.innerHTML = syntaxHighlightGLSL(escapeHtml(initialText));
+    renderHighlightedCode(editor, initialText);
     editor.addEventListener('input', () => {
       const [selStart, selEnd] = getSelectionCharacterOffsets(editor);
       let raw = editor.innerText.replace(/\r\n/g, '\n');
@@ -46,7 +46,7 @@
         raw += '\n';
       }
       textarea.value = raw;
-      editor.innerHTML = syntaxHighlightGLSL(escapeHtml(raw));
+      renderHighlightedCode(editor, raw);
       restoreSelectionFromOffsets(editor, selStart, selEnd);
       textarea.dispatchEvent(new Event('input', { bubbles: true }));
     });
@@ -54,7 +54,7 @@
       const newVal = textarea.value || '';
       if (editor.innerText.replace(/\r\n/g, '\n') !== newVal) {
         const [selStart, selEnd] = getSelectionCharacterOffsets(editor);
-        editor.innerHTML = syntaxHighlightGLSL(escapeHtml(newVal));
+        renderHighlightedCode(editor, newVal);
         restoreSelectionFromOffsets(editor, selStart, selEnd);
       }
     });
@@ -69,7 +69,7 @@
       if (textarea.value !== lastValue) {
         lastValue = textarea.value;
         const [selStart, selEnd] = getSelectionCharacterOffsets(editor);
-        editor.innerHTML = syntaxHighlightGLSL(escapeHtml(textarea.value));
+        renderHighlightedCode(editor, textarea.value);
         restoreSelectionFromOffsets(editor, selStart, selEnd);
       }
     }, 100);
@@ -80,7 +80,7 @@
         let raw = editor.innerText.replace(/\r\n/g, '\n');
         raw = raw.slice(0, selStart) + '\n' + raw.slice(selEnd);
         textarea.value = raw;
-        editor.innerHTML = syntaxHighlightGLSL(escapeHtml(raw));
+        renderHighlightedCode(editor, raw);
         restoreSelectionFromOffsets(editor, selStart + 1, selStart + 1);
         textarea.dispatchEvent(new Event('input', { bubbles: true }));
       }
@@ -95,13 +95,19 @@
       }
     });
   }
-  function escapeHtml(str) {
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+  function renderHighlightedCode(editorDiv, code) {
+    editorDiv.textContent = '';
+    const tokens = tokenizeGLSL(code);
+    tokens.forEach(token => {
+      const span = document.createElement('span');
+      if (token.type !== 'text') {
+        span.className = 'token-' + token.type;
+      }
+      span.textContent = token.value;
+      editorDiv.appendChild(span);
+    });
   }
-  function syntaxHighlightGLSL(escapedCode) {
+  function tokenizeGLSL(code) {
     const keywords = [
       'precision','uniform','attribute','varying','layout','const',
       'in','out','inout','if','else','for','while','do','return',
@@ -139,18 +145,29 @@
       '(\\b[A-Za-z_]\\w*)(?=\\s*\\()'
       , 'g'
     );
-    return escapedCode.replace(re, (match, g1, g2, g3, g4, g5, g6, g7, g8, g9) => {
-      if (g1) return `<span class="token-comment">${g1}</span>`;
-      if (g2) return `<span class="token-comment">${g2}</span>`;
-      if (g3) return `<span class="token-keyword">${g3}</span>`;
-      if (g4) return `<span class="token-type">${g4}</span>`;
-      if (g5) return `<span class="token-builtin">${g5}</span>`;
-      if (g6) return `<span class="token-number">${g6}</span>`;
-      if (g7) return `<span class="token-variable">${g7}</span>`;
-      if (g8) return `<span class="token-variable">${g8}</span>`;
-      if (g9) return `<span class="token-function">${g9}</span>`;
-      return match;
-    });
+    const tokens = [];
+    let lastIndex = 0;
+    let match;
+    while ((match = re.exec(code)) !== null) {
+      if (match.index > lastIndex) {
+        tokens.push({ type: 'text', value: code.slice(lastIndex, match.index) });
+      }
+      const [fullMatch, g1, g2, g3, g4, g5, g6, g7, g8, g9] = match;
+      let tokenType = 'text';
+      if (g1 || g2) tokenType = 'comment';
+      else if (g3) tokenType = 'keyword';
+      else if (g4) tokenType = 'type';
+      else if (g5) tokenType = 'builtin';
+      else if (g6) tokenType = 'number';
+      else if (g7 || g8) tokenType = 'variable';
+      else if (g9) tokenType = 'function';
+      tokens.push({ type: tokenType, value: fullMatch });
+      lastIndex = re.lastIndex;
+    }
+    if (lastIndex < code.length) {
+      tokens.push({ type: 'text', value: code.slice(lastIndex) });
+    }
+    return tokens;
   }
   function getSelectionCharacterOffsets(root) {
     const sel = window.getSelection();
