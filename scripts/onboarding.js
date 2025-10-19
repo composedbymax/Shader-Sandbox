@@ -65,6 +65,74 @@
     {
       selector: 'button.audio-reactive-button[title="Audio Reactivity"]',
       text: 'This enables audio reactivity — animations that respond to sound.'
+    },
+    {
+      selector: 'button#audio-toggle',
+      text: 'Select your microphone here (internal audio compatible).'
+    },
+    {
+      selector: 'button#file-upload-btn',
+      text: 'Upload audio files to use in your animations.'
+    },
+    {
+      selector: 'button#info-toggle',
+      text: 'Get instructions on how to incorporate audio reactive uniforms.'
+    },
+    {
+      selector: 'button#recBtn',
+      text: 'Open recording settings to capture your animations.'
+    },
+    {
+      selector: 'button.camera-btn',
+      text: 'Turn the canvas into a webcam feed — customize with fragment/vertex shaders.'
+    },
+    {
+      selector: 'button#mediaUploadBtn',
+      text: 'Upload images or videos to be reflected onto the WebGL canvas.'
+    },
+    {
+      selector: 'button#effectsTab',
+      text: 'Add effects to your uploaded media.'
+    },
+    {
+      selector: 'button#pm-toggle-btn',
+      text: 'Open the sequencer to create timed animations.'
+    },
+    {
+      selector: 'button#theme-manager-btn',
+      text: 'Customize the app colors with the theme manager.'
+    },
+    {
+      selector: 'button#toggle-editor',
+      text: 'Customize any color individually with the color editor.'
+    },
+    {
+      selector: 'button#fsBtn',
+      text: 'Open/close code editors, or double-click to launch app in fullscreen.'
+    },
+    {
+      selector: 'button.glsl-performance-monitor-toggle',
+      text: 'Monitor FPS, draw calls, and memory for performant animations.'
+    },
+    {
+      selector: 'button#jsToggleBtn',
+      text: 'Turn the canvas into a 2D canvas powered by JavaScript animations.'
+    },
+    {
+      selector: 'button#webgpuToggle',
+      text: 'Switch to WebGPU canvas with WGSL coding.'
+    },
+    {
+      selector: 'button#threeLoadBtn',
+      text: 'Load 3D models (.glb, .obj, .stl).'
+    },
+    {
+      selector: 'button#uploadHTMLBtn',
+      text: 'Upload whole HTML files to be separated.'
+    },
+    {
+      selector: 'button.expbtn[title="Export Full HTML"]',
+      text: 'Export your animations as HTML files.'
     }
   ];
   let currentStep = 0;
