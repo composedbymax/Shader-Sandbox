@@ -339,6 +339,19 @@
     `;
     return div;
   }
+  function disableAllLoadButtons() {
+    document.querySelectorAll('.ldbtn').forEach(btn => {
+      btn.disabled = true;
+      btn.dataset.originalText = btn.textContent;
+      btn.textContent = 'Loading...';
+    });
+  }
+  function enableAllLoadButtons() {
+    document.querySelectorAll('.ldbtn').forEach(btn => {
+      btn.disabled = false;
+      btn.textContent = btn.dataset.originalText || 'Load';
+    });
+  }
   async function loadPublicShader(token) {
     function handleShaderError(msg) {
       if (errorTracker.addError()) {
@@ -346,6 +359,7 @@
         showToast('Error detected - reloading...', 'warning');
         setTimeout(() => forceRefreshPublicShaders(), 1000);
       }
+      enableAllLoadButtons();
     }
     try {
       const res = await fetch(`../shader/api/fetch.php?action=load&token=${token}`);
@@ -376,6 +390,7 @@
           window.render();
         }
         closeShaderWindow();
+        enableAllLoadButtons();
       }, delay);
     } else {
       shaderTitle.value = shader.title;
@@ -388,6 +403,7 @@
         window.render();
       }
       closeShaderWindow();
+      enableAllLoadButtons();
     }
   }
   function switchToAnimationType(type) {
@@ -450,6 +466,7 @@
     if (e.target.classList.contains('ldbtn')) {
       const publicToken = e.target.getAttribute('data-public-token');
       const localIndex = e.target.getAttribute('data-local-index');
+      disableAllLoadButtons();
       if (publicToken !== null) {
         loadPublicShader(publicToken);
       } else if (localIndex !== null) {
@@ -460,6 +477,8 @@
           const shader = window._localShaderList[index];
           loadShaderData(shader);
           showToast(`Loaded "${shader.title}"`, 'success');
+        } else {
+          enableAllLoadButtons();
         }
       }
     }
