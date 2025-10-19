@@ -2,6 +2,7 @@ class ColorPicker {
     constructor() {
         this.isInitialized = false;
         this.currentTextarea = null;
+        this.currentEditor = null;
         this.currentMatch = null;
         this.currentStartPos = 0;
         this.currentEndPos = 0;
@@ -114,6 +115,7 @@ class ColorPicker {
                 this.updateEditors(r, g, b);
                 this.highlightColor(
                     this.currentTextarea,
+                    this.currentEditor,
                     this.currentStartPos,
                     this.currentEndPos
                 );
@@ -163,6 +165,13 @@ class ColorPicker {
                     textarea.dataset.glslColorPickerAttached = 'true';
                 }
             });
+            const editors = document.querySelectorAll('.glsl-editor[contenteditable="true"]');
+            editors.forEach(editor => {
+                if (!editor.dataset.glslColorPickerAttached) {
+                    this.attachToEditor(editor);
+                    editor.dataset.glslColorPickerAttached = 'true';
+                }
+            });
         };
         checkTextareas();
         const observer = new MutationObserver(checkTextareas);
@@ -172,6 +181,58 @@ class ColorPicker {
         const clickHandler = (e) => this.handleTextareaClick(e, textarea);
         textarea.addEventListener('click', clickHandler);
         textarea._glslClickHandler = clickHandler;
+    }
+    attachToEditor(editor) {
+        const clickHandler = (e) => this.handleEditorClick(e, editor);
+        editor.addEventListener('click', clickHandler);
+        editor._glslClickHandler = clickHandler;
+    }
+    handleEditorClick(e, editor) {
+        const textareaId = editor.getAttribute('data-associated-textarea-id');
+        const textarea = textareaId ? document.getElementById(textareaId) : null;
+        if (!textarea) return;
+        const sel = window.getSelection();
+        if (!sel.rangeCount) return;
+        const cursorPos = this.getEditorCursorPosition(editor);
+        const text = textarea.value;
+        const colorRegex = this.ColorRegex();
+        let match;
+        while ((match = colorRegex.exec(text)) !== null) {
+            const start = match.index;
+            const end = start + match[0].length;
+            if (cursorPos >= start && cursorPos <= end) {
+                setTimeout(() => {
+                    this.showTab(e.clientX, e.clientY, textarea, editor, match, start, end);
+                }, 10);
+                return;
+            }
+        }
+        this.removeTab();
+    }
+    getEditorCursorPosition(editor) {
+        const sel = window.getSelection();
+        if (!sel.rangeCount) return 0;
+        let charIndex = 0;
+        let foundPosition = false;
+        function traverse(node) {
+            if (foundPosition) return;
+            if (node.nodeType === Node.TEXT_NODE) {
+                const text = node.textContent.replace(/\r\n/g, '\n');
+                if (sel.anchorNode === node) {
+                    charIndex += sel.anchorOffset;
+                    foundPosition = true;
+                    return;
+                }
+                charIndex += text.length;
+            } else {
+                for (let i = 0; i < node.childNodes.length; i++) {
+                    traverse(node.childNodes[i]);
+                    if (foundPosition) break;
+                }
+            }
+        }
+        traverse(editor);
+        return charIndex;
     }
     handleTextareaClick(e, textarea) {
         const cursorPos = textarea.selectionStart;
@@ -183,14 +244,14 @@ class ColorPicker {
             const end = start + match[0].length;
             if (cursorPos >= start && cursorPos <= end) {
                 setTimeout(() => {
-                    this.showTab(e.clientX, e.clientY, textarea, match, start, end);
+                    this.showTab(e.clientX, e.clientY, textarea, null, match, start, end);
                 }, 10);
                 return;
             }
         }
         this.removeTab();
     }
-    showTab(x, y, textarea, match, startPos, endPos) {
+    showTab(x, y, textarea, editor, match, startPos, endPos) {
         this.removeTab();
         const tab = document.createElement('div');
         tab.className = 'glsl-tab';
@@ -208,7 +269,7 @@ class ColorPicker {
         tab.style.left = (x + 5) + 'px';
         tab.style.top = (y + 5) + 'px';
         const tabClickHandler = (evt) => {
-            this.openPicker(textarea, match, startPos, endPos, x, y);
+            this.openPicker(textarea, editor, match, startPos, endPos, x, y);
             this.removeTab();
         };
         tab.addEventListener('click', tabClickHandler);
@@ -221,7 +282,8 @@ class ColorPicker {
             if (
                 this.tabElement &&
                 !this.tabElement.contains(clickedNode) &&
-                !textarea.contains(clickedNode)
+                !textarea.contains(clickedNode) &&
+                (!editor || !editor.contains(clickedNode))
             ) {
                 this.removeTab();
                 this.removeClickOutsideHandler();
@@ -282,8 +344,9 @@ class ColorPicker {
         picker.style.left = left + 'px';
         picker.style.top = top + 'px';
     }
-    openPicker(textarea, match, startPos, endPos, x, y) {
+    openPicker(textarea, editor, match, startPos, endPos, x, y) {
         this.currentTextarea = textarea;
+        this.currentEditor = editor;
         this.currentMatch = match;
         this.currentStartPos = startPos;
         this.currentEndPos = endPos;
@@ -303,7 +366,7 @@ class ColorPicker {
         this.updatePreview(r, g, b);
         this.positionPicker(x, y);
         document.getElementById('glsl-color-picker-overlay').style.display = 'block';
-        this.highlightColor(textarea, startPos, endPos);
+        this.highlightColor(textarea, editor, startPos, endPos);
     }
     updatePreview(r, g, b) {
         const preview = document.getElementById('glsl-color-preview');
@@ -312,9 +375,11 @@ class ColorPicker {
         const cssB = Math.min(255, Math.max(0, Math.round(b * 255)));
         preview.style.backgroundColor = `rgb(${cssR}, ${cssG}, ${cssB})`;
     }
-    highlightColor(textarea, start, end) {
-        textarea.focus();
-        textarea.setSelectionRange(start, end);
+    highlightColor(textarea, editor, start, end) {
+        if (textarea) {
+            textarea.focus();
+            textarea.setSelectionRange(start, end);
+        }
     }
     applyColor() {
         if (!this.currentTextarea) return;
@@ -347,6 +412,7 @@ class ColorPicker {
     closePicker() {
         document.getElementById('glsl-color-picker-overlay').style.display = 'none';
         this.currentTextarea = null;
+        this.currentEditor = null;
         this.currentMatch = null;
         this.originalValues = { r: 0, g: 0, b: 0 };
         this.removeTab();
@@ -383,6 +449,16 @@ class ColorPicker {
             }
             delete textarea.dataset.glslColorPickerAttached;
         });
+        
+        const editors = document.querySelectorAll('.glsl-editor[data-glsl-color-picker-attached]');
+        editors.forEach(editor => {
+            if (editor._glslClickHandler) {
+                editor.removeEventListener('click', editor._glslClickHandler);
+                delete editor._glslClickHandler;
+            }
+            delete editor.dataset.glslColorPickerAttached;
+        });
+        
         this.isInitialized = false;
     }
 }
