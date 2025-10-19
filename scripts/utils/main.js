@@ -45,6 +45,7 @@
             "scripts/sequencer.js",
             "scripts/syntax.js",
             "scripts/onboarding.js",
+            "scripts/offlinesave.js",
             ...(window.userLoggedIn ? ["scripts/utils/find.js"] : []),
             ...(window.userLoggedIn ? ["scripts/utils/p2p.js"] : []),
         ];

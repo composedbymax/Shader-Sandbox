@@ -15,6 +15,8 @@ const ASSETS = [
     "/glsl/scripts/keyboard.js",
     "/glsl/scripts/link.js",
     "/glsl/scripts/media.js",
+    "/glsl/scripts/no.js",
+    "/glsl/scripts/onboarding.js",
     "/glsl/scripts/parse.js",
     "/glsl/scripts/performance.js",
     "/glsl/scripts/player.js",
