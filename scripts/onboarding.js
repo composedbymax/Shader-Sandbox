@@ -46,38 +46,6 @@
     localStorage.removeItem(STORAGE_KEY);
     console.log('Tutorial state reset');
   };
-  const CSS = `
-    .tutorial-overlay{position: fixed;top: 0;left: 0;width: 100%;height: 100%;z-index: 999998;pointer-events: none;}
-    .tutorial-overlay-clickable{pointer-events: auto;}
-    .tutorial-controls{position: fixed;top: 20px;left: 50%;transform: translateX(-50%);z-index: 1000000;pointer-events: auto;}
-    .tutorial-skip-btn{background: linear-gradient(135deg, var(--a) 0%, var(--ah) 100%);color: var(--l);border: none;padding: 12px 32px;border-radius: 8px;font-size: 16px;font-weight: 600;cursor: pointer;box-shadow: 0 4px 15px var(--5);transition: all 0.3s ease;}
-    .tutorial-skip-btn:hover{transform: translateY(-2px);box-shadow: 0 6px 20px var(--ah);}
-    .tutorial-navigation{position: fixed;bottom: 40px;left: 50%;transform: translateX(-50%);z-index: 1000000;display: flex;gap: 20px;align-items: center;pointer-events: auto;}
-    .tutorial-nav-btn{background: var(--7);border: 2px solid var(--a);color: var(--a);width: 50px;height: 50px;border-radius: 50%;font-size: 24px;cursor: pointer;display: flex;align-items: center;justify-content: center;transition: all 0.3s ease;box-shadow: 0 4px 15px var(--4);}
-    .tutorial-nav-btn:hover:not(:disabled){background: var(--a);color: var(--l);transform: scale(1.1);}
-    .tutorial-nav-btn:disabled{opacity: 0.3;cursor: not-allowed;}
-    .tutorial-step-indicator{background: var(--7);padding: 10px 20px;border-radius: 20px;font-weight: 600;color: var(--a);box-shadow: 0 4px 15px var(--4);}
-    .tutorial-highlight{position: absolute;pointer-events: none;z-index: 999999;border-radius: 8px;box-shadow:
-        0 0 0 4px var(--ah),
-        0 0 30px 8px var(--ah),
-        0 0 60px 15px var(--a);animation: tutorial-pulse 2s ease-in-out infinite;}
-    @keyframes tutorial-pulse{0%, 100%{box-shadow:
-        0 0 0 4px var(--ah),
-        0 0 30px 8px var(--ah),
-        0 0 60px 15px var(--a);}
-    50%{box-shadow:
-        0 0 0 4px var(--a),
-        0 0 40px 12px var(--ah),
-        0 0 80px 20px var(--a);}
-    }
-    .tutorial-textbox{position: absolute;background: var(--7);border-radius: 12px;padding: 20px 24px;max-width: 300px;box-shadow: 0 10px 40px var(--0);z-index: 1000000;pointer-events: auto;}
-    .tutorial-textbox::before{content: '';position: absolute;width: 0;height: 0;border-style: solid;}
-    .tutorial-textbox.pos-bottom::before{bottom: 100%;left: 50%;transform: translateX(-50%);border-width: 0 10px 10px 10px;border-color: transparent transparent var(--7) transparent;}
-    .tutorial-textbox.pos-top::before{top: 100%;left: 50%;transform: translateX(-50%);border-width: 10px 10px 0 10px;border-color: var(--7) transparent transparent transparent;}
-    .tutorial-textbox.pos-right::before{right: 100%;top: 50%;transform: translateY(-50%);border-width: 10px 10px 10px 0;border-color: transparent var(--7) transparent transparent;}
-    .tutorial-textbox.pos-left::before{left: 100%;top: 50%;transform: translateY(-50%);border-width: 10px 0 10px 10px;border-color: transparent transparent transparent var(--7);}
-    .tutorial-textbox-content{font-size: 16px;line-height: 1.5;color: var(--b);}
-  `;
   const HTML = `
     <div class="tutorial-overlay"></div>
     <div class="tutorial-controls">
@@ -184,10 +152,6 @@
   let currentStep = 0;
   let elements = {};
   function init() {
-    const styleEl = document.createElement('style');
-    styleEl.textContent = CSS;
-    document.head.appendChild(styleEl);
-    elements.style = styleEl;
     const container = document.createElement('div');
     container.className = 'tutorial-container';
     container.innerHTML = HTML;
@@ -202,6 +166,10 @@
     elements.textboxContent = container.querySelector('.tutorial-textbox-content');
     elements.currentStepEl = container.querySelector('.tutorial-current-step');
     elements.totalStepsEl = container.querySelector('.tutorial-total-steps');
+    if (!elements.currentStepEl || !elements.totalStepsEl || !elements.textboxContent) {
+      cleanup();
+      return;
+    }
     elements.totalStepsEl.textContent = steps.length;
     elements.skipBtn.addEventListener('click', () => {
       markAsSkipped();
@@ -210,7 +178,9 @@
     elements.prevBtn.addEventListener('click', () => navigateStep(-1));
     elements.nextBtn.addEventListener('click', () => navigateStep(1));
     elements.overlay.addEventListener('click', handleOverlayClick);
-    showStep(0);
+    requestAnimationFrame(() => {
+      showStep(0);
+    });
   }
   function navigateStep(direction) {
     const newStep = currentStep + direction;
@@ -223,11 +193,16 @@
   function showStep(stepIndex) {
     currentStep = stepIndex;
     const step = steps[stepIndex];
+    if (!elements.currentStepEl || !elements.prevBtn || !elements.nextBtn) {
+      console.error('Tutorial elements not initialized');
+      return;
+    }
     elements.currentStepEl.textContent = stepIndex + 1;
     elements.prevBtn.disabled = stepIndex === 0;
     elements.nextBtn.textContent = stepIndex === steps.length - 1 ? '✓' : '→';
     const targetEl = document.querySelector(step.selector);
     if (!targetEl) {
+      console.warn(`Tutorial step ${stepIndex}: target element not found - ${step.selector}`);
       return;
     }
     if (elements.currentTarget && elements.currentClickHandler) {
@@ -304,13 +279,14 @@
     if (elements.style) {
       elements.style.remove();
     }
+    elements = {};
     window.dispatchEvent(new Event('tutorial:end'));
   }
   let resizeTimeout;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimeout);
     resizeTimeout = setTimeout(() => {
-      if (currentStep < steps.length) {
+      if (elements.container && currentStep < steps.length) {
         showStep(currentStep);
       }
     }, 100);
