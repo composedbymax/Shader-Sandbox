@@ -85,6 +85,22 @@
         textarea.dispatchEvent(new Event('input', { bubbles: true }));
       }
     });
+    ['dragover','dragleave'].forEach(evt => 
+      editor.addEventListener(evt, e => (e.preventDefault(), e.stopPropagation()))
+    );
+    editor.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.dataTransfer.files.length) {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          textarea.value = evt.target.result;
+          renderHighlightedCode(editor, evt.target.result);
+          textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        };
+        reader.readAsText(e.dataTransfer.files[0]);
+      }
+    });
   }
   function copyComputedStyle(fromElem, toElem, properties) {
     const computed = window.getComputedStyle(fromElem);
