@@ -1,5 +1,51 @@
+// To manually start the tutorial from anywhere:
+// window.startTutorial();
 (function() {
   'use strict';
+  const STORAGE_KEY = 'tutorial_state';
+  const MAX_AUTO_SHOWS = 10;
+  function getTutorialState() {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return stored ? JSON.parse(stored) : { viewCount: 0, skipped: false };
+    } catch (e) {
+      return { viewCount: 0, skipped: false };
+    }
+  }
+  function saveTutorialState(state) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.error('Failed to save tutorial state:', e);
+    }
+  }
+  function shouldShowTutorial() {
+    const state = getTutorialState();
+    if (state.skipped && state.viewCount >= 2) {
+      return false;
+    }
+    if (!state.skipped && state.viewCount >= MAX_AUTO_SHOWS) {
+      return false;
+    }
+    return true;
+  }
+  function incrementViewCount() {
+    const state = getTutorialState();
+    state.viewCount++;
+    saveTutorialState(state);
+  }
+  function markAsSkipped() {
+    const state = getTutorialState();
+    state.skipped = true;
+    saveTutorialState(state);
+  }
+  window.startTutorial = function() {
+    init();
+  };
+  window.resetTutorial = function() {
+    localStorage.removeItem(STORAGE_KEY);
+    console.log('Tutorial state reset');
+  };
   const CSS = `
     .tutorial-overlay{position: fixed;top: 0;left: 0;width: 100%;height: 100%;z-index: 999998;pointer-events: none;}
     .tutorial-overlay-clickable{pointer-events: auto;}
@@ -157,7 +203,10 @@
     elements.currentStepEl = container.querySelector('.tutorial-current-step');
     elements.totalStepsEl = container.querySelector('.tutorial-total-steps');
     elements.totalStepsEl.textContent = steps.length;
-    elements.skipBtn.addEventListener('click', cleanup);
+    elements.skipBtn.addEventListener('click', () => {
+      markAsSkipped();
+      cleanup();
+    });
     elements.prevBtn.addEventListener('click', () => navigateStep(-1));
     elements.nextBtn.addEventListener('click', () => navigateStep(1));
     elements.overlay.addEventListener('click', handleOverlayClick);
@@ -179,7 +228,6 @@
     elements.nextBtn.textContent = stepIndex === steps.length - 1 ? '✓' : '→';
     const targetEl = document.querySelector(step.selector);
     if (!targetEl) {
-      console.warn(`Tutorial: Element not found for step ${stepIndex + 1}`);
       return;
     }
     if (elements.currentTarget && elements.currentClickHandler) {
@@ -267,5 +315,8 @@
       }
     }, 100);
   });
-  init();
+  if (shouldShowTutorial()) {
+    incrementViewCount();
+    init();
+  }
 })();
