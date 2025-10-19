@@ -45,7 +45,7 @@
     `;
     const shortcutsBtn = document.createElement('button');
     shortcutsBtn.className = 'shortcut-trigger-btn';
-    shortcutsBtn.textContent = 'Shortcuts';
+    shortcutsBtn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h8M6 16h.01M10 16h.01M14 16h.01M18 16h.01"/></svg>';
     shortcutsBtn.addEventListener('click', () => {
       window.KeyboardShortcuts.open();
     });
@@ -63,6 +63,13 @@
     overlay.appendChild(modalContent);
     overlay.appendChild(closeBtn);
     container.appendChild(overlay);
+    const tutorialBtn = document.createElement('button');
+    tutorialBtn.className = 'tutorial-trigger-btn';
+    tutorialBtn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+    tutorialBtn.addEventListener('click', () => {
+      window.startTutorial();
+    });
+    modalContent.appendChild(tutorialBtn);
   }
   btn.addEventListener('click', openModal);
   container.appendChild(btn);
