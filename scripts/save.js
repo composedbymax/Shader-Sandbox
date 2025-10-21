@@ -468,7 +468,11 @@
       const localIndex = e.target.getAttribute('data-local-index');
       disableAllLoadButtons();
       if (publicToken !== null) {
-        loadPublicShader(publicToken);
+        if (window.loadPublicShader && (/^\d+(\.\d+)?$/.test(publicToken))) {
+          window.loadPublicShader(publicToken);
+        } else {
+          loadPublicShader(publicToken);
+        }
       } else if (localIndex !== null) {
         loadLocalShader(parseInt(localIndex));
       }
@@ -492,4 +496,7 @@
   window.clearPublicCache = clearPublicCache;
   window.forceRefreshPublicShaders = forceRefreshPublicShaders;
   window.showToast = showToast;
+  window.createPublicShaderCard = createPublicShaderCard;
+  window.enableAllLoadButtons = enableAllLoadButtons;
+  window.disableAllLoadButtons = disableAllLoadButtons;
 })();

@@ -3,6 +3,7 @@ const CACHE_NAME = `glsl-app-${CACHE_VERSION}`;
 const ASSETS = [
     "/glsl/index.php",
     "/glsl/scripts/3d.js",
+    "/glsl/scripts/api.js",
     "/glsl/scripts/audio.js",
     "/glsl/scripts/banner.js",
     "/glsl/scripts/color.js",
