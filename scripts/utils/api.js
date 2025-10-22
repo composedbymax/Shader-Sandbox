@@ -1,17 +1,6 @@
 (function () {
     const PROXY_URL = './api/proxy.php';
     let currentPage = 0;
-    const css = `
-        #publicShaderList { display: flex; flex-direction: column; gap: 10px; }
-        .shader-card { border: 0.2px solid var(--4); padding: 8px; border-radius:2px;background: var(--3); }
-        .pagination { text-align: center; margin: 10px 0; }
-        .sbtn { background: var(--4); color: var(--l); border: none; padding: 6px 12px; cursor: pointer; border-radius: 2px; }
-        .sbtn:disabled { opacity: 0.5; cursor: default; }
-        #useSandboxContainer { display: flex; align-items: center; gap: 8px; color: var(--l); margin-top: 10px; }
-    `;
-    const styleTag = document.createElement('style');
-    styleTag.textContent = css;
-    document.head.appendChild(styleTag);
     async function fetchGLSLSandboxShaders() {
         const container = document.getElementById('publicShaderList');
         if (!container) return;

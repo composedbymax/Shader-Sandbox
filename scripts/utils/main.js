@@ -46,9 +46,9 @@
             "scripts/syntax.js",
             "scripts/onboarding.js",
             "scripts/offlinesave.js",
-            "scripts/api.js",
             ...(window.userLoggedIn ? ["scripts/utils/find.js"] : []),
             ...(window.userLoggedIn ? ["scripts/utils/p2p.js"] : []),
+            ...(window.userLoggedIn ? ["scripts/utils/api.js"] : []),
         ];
         build.reduce(((n, r) => n.then(() => new Promise((e, n) => {
             const o = document.createElement("script");

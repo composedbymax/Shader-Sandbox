@@ -76,6 +76,14 @@
 .audio-reactive-clear-btn{display: none;margin-top: 10px;padding: 6px 12px;background: var(--d);border: none;color: var(--7);cursor: pointer;}
 .audio-code-span{color:#ff79c6;}
 
+/* api.js */
+#publicShaderList { display: flex; flex-direction: column; gap: 10px; }
+.shader-card { border: 0.2px solid var(--4); padding: 8px; border-radius:2px;background: var(--3); }
+.pagination { text-align: center; margin: 10px 0; }
+.sbtn { background: var(--4); color: var(--l); border: none; padding: 6px 12px; cursor: pointer; border-radius: 2px; }
+.sbtn:disabled { opacity: 0.5; cursor: default; }
+#useSandboxContainer { display: flex; align-items: center; gap: 8px; color: var(--l); margin-top: 10px; }
+
 /* banner.js */
 .banner{position: fixed;top: 0;left: 0;right: 0;background: var(--2);color: var(--7);padding: 12px 16px;display: flex;justify-content: space-between;align-items: center;z-index: 9999;font-family: sans-serif;font-size: 16px;transition: transform 0.3s ease, opacity 0.3s ease;}
 .banner-link{color: var(--a);margin-left: 4px;text-decoration: underline;}
