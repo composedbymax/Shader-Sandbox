@@ -23,6 +23,7 @@
     let deltaTime = 0;
     let fps = 60;
     const UNIFORM_BUFFER_SIZE = 80;
+    let savedSnapshot = null;
     const createWebGPUToggle = () => {
         const toggleBtn = Object.assign(document.createElement('button'), {
             id: 'webgpuToggle',
@@ -42,6 +43,23 @@
             originalVertexCode = vertCode.value;
             originalFragmentCode = fragCode.value;
         }
+    };
+    const captureSnapshot = () => {
+        const vertCode = document.getElementById('vertCode');
+        const fragCode = document.getElementById('fragCode');
+        if (!vertCode || !fragCode) return;
+        savedSnapshot = {
+            vert: vertCode.value,
+            frag: fragCode.value
+        };
+    };
+    const restoreAndDeleteSnapshot = () => {
+        if (!savedSnapshot) return;
+        const vert = document.getElementById('vertCode');
+        const frag = document.getElementById('fragCode');
+        if (!vert || !frag) return;
+        ({ vert: vert.value, frag: frag.value } = savedSnapshot);
+        savedSnapshot = null;
     };
     const addWebGPUEventListeners = () => {
         const vertTA = document.getElementById('vertCode');
@@ -106,7 +124,7 @@ fn vs_main(@location(0) position: vec2<f32>) -> VertexOutput {
 }`;
             }
             if (fragCode) {
-                fragCode.value = `// WebGPU Fragment Shader (WGSL) with Audio Reactivity
+                fragCode.value = `// WebGPU Fragment Shader (WGSL)
 struct Uniforms {
     resolution: vec2<f32>,
     time: f32,
@@ -118,7 +136,6 @@ struct Uniforms {
     fps: f32,
     aspect: f32,
     pixel_size: vec2<f32>,
-    // AUDIO UNIFORMS
     bass: f32,
     mid: f32,
     treble: f32,
@@ -157,6 +174,7 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             if (fragCode && originalFragmentCode !== null) {fragCode.value = originalFragmentCode;}
         }
     };
+
     const setupCanvasResizing = () => {
         if (!webgpuCanvas) return;
         if (resizeObserver) {
@@ -214,6 +232,7 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             webgpuCanvas.id = 'webgpu-canvas';
             webgpuCanvas.style.cssText = originalCanvas.style.cssText;
             webgpuCanvas.className = originalCanvas.className;
+            captureSnapshot();
             originalCanvas.style.display = 'none';
             originalCanvas.parentNode.insertBefore(webgpuCanvas, originalCanvas);
             webgpuContext = webgpuCanvas.getContext('webgpu');
@@ -232,7 +251,6 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             lastFrameTime = 0;
             deltaTime = 0;
             fps = 60;
-            
             setupCanvasResizing();
             return true;
         } catch (error) {
@@ -241,7 +259,6 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             return false;
         }
     };
-
     const createWebGPUPipeline = (vertexShader, fragmentShader) => {
         try {
             [webgpuPipeline, webgpuBindGroup] = [null, null];
@@ -499,6 +516,7 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             if (!originalRender && window.render) {
                 originalRender = window.render;
             }
+            captureSnapshot();
             cleanupAnimation();
             cleanupWebGL();
             hideWebGPUError();
@@ -518,7 +536,6 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
                 console.log('WebGPU');
             } else {
                 console.error('Failed to initialize WebGPU');
-                alert('WebGPU initialization failed. Check the console for details.');
             }
         } else {
             cleanupAnimation();
@@ -543,6 +560,7 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             setToggleState('WebGPU', 'webgl-mode');
             removeWebGPUEventListeners();
             updateShaderEditors(false);
+            restoreAndDeleteSnapshot();
             if (originalRebuildProgram) window.rebuildProgram = originalRebuildProgram;
             if (originalRender) window.render = originalRender;
             if (restoreWebGL()) {
