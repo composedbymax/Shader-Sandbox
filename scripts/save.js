@@ -181,7 +181,16 @@
       $(`tab${capitalize(t)}`).style.display = t === tab ? 'block' : 'none';
       $(`tab${capitalize(t)}Btn`).style.background = `var(--${t === tab ? 3 : 4})`;
     });
-    ({ public: fetchPublicShaders, local: fetchLocalShaders }[tab]?.());
+    if (tab === "public") {
+      const sandbox = document.getElementById("useSandboxAPI");
+      if (sandbox && sandbox.checked && window.fetchGLSLSandboxShaders) {
+        window.fetchGLSLSandboxShaders();
+      } else {
+        fetchPublicShaders();
+      }
+    } else if (tab === "local") {
+      fetchLocalShaders();
+    }
   }
   function compressImage(file, callback) {
     const img = new Image();

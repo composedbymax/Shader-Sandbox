@@ -1,4 +1,5 @@
 <?php
+include '../../check_auth.php';
 $allowedTypes = ['gallery', 'shader', 'image'];
 $type = $_GET['type'] ?? '';
 if (!in_array($type, $allowedTypes)) {
