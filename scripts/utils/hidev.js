@@ -6,11 +6,12 @@
   if (hasGreeted) return;
   hasGreeted = true;
   const glsl = `
-  ____  _      ____  _     
- / ___|| |    / ___|| |
-| |  _ | |___ \\___\\ | |___ 
- \\____||_____||____/|_____|
-
+░█▀▀░█░█░█▀█░█▀▄░█▀▀░█▀▄    
+░▀▀█░█▀█░█▀█░█░█░█▀▀░█▀▄    
+░▀▀▀░▀░▀░▀░▀░▀▀░░▀▀▀░▀░▀    
+░█▀▀░█▀█░█▀█░█▀▄░█▀▄░█▀█░█░█
+░▀▀█░█▀█░█░█░█░█░█▀▄░█░█░▄▀▄
+░▀▀▀░▀░▀░▀░▀░▀▀░░▀▀░░▀▀▀░▀░▀
 `;
     console.group('%c' + glsl, 'font-size:1rem; color:#00ffcc; font-weight:extra-bold; font-family: monospace; white-space: pre;');
     console.log('%cThis Site/App was created by: %cMax Warren', 'font-size:1rem; color:#dadada;', 'font-size:1rem; color:#fff; font-weight:bold;');
