@@ -1,4 +1,5 @@
 <?php
+include '../../check_auth.php';
 define('CACHE_FILE', __DIR__ . '/api_cache.json');
 define('CACHE_ENABLED', true);
 class CacheManager {
@@ -142,7 +143,7 @@ if ($type === 'gallery') {
             if (is_array($response)) {
                 $response['cached'] = true;
                 $response['cached_at'] = date('Y-m-d H:i:s', $cached['cached_at']);
-                $response['animationType'] = "webgl";   // ✅ ADD THIS
+                $response['animationType'] = "webgl";
                 echo json_encode($response);
             } else {
                 echo json_encode(['error' => 'Invalid cached shader']);

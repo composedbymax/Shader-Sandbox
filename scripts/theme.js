@@ -2,7 +2,7 @@
   class ThemeManager {
     constructor() {
       this.dbName = "ThemeManagerDB";
-      this.dbVersion = 1;
+      this.dbVersion = 2;
       this.storeName = "themes";
       this.db = null;
       this.currentTheme = "default";
@@ -27,6 +27,21 @@
         "--r": "#b91040",
         "--rh": "rgba(227, 48, 98, 0.79)"
       };
+      this.fontOptions = [
+        { name: "Courier New", value: "'Courier New', Courier, monospace" },
+        { name: "Courier", value: "Courier, 'Courier New', monospace" },
+        { name: "Lucida Console", value: "'Lucida Console', Monaco, monospace" },
+        { name: "Monaco", value: "Monaco, 'Lucida Console', monospace" },
+        { name: "Consolas", value: "Consolas, 'Courier New', monospace" },
+        { name: "Andale Mono", value: "'Andale Mono', monospace" },
+        { name: "Menlo", value: "Menlo, Monaco, monospace" },
+        { name: "Monospace", value: "monospace" },
+        { name: "Arial", value: "Arial, Helvetica, sans-serif" },
+        { name: "Verdana", value: "Verdana, Geneva, sans-serif" },
+        { name: "Sans-serif", value: "sans-serif" },
+      ];
+
+      this.defaultFont = "'JetBrains Mono', 'Fira Code', 'Courier New', monospace";
       this.presetThemes = {
        "CODE": {
           "--0": "rgba(0, 0, 0, 0.9)",
@@ -90,6 +105,7 @@
     }
     async init() {
       this.applyDefaultColors();
+      this.applyDefaultFont();
       await this.initDB();
       this.createButton();
       this.createModal();
@@ -101,6 +117,25 @@
       Object.entries(this.defaultColors).forEach(([property, value]) => {
         root.style.setProperty(property, value);
       });
+    }
+    applyDefaultFont() {
+      document.body.style.fontFamily = this.defaultFont;
+      const style = document.createElement('style');
+      style.id = 'theme-manager-font-style';
+      style.textContent = `* { font-family: ${this.defaultFont} !important; }`;
+      document.head.appendChild(style);
+    }
+    applyFont(fontFamily) {
+      const existingStyle = document.getElementById('theme-manager-font-style');
+      if (existingStyle) {
+        existingStyle.textContent = `* { font-family: ${fontFamily} !important; }`;
+      } else {
+        const style = document.createElement('style');
+        style.id = 'theme-manager-font-style';
+        style.textContent = `* { font-family: ${fontFamily} !important; }`;
+        document.head.appendChild(style);
+      }
+      document.body.style.fontFamily = fontFamily;
     }
     initDB() {
       return new Promise((resolve, reject) => {
@@ -117,8 +152,22 @@
             store.add({
               name: "default",
               colors: this.defaultColors,
+              font: this.defaultFont,
               created: new Date().toISOString()
             });
+          } else if (event.oldVersion < 2) {
+            const transaction = event.target.transaction;
+            const store = transaction.objectStore(this.storeName);
+            const getAllRequest = store.getAll();
+            getAllRequest.onsuccess = () => {
+              const themes = getAllRequest.result;
+              themes.forEach(theme => {
+                if (!theme.font) {
+                  theme.font = this.defaultFont;
+                  store.put(theme);
+                }
+              });
+            };
           }
         };
       });
@@ -221,7 +270,7 @@
           </div>
           <div class="theme-toggle-editor-container">
             <button id="toggle-editor" class="theme-toggle-editor-btn">
-              Color Editor
+              Editor
             </button>
           </div>
         </div>
@@ -235,6 +284,11 @@
                 <button id="delete-theme" class="delete-theme-btn">Delete</button>
               </div>
             </div>
+            <div class="font-select-container">
+              <label for="font-select" class="font-select-label">Font Family:</label>
+              <select id="font-select" class="font-select">
+              </select>
+            </div>
           </div>
           <div id="color-inputs" class="color-inputs-container">
           </div>
@@ -246,6 +300,19 @@
       document.body.appendChild(modal);
       this.setupModalEvents();
       this.createColorInputs();
+      this.createFontSelect();
+    }
+    createFontSelect() {
+      const select = document.getElementById("font-select");
+      if (!select) return;
+      this.fontOptions.forEach(font => {
+        const option = document.createElement("option");
+        option.value = font.value;
+        option.textContent = font.name;
+        option.style.fontFamily = font.value;
+        select.appendChild(option);
+      });
+      select.value = this.defaultFont;
     }
     setupModalEvents() {
       const modal = document.getElementById("theme-modal");
@@ -255,12 +322,20 @@
       const saveButton = document.getElementById("save-theme");
       const deleteButton = document.getElementById("delete-theme");
       const resetButton = document.getElementById("reset-colors");
+      const fontSelect = document.getElementById("font-select");
       closeButton.onclick = () => this.closeModal();
       themeSelect.onchange = () => this.loadSelectedTheme(themeSelect.value);
       toggleEditorButton.onclick = () => this.toggleColorEditor();
       saveButton.onclick = () => this.saveTheme();
       deleteButton.onclick = () => this.deleteTheme();
       resetButton.onclick = () => this.resetToDefault();
+      
+      if (fontSelect) {
+        fontSelect.onchange = () => {
+          this.applyFont(fontSelect.value);
+        };
+      }
+      
       const handleEvent = e => {
         if (!this.isModalOpen) return;
         if ((e.type === "click" && !modal.contains(e.target) && e.target.id !== "theme-manager-btn") || 
@@ -275,11 +350,11 @@
       this.showColorEditor = !this.showColorEditor;
       if (this.showColorEditor) {
         section.style.display = "block";
-        button.textContent = "Hide Color Editor";
+        button.textContent = "Hide Editor";
         button.style.background = "var(--r)";
       } else {
         section.style.display = "none";
-        button.textContent = "Color Editor";
+        button.textContent = "Editor";
         button.style.background = "var(--b)";
       }
     }
@@ -303,6 +378,13 @@
         });
         if (theme) {
           this.applyThemeColors(theme.colors);
+          if (theme.font) {
+            this.applyFont(theme.font);
+            const fontSelect = document.getElementById("font-select");
+            if (fontSelect) {
+              fontSelect.value = theme.font;
+            }
+          }
           this.currentTheme = themeName;
           if (showNotification) {
             this.showToast(`"${themeName}" loaded!`, "success");
@@ -543,10 +625,16 @@
     }
     resetToDefault() {
       this.applyThemeColors(this.defaultColors);
+      this.applyFont(this.defaultFont);
+      const fontSelect = document.getElementById("font-select");
+      if (fontSelect) {
+        fontSelect.value = this.defaultFont;
+      }
       this.showToast("Reset to default!", "success");
     }
     async saveTheme() {
       const nameInput = document.getElementById("theme-name");
+      const fontSelect = document.getElementById("font-select");
       const themeName = nameInput.value.trim();
       if (!themeName) {
         this.showToast("Enter theme name!", "error");
@@ -562,6 +650,7 @@
         const value = getComputedStyle(root).getPropertyValue(property).trim();
         colors[property] = value || this.defaultColors[property];
       });
+      const selectedFont = fontSelect ? fontSelect.value : this.defaultFont;
 
       try {
         const transaction = this.db.transaction([this.storeName], "readwrite");
@@ -570,6 +659,7 @@
           const request = store.put({
             name: themeName,
             colors: colors,
+            font: selectedFont,
             created: new Date().toISOString()
           });
           request.onsuccess = () => resolve();
@@ -586,6 +676,12 @@
     }
     async loadSavedTheme() {
       const savedTheme = localStorage.getItem("currentTheme");
+      const savedFont = localStorage.getItem("currentFont");
+      
+      if (savedFont) {
+        this.applyFont(savedFont);
+      }
+      
       if (savedTheme && savedTheme !== "default") {
         await this.loadSelectedTheme(savedTheme, false);
       }
@@ -616,11 +712,16 @@
       const button = document.getElementById("toggle-editor");
       const section = document.getElementById("color-editor-section");
       if (button && section) {
-        button.textContent = "Color Editor";
+        button.textContent = "Editor";
         button.style.background = "var(--b)";
         section.style.display = "none";
       }
       localStorage.setItem("currentTheme", this.currentTheme);
+      
+      const fontSelect = document.getElementById("font-select");
+      if (fontSelect) {
+        localStorage.setItem("currentFont", fontSelect.value);
+      }
     }
   }
   if (document.readyState === "loading") {
