@@ -41,13 +41,16 @@ if (!gl) {
 if (!gl) { alert('WebGL not supported'); return; }
 let program = null,
     attribLoc = null,
+    surfaceAttrLoc = null,
     uniforms = {},
     startTime = performance.now(),
     drag = { type: null, startPos: 0, startSize: 0 },
-    editorsVisible = true;
+    editorsVisible = true,
     pauseOnBlurEnabled = true;
 const quadVerts = new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]);
 const buf = gl.createBuffer();
+const surfaceUVs = new Float32Array([0,0, 1,0, 0,1, 0,1, 1,0, 1,1]);
+const surfaceBuf = gl.createBuffer();
 const performanceMonitor = new GLSLPerformanceMonitor(canvas, {
     sampleSize: 120,
     showFPS: true,
@@ -58,6 +61,8 @@ const performanceMonitor = new GLSLPerformanceMonitor(canvas, {
 });
 gl.bindBuffer(gl.ARRAY_BUFFER, buf);
 gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
+gl.bindBuffer(gl.ARRAY_BUFFER, surfaceBuf);
+gl.bufferData(gl.ARRAY_BUFFER, surfaceUVs, gl.STATIC_DRAW);
 gl.enable(gl.BLEND);
 gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -87,6 +92,7 @@ const getPos = (e, isTouch = false) => {
         y: rect.height - (point.clientY - rect.top),
     };
 };
+
 const updateMouse = (e, isTouch = false, type) => {
     if (drag.type) return;
     const pos = getPos(e, isTouch);
@@ -233,7 +239,25 @@ function rebuildProgram() {
     gl.attachShader(p, fs.shader);
     gl.linkProgram(p);
     if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
-        showError('Link: ' + gl.getProgramInfoLog(p));
+        const linkError = gl.getProgramInfoLog(p);
+        if (linkError.includes('FRAGMENT varying') && linkError.includes('does not match any VERTEX varying')) {
+            const match = linkError.match(/varying\s+(\w+)/);
+            if (match) {
+                const varyingName = match[1];
+                const surfaceVertexShader = `attribute vec3 position;
+attribute vec2 surfacePosAttrib;
+varying vec2 ${varyingName};
+void main() {
+    ${varyingName} = surfacePosAttrib;
+    gl_Position = vec4(position, 1.0);
+}`;
+                vertTA.value = surfaceVertexShader;
+                showToast(`Auto-injected surface vertex shader for: ${varyingName}`);
+                setTimeout(() => rebuildProgram(), 100);
+                return;
+            }
+        }
+        showError('Link: ' + linkError);
         gl.deleteProgram(p);
         return;
     }
@@ -249,6 +273,7 @@ function rebuildProgram() {
         }
     }
     if (attribLoc !== -1) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, buf);
         gl.enableVertexAttribArray(attribLoc);
         gl.vertexAttribPointer(attribLoc, 2, gl.FLOAT, false, 0, 0);
     } else {
@@ -258,6 +283,20 @@ function rebuildProgram() {
             const info = gl.getActiveAttrib(program, i);
             console.warn(`  ${info.name} (location: ${gl.getAttribLocation(program, info.name)})`);
         }
+    }
+    const surfaceAttrNames = ['surfacePosAttrib', 'surfacePos', 'a_surfacePos', 'a_surfacePosition'];
+    surfaceAttrLoc = -1;
+    for (const name of surfaceAttrNames) {
+        surfaceAttrLoc = gl.getAttribLocation(program, name);
+        if (surfaceAttrLoc !== -1) {
+            console.log(`Surface attribute found: ${name}`);
+            break;
+        }
+    }
+    if (surfaceAttrLoc !== -1) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, surfaceBuf);
+        gl.enableVertexAttribArray(surfaceAttrLoc);
+        gl.vertexAttribPointer(surfaceAttrLoc, 2, gl.FLOAT, false, 0, 0);
     }
     uniforms = {};
     const numUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
@@ -338,7 +377,6 @@ window.addEventListener('resize', initSplit);
         drag.startSize = vertPanel.getBoundingClientRect().height;
         e.preventDefault();
     }, { passive: false });
-    
     divider.addEventListener(evt, e => {
         drag.type = 'col';
         drag.startPos = e.clientX || e.touches[0].clientX;
