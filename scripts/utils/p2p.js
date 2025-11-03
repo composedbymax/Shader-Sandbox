@@ -7,6 +7,8 @@
   let isIntentionalDisconnect = false;
   let pollingStartTime = null;
   let pollTimeout = null;
+  let lastAnimationType = null;
+  let animationTypeCheckInterval = null;
   const toggleButton = document.createElement('button');
     toggleButton.classList.add('connect-toggle-btn');
     toggleButton.innerHTML = `
@@ -55,7 +57,7 @@
     container.classList.add('show');
     toggleButton.classList.add('active');
   };
-    const hideModal = () => {
+  const hideModal = () => {
     modalVisible = false;
     container.classList.remove('show');
     setTimeout(() => {
@@ -126,9 +128,38 @@
     els.joinCodeInput.value = '';
     els.waitingMessage.style.display = 'block';
   };
+  const stopAnimationTypeMonitoring = () => {
+    if (animationTypeCheckInterval) {
+      clearInterval(animationTypeCheckInterval);
+      animationTypeCheckInterval = null;
+    }
+    lastAnimationType = null;
+  };
+  const startAnimationTypeMonitoring = () => {
+    stopAnimationTypeMonitoring();
+    if (typeof window.getCurrentAnimationType === 'function') {
+      lastAnimationType = window.getCurrentAnimationType();
+    }
+    animationTypeCheckInterval = setInterval(() => {
+      if (!dc || dc.readyState !== 'open' || isReceivingUpdate) return;
+      if (typeof window.getCurrentAnimationType === 'function') {
+        const currentType = window.getCurrentAnimationType();
+        if (currentType !== lastAnimationType) {
+          lastAnimationType = currentType;
+          const message = JSON.stringify({
+            type: 'animation_type_change',
+            animationType: currentType
+          });
+          dc.send(message);
+          log(`Animation type changed to: ${currentType}`, true);
+        }
+      }
+    }, 300);
+  };
   const disconnect = async () => {
     log("Disconnecting...", true);
     isIntentionalDisconnect = true;
+    stopAnimationTypeMonitoring();
     if (pollInterval) {clearInterval(pollInterval);pollInterval = null;}
     if (pollTimeout) {clearTimeout(pollTimeout);pollTimeout = null;}
     if (dc) dc.close(), dc = null;
@@ -231,12 +262,23 @@
             fragEditor.setSelectionRange(message.cursor, message.cursor);
           }
           break;
+        case 'animation_type_change':
+          if (typeof window.switchToAnimationType === 'function') {
+            lastAnimationType = message.animationType;
+            window.switchToAnimationType(message.animationType);
+            log(`Animation type changed to: ${message.animationType}`, false);
+          }
+          break;
         case 'full_sync_request':
           if (vertEditor && fragEditor) {
+            const currentAnimationType = typeof window.getCurrentAnimationType === 'function' 
+              ? window.getCurrentAnimationType() 
+              : 'webgl';
             const syncData = JSON.stringify({
               type: 'full_sync_response',
               vertex: vertEditor.value,
-              fragment: fragEditor.value
+              fragment: fragEditor.value,
+              animationType: currentAnimationType
             });
             dc.send(syncData);
             log('Sent full shader sync', true);
@@ -246,6 +288,11 @@
           if (vertEditor && fragEditor) {
             vertEditor.value = message.vertex;
             fragEditor.value = message.fragment;
+            if (message.animationType && typeof window.switchToAnimationType === 'function') {
+              lastAnimationType = message.animationType;
+              window.switchToAnimationType(message.animationType);
+              log(`Synced to animation type: ${message.animationType}`, false);
+            }
             log('Received full shader sync', false);
             if (typeof window.rebuildProgram === 'function') {
               window.rebuildProgram();
@@ -268,6 +315,7 @@
       if (!vertEditor || !fragEditor) {
         initializeShaderEditors();
       }
+      startAnimationTypeMonitoring();
       if (!isHost) {
         const syncRequest = JSON.stringify({ type: 'full_sync_request' });
         channel.send(syncRequest);
@@ -279,6 +327,7 @@
     channel.onclose = () => {
       els.connectionStatus.textContent = 'Status: Closed';
       els.syncInfo.style.display = 'none';
+      stopAnimationTypeMonitoring();
       if (!isIntentionalDisconnect) {
         logError('Shader sync connection closed');
       }
@@ -308,6 +357,7 @@
         }
         connectionEstablished = false;
         els.syncInfo.style.display = 'none';
+        stopAnimationTypeMonitoring();
       }
     };
     pc.onicecandidate = (event) => {};
@@ -343,6 +393,7 @@
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       await waitForIceGatheringComplete(pc);
+      
       const result = await api('api/connect.php', { 
         action: 'create_room', 
         joinCode, 
@@ -460,6 +511,17 @@
         log(`${shader} shader synced`, true);
       }
     },
+    sendAnimationTypeChange: (animationType) => {
+      if (dc && dc.readyState === 'open') {
+        lastAnimationType = animationType;
+        const message = JSON.stringify({
+          type: 'animation_type_change',
+          animationType
+        });
+        dc.send(message);
+        log(`Animation type changed to: ${animationType}`, true);
+      }
+    },
     isConnected: () => dc && dc.readyState === 'open',
     getConnectionStatus: () => connectionEstablished,
     disconnect,
@@ -473,6 +535,7 @@
   });
   window.addEventListener('beforeunload', () => {
     if (pollInterval) clearInterval(pollInterval);
+    if (animationTypeCheckInterval) clearInterval(animationTypeCheckInterval);
     if (pc) pc.close();
     if (joinCode && !connectionEstablished) {
       navigator.sendBeacon('api/connect.php', JSON.stringify({

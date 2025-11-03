@@ -1,5 +1,3 @@
-// To manually start the tutorial from anywhere:
-// window.startTutorial();
 (function() {
   'use strict';
   const STORAGE_KEY = 'tutorial_state';
@@ -194,7 +192,6 @@
     currentStep = stepIndex;
     const step = steps[stepIndex];
     if (!elements.currentStepEl || !elements.prevBtn || !elements.nextBtn) {
-      console.error('Tutorial elements not initialized');
       return;
     }
     elements.currentStepEl.textContent = stepIndex + 1;
