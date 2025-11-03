@@ -89,11 +89,17 @@
             <span>Use GLSL Sandbox API</span>
         `;
         tab.appendChild(toggle);
-        document.getElementById('useSandboxAPI').addEventListener('change', (e) => {
+        const checkbox = document.getElementById('useSandboxAPI');
+        const savedState = localStorage.getItem('useSandboxAPI');
+        if (savedState === 'true') {
+            checkbox.checked = true;
+        }
+        checkbox.addEventListener('change', (e) => {
+            localStorage.setItem('useSandboxAPI', e.target.checked);
             if (e.target.checked) {
-                fetchGLSLSandboxShaders();
+            fetchGLSLSandboxShaders();
             } else {
-                if (window.fetchPublicShaders) window.fetchPublicShaders();
+            if (window.fetchPublicShaders) window.fetchPublicShaders();
             }
         });
     }

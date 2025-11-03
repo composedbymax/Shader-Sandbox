@@ -39,15 +39,6 @@
       return false;
     }
   };
-  function getCurrentAnimationType() {
-    if (window.jsCanvasState && window.jsCanvasState.isJSMode()) {
-      return 'js';
-    } else if (window.webgpuState && window.webgpuState.isWebGPUMode()) {
-      return 'webgpu';
-    } else {
-      return 'webgl';
-    }
-  }
   function createToastContainer() {
     const fullscreenRoot = document.fullscreenElement || document.documentElement;
     let container = document.getElementById('toastContainer');
@@ -183,8 +174,7 @@
     });
     if (tab === "public") {
       const sandbox = document.getElementById("useSandboxAPI");
-      if (sandbox && sandbox.checked && window.fetchGLSLSandboxShaders) {
-        window.fetchGLSLSandboxShaders();
+      if (sandbox && sandbox.checked) {
       } else {
         fetchPublicShaders();
       }
@@ -413,35 +403,6 @@
       }
       closeShaderWindow();
       enableAllLoadButtons();
-    }
-  }
-  function switchToAnimationType(type) {
-    const currentType = getCurrentAnimationType();
-    if (currentType === type) {
-      return;
-    }
-    switch (type) {
-      case 'js':
-        if (currentType !== 'js') {
-          const jsBtn = document.getElementById('jsToggleBtn');
-          if (jsBtn) jsBtn.click();
-        }
-        break;
-      case 'webgpu':
-        if (currentType !== 'webgpu') {
-          const webgpuBtn = document.getElementById('webgpuToggle');
-          if (webgpuBtn) webgpuBtn.click();
-        }
-        break;
-      case 'webgl':
-        if (currentType === 'js') {
-          const jsBtn = document.getElementById('jsToggleBtn');
-          if (jsBtn) jsBtn.click();
-        } else if (currentType === 'webgpu') {
-          const webgpuBtn = document.getElementById('webgpuToggle');
-          if (webgpuBtn) webgpuBtn.click();
-        }
-        break;
     }
   }
   function deleteLocal(key) {
