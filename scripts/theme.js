@@ -2,7 +2,7 @@
   class ThemeManager {
     constructor() {
       this.dbName = "ThemeManagerDB";
-      this.dbVersion = 2;
+      this.dbVersion = 3;
       this.storeName = "themes";
       this.db = null;
       this.currentTheme = "default";
@@ -40,7 +40,6 @@
         { name: "Verdana", value: "Verdana, Geneva, sans-serif" },
         { name: "Sans-serif", value: "sans-serif" },
       ];
-
       this.defaultFont = "'JetBrains Mono', 'Fira Code', 'Courier New', monospace";
       this.presetThemes = {
        "CODE": {
@@ -139,37 +138,44 @@
     }
     initDB() {
       return new Promise((resolve, reject) => {
-        const request = indexedDB.open(this.dbName, this.dbVersion);
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => {
-          this.db = request.result;
-          resolve();
-        };
-        request.onupgradeneeded = (event) => {
-          const db = event.target.result;
-          if (!db.objectStoreNames.contains(this.storeName)) {
-            const store = db.createObjectStore(this.storeName, { keyPath: "name" });
-            store.add({
-              name: "default",
-              colors: this.defaultColors,
-              font: this.defaultFont,
-              created: new Date().toISOString()
-            });
-          } else if (event.oldVersion < 2) {
-            const transaction = event.target.transaction;
-            const store = transaction.objectStore(this.storeName);
-            const getAllRequest = store.getAll();
-            getAllRequest.onsuccess = () => {
-              const themes = getAllRequest.result;
-              themes.forEach(theme => {
-                if (!theme.font) {
-                  theme.font = this.defaultFont;
-                  store.put(theme);
-                }
+        const checkRequest = indexedDB.open(this.dbName);
+        checkRequest.onsuccess = () => {
+          const existingVersion = checkRequest.result.version;
+          checkRequest.result.close();
+          const targetVersion = Math.max(existingVersion, this.dbVersion);
+          const request = indexedDB.open(this.dbName, targetVersion);
+          request.onerror = () => reject(request.error);
+          request.onsuccess = () => {
+            this.db = request.result;
+            resolve();
+          };
+          request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains(this.storeName)) {
+              const store = db.createObjectStore(this.storeName, { keyPath: "name" });
+              store.add({
+                name: "default",
+                colors: this.defaultColors,
+                font: this.defaultFont,
+                created: new Date().toISOString()
               });
-            };
-          }
+            } else if (event.oldVersion < 2) {
+              const transaction = event.target.transaction;
+              const store = transaction.objectStore(this.storeName);
+              const getAllRequest = store.getAll();
+              getAllRequest.onsuccess = () => {
+                const themes = getAllRequest.result;
+                themes.forEach(theme => {
+                  if (!theme.font) {
+                    theme.font = this.defaultFont;
+                    store.put(theme);
+                  }
+                });
+              };
+            }
+          };
         };
+        checkRequest.onerror = () => reject(checkRequest.error);
       });
     }
     createButton() {
@@ -329,13 +335,11 @@
       saveButton.onclick = () => this.saveTheme();
       deleteButton.onclick = () => this.deleteTheme();
       resetButton.onclick = () => this.resetToDefault();
-      
       if (fontSelect) {
         fontSelect.onchange = () => {
           this.applyFont(fontSelect.value);
         };
       }
-      
       const handleEvent = e => {
         if (!this.isModalOpen) return;
         if ((e.type === "click" && !modal.contains(e.target) && e.target.id !== "theme-manager-btn") || 
@@ -651,7 +655,6 @@
         colors[property] = value || this.defaultColors[property];
       });
       const selectedFont = fontSelect ? fontSelect.value : this.defaultFont;
-
       try {
         const transaction = this.db.transaction([this.storeName], "readwrite");
         const store = transaction.objectStore(this.storeName);
