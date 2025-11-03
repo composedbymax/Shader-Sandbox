@@ -62,6 +62,23 @@ gl.enable(gl.BLEND);
 gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 gl.clearColor(0.0, 0.0, 0.0, 1.0);
 gl.clear(gl.COLOR_BUFFER_BIT);
+function preprocessShader(src) {
+    const lines = src.split('\n');
+    const extensions = [];
+    const otherLines = [];
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('#extension')) {
+            extensions.push(line);
+        } else {
+            otherLines.push(line);
+        }
+    }
+    if (extensions.length > 0) {
+        return extensions.join('\n') + '\n' + otherLines.join('\n');
+    }
+    return src;
+}
 const getPos = (e, isTouch = false) => {
     const rect = canvas.getBoundingClientRect();
     const point = isTouch ? (e.touches[0] || e.changedTouches[0]) : e;
@@ -173,8 +190,9 @@ function toggleEditors() {
     setTimeout(resizeCanvas, 10);
 }
 function compileShader(src, type) {
+    const processedSrc = preprocessShader(src);
     const s = gl.createShader(type);
-    gl.shaderSource(s, src);
+    gl.shaderSource(s, processedSrc);
     gl.compileShader(s);
     if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
         const err = gl.getShaderInfoLog(s);
