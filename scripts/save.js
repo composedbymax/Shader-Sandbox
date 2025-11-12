@@ -469,4 +469,5 @@
   window.createPublicShaderCard = createPublicShaderCard;
   window.enableAllLoadButtons = enableAllLoadButtons;
   window.disableAllLoadButtons = disableAllLoadButtons;
+  window.loadShaderData = loadShaderData;
 })();
