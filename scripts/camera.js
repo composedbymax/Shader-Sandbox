@@ -267,32 +267,38 @@ void main() {
                 this.cameraBtn.innerHTML = `${CAMERA_SVG}`;
             }
         }
-        stopCamera() {
+        async stopCamera() {
+            if (!this.isActive && !this.stream) return;
             this.cancelCameraRenderLoop();
             this.isActive = false;
-            if (this.texture && this.gl) {
+            if (this.gl && this.texture) {
+                this.gl.bindTexture(this.gl.TEXTURE_2D, null);
                 this.gl.deleteTexture(this.texture);
                 this.texture = null;
             }
             if (this.stream) {
-                this.stream.getTracks().forEach(track => {
-                    track.stop();
-                });
+                for (const track of this.stream.getTracks()) {
+                    try {
+                        track.stop();
+                    } catch (err) {
+                        console.warn('Track stop failed:', err);
+                    }
+                }
                 this.stream = null;
             }
             if (this.preview) {
+                this.preview.pause();
+                this.preview.removeAttribute('src');
                 this.preview.srcObject = null;
+                await new Promise(res => setTimeout(res, 100));
             }
             this.cameraBtn.classList.remove('active');
-            this.cameraBtn.innerHTML = `${CAMERA_SVG}`;
             this.startBtn.disabled = false;
             this.stopBtn.disabled = true;
             this.status.textContent = 'Camera stopped';
             this.status.className = 'camera-status';
             this.restoreOriginalShader();
-            setTimeout(() => {
-                this.forceAnimationReset();
-            }, 50);
+            requestAnimationFrame(() => this.forceAnimationReset());
         }
         openModal() {
             this.modal.remove();
