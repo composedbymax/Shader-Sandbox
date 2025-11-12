@@ -60,12 +60,23 @@
             const data = await response.json();
             if (data.error) throw new Error(data.error);
             if (!data.code) throw new Error('No shader code found');
-            const frag = document.getElementById('fragCode');
-            if (frag) {
-                frag.value = '// Loaded from GLSL Sandbox\n' + data.code;
-                if (window.rebuildProgram) window.rebuildProgram();
-                if (window.showToast) window.showToast(`Loaded Sandbox shader #${token}`, 'success');
+            const shader = {
+                title: `Sandbox #${token}`,
+                vert: 'attribute vec2 a_position;\nvoid main() {\n  gl_Position = vec4(a_position, 0., 1.);\n}',
+                frag: '// Loaded from GLSL Sandbox\n' + data.code,
+                animationType: data.animationType || 'webgl'
+            };
+            if (typeof window.loadShaderData === 'function') {
+                window.loadShaderData(shader);
+            } else {
+                const frag = document.getElementById('fragCode');
+                if (frag) {
+                    frag.value = shader.frag;
+                    if (window.rebuildProgram) window.rebuildProgram();
+                    if (window.showToast) window.showToast(`Loaded Sandbox shader #${token}`, 'success');
+                }
             }
+            if (window.closeShaderWindow) window.closeShaderWindow();
         } catch (err) {
             console.error('Error loading Sandbox shader:', err);
             if (window.showToast) window.showToast(`Error: ${err.message}`, 'error');
@@ -85,9 +96,12 @@
         const toggle = document.createElement('label');
         toggle.id = 'useSandboxContainer';
         toggle.innerHTML = `
+        <div class="ellips">Use GLSL Sandbox API</div>
+        <div class="checkbox-container">
             <input type="checkbox" id="useSandboxAPI">
-            <span>Use GLSL Sandbox API</span>
-        `;
+            <div class="custom-checkbox"></div>
+        </div>
+    `;
         tab.appendChild(toggle);
         const checkbox = document.getElementById('useSandboxAPI');
         const savedState = localStorage.getItem('useSandboxAPI');
@@ -97,9 +111,9 @@
         checkbox.addEventListener('change', (e) => {
             localStorage.setItem('useSandboxAPI', e.target.checked);
             if (e.target.checked) {
-            fetchGLSLSandboxShaders();
+                fetchGLSLSandboxShaders();
             } else {
-            if (window.fetchPublicShaders) window.fetchPublicShaders();
+                if (window.fetchPublicShaders) window.fetchPublicShaders();
             }
         });
     }
