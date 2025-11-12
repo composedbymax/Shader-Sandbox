@@ -47,7 +47,11 @@
       if (e.key === 'Escape' && findModal.style.display === 'block') closeFindModal();
     });
     findModal.addEventListener('click', e => { if (e.target === findModal) closeFindModal(); });
-    document.addEventListener('focusin', e => { if (e.target.tagName === 'TEXTAREA') currentTextarea = e.target; });
+    document.addEventListener('focusin', e => { 
+      if (e.target.tagName === 'TEXTAREA' || e.target.getAttribute('contenteditable') === 'true') {
+        currentTextarea = e.target;
+      }
+    });
     document.addEventListener('fullscreenchange', 
     () => (document.fullscreenElement || document.body).append(...['findBtn', 'findModal'].map(id => document.getElementById(id))));
   }
@@ -113,11 +117,23 @@
       showToast('Please click in a textarea first', 'warning');
       return;
     }
-    const ta = currentTextarea;
-    const start = ta.selectionStart, end = ta.selectionEnd;
-    ta.value = ta.value.slice(0, start) + code + ta.value.slice(end);
-    ta.setSelectionRange(start + code.length, start + code.length);
-    ta.focus();
+    const target = currentTextarea;
+    if (target.getAttribute('contenteditable') === 'true') {
+      const textareaId = target.getAttribute('data-associated-textarea-id');
+      if (textareaId) {
+        const actualTextarea = document.getElementById(textareaId);
+        if (actualTextarea) {
+          const start = actualTextarea.selectionStart || actualTextarea.value.length;
+          actualTextarea.value = actualTextarea.value.slice(0, start) + code + actualTextarea.value.slice(start);
+          actualTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }
+    } else {
+      const start = target.selectionStart, end = target.selectionEnd;
+      target.value = target.value.slice(0, start) + code + target.value.slice(end);
+      target.setSelectionRange(start + code.length, start + code.length);
+    }
+    target.focus();
     closeFindModal();
     showToast('Code inserted successfully!', 'success');
     if (typeof window.rebuildProgram === 'function') {
