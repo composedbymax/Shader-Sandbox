@@ -510,3 +510,8 @@ function addExportButtons() {
     fullExportBtn.onclick = exportFullHTML;
     previewPanel.appendChild(fullExportBtn);
 }
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addExportButtons);
+} else {
+    addExportButtons();
+}
