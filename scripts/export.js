@@ -484,6 +484,8 @@ function downloadFile(content, filename, mimeType) {
     }
 }
 function addExportButtons() {
+    if (document.querySelector('.export-added')) return;
+    document.body.classList.add('export-added');
     const vertExportBtn = document.createElement('button');
     vertExportBtn.textContent = 'Export';
     vertExportBtn.title = 'Export Vertex Shader';
