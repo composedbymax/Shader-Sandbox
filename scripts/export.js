@@ -23,7 +23,7 @@ function handleFile(input, ta) {
 }
 function handleFileDrop(file, ta, nameSpan) {
     const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
-    const allowed = ['.txt','.vert','.vs','.frag','.fs','.wgsl'];
+    const allowed = ['.txt','.vert','.vs','.frag','.fs','.wgsl','.js'];
     if (!allowed.includes(ext)) return;
     const r = new FileReader();
     r.onload = e => { ta.value = e.target.result; rebuildProgram(); };
@@ -55,14 +55,15 @@ fragTA.addEventListener('drop', e => {
         handleFileDrop(e.dataTransfer.files[0], fragTA, fragFileName);
 });
 function exportFullHTML() {
-    function escapeForTemplateLiteral(str) {
-        return str
-            .replace(/\\/g, '\\\\')
-            .replace(/`/g, '\\`')
-            .replace(/\$\{/g, '\\${')
-            .replace(/\r\n/g, '\\n')
-            .replace(/\r/g, '\\n')
-            .replace(/\n/g, '\\n');
+    const isJSMode = window.jsCanvasState && window.jsCanvasState.isJSMode();
+    if (isJSMode) {
+        const jsSource = vertTA?.value || '';
+        if (!jsSource.trim()) {
+            alert('No JavaScript animation code to export!');
+            return;
+        }
+        exportJSAnimationHTML(jsSource);
+        return;
     }
     const vertexSource = vertTA?.value || '';
     const fragmentSource = fragTA?.value || '';
@@ -76,6 +77,113 @@ function exportFullHTML() {
     } else {
         exportWebGLHTML(vertexSource, fragmentSource);
     }
+}
+function exportJSAnimationHTML(jsSource) {
+    function escapeForTemplateLiteral(str) {
+        return str
+            .replace(/\\/g, '\\\\')
+            .replace(/`/g, '\\`')
+            .replace(/\$\{/g, '\\${')
+            .replace(/\r\n/g, '\\n')
+            .replace(/\r/g, '\\n')
+            .replace(/\n/g, '\\n');
+    }
+    const template = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JavaScript Canvas Animation</title>
+<style>
+body { 
+    margin: 0; 
+    overflow: hidden; 
+    background: #000; 
+}
+canvas { 
+    width: 100vw; 
+    height: 100vh; 
+    display: block; 
+}
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<script>
+(function(){
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let startTime = Date.now();
+    const mouse = {
+        x: 0,
+        y: 0,
+        clickX: 0,
+        clickY: 0,
+        isPressed: false,
+        lastClickTime: 0
+    };
+    const audio = {
+        bass: 0,
+        mid: 0,
+        treble: 0,
+        volume: 0
+    };
+    function resize() {
+        const w = canvas.clientWidth;
+        const h = canvas.clientHeight;
+        if (canvas.width !== w || canvas.height !== h) {
+            canvas.width = w;
+            canvas.height = h;
+        }
+    }
+    const getMousePos = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        return {
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top
+        };
+    };
+    canvas.addEventListener('mousemove', (e) => {
+        const pos = getMousePos(e);
+        mouse.x = pos.x;
+        mouse.y = pos.y;
+    });
+    canvas.addEventListener('mousedown', (e) => {
+        const pos = getMousePos(e);
+        mouse.isPressed = true;
+        mouse.clickX = pos.x;
+        mouse.clickY = pos.y;
+        mouse.lastClickTime = Date.now();
+    });
+    canvas.addEventListener('mouseup', () => {
+        mouse.isPressed = false;
+    });
+    canvas.addEventListener('mouseleave', () => {
+        mouse.isPressed = false;
+    });
+    window.addEventListener('resize', resize);
+    resize();
+    const userAnimation = \`${escapeForTemplateLiteral(jsSource)}\`;
+    function render() {
+        const time = (Date.now() - startTime) / 1000;
+        const width = canvas.width;
+        const height = canvas.height;
+        try {
+            const animateFunction = new Function('ctx', 'width', 'height', 'time', 'mouse', 'audio', userAnimation);
+            animateFunction(ctx, width, height, time, mouse, audio);
+        } catch (error) {
+            ctx.fillStyle = '#ff0000';
+            ctx.font = '14px monospace';
+            ctx.fillText('Error: ' + error.message, 10, 30);
+            console.error('Animation error:', error);
+        }
+        requestAnimationFrame(render);
+    }
+    render();
+})();
+</script>
+</body>
+</html>`;
+    downloadFile(template, 'js-canvas-animation.html', 'text/html');
 }
 function exportWebGLHTML(vertexSource, fragmentSource) {
     function escapeForTemplateLiteral(str) {
@@ -490,6 +598,11 @@ function addExportButtons() {
     vertExportBtn.textContent = 'Export';
     vertExportBtn.title = 'Export Vertex Shader';
     vertExportBtn.onclick = () => {
+        const isJSMode = window.jsCanvasState && window.jsCanvasState.isJSMode();
+        if (isJSMode) {
+            exportShader('js', vertTA.value);
+            return;
+        }
         const isWebGPU = window.webgpuState && window.webgpuState.isWebGPUMode();
         const extension = isWebGPU ? 'wgsl' : 'vert';
         exportShader(extension, vertTA.value);
