@@ -1,18 +1,18 @@
 ```
- ____  _   _    _    ____   _____  ____  
-/ ___|| | | |  /_\  |  _ \ | ____||  _ \ 
-\___ \| |_| | / _ \ | | | ||  _|  | |_) |
-|____/|_| |_|/_/ \_\|____/ |_____||_| \_\
-
-                  Sandbox
+░█▀▀░█░█░█▀█░█▀▄░█▀▀░█▀▄    
+░▀▀█░█▀█░█▀█░█░█░█▀▀░█▀▄    
+░▀▀▀░▀░▀░▀░▀░▀▀░░▀▀▀░▀░▀    
+░█▀▀░█▀█░█▀█░█▀▄░█▀▄░█▀█░█░█
+░▀▀█░█▀█░█░█░█░█░█▀▄░█░█░▄▀▄
+░▀▀▀░▀░▀░▀░▀░▀▀░░▀▀░░▀▀▀░▀░▀
 
 ```
 
 # Shader Sandbox - Created by Max Warren
 
-A browser-based GLSL + WGSL + JS editor for writing, testing, recording, and exporting or loading vertex and fragment shaders, as well as standalone .html animations. Users can interactively build shaders and preview them in real time using WebGL or WebGPU.
+A browser-based GLSL + WGSL + JS editor for writing, testing, recording, and exporting or loading animations. Users can interactively build shaders and preview them in real time.
 
-[Go to App](https://max.wuaze.com/glsl)
+[Go to App](https://max.x10.mx/shader)
 
 ---
 
