@@ -76,6 +76,28 @@
 .audio-reactive-clear-btn{display: none;margin-top: 10px;padding: 6px 12px;background: var(--d);border: none;color: var(--7);cursor: pointer;}
 .audio-code-span{color:#ff79c6;}
 
+/* ai.js */
+#aiModal{display: none;position: absolute;z-index: 9999;top: 0;left: 0;width: 100%;height: 100%;justify-content: center;align-items: center;}
+#aiModal .modal-content{background: var(--2);padding: 20px;width: 100%;height: 100%;overflow-y: auto;border-radius: 0;box-sizing: border-box;position: relative;}
+#aiModal .close-btn{position: absolute;top: 10px;right: 10px;cursor: pointer;font-weight: bold;font-size: 18px;z-index: 10001;}
+#aiModal textarea{width: 100%;height: 100px;padding: 10px;margin-bottom: 15px;background: var(--3);color: var(--6);border: 1px solid var(--4);border-radius: 4px;resize: vertical;font-family: monospace;box-sizing: border-box;}
+#aiModal .response-area{margin-top: 15px;padding: 15px;padding-top: 40px;background: var(--3);border-radius: 4px;white-space: pre-wrap;word-wrap: break-word;max-height: 400px;overflow-y: auto;display: none;position: relative;}
+#aiModal .response-area.show{display: block;}
+#aiModal .copy-btn{position: absolute;top: 10px;right: 10px;padding: 6px 12px;background: var(--d);color: var(--6);border: none;border-radius: 4px;cursor: pointer;font-size: 12px;z-index: 10;}
+#aiModal .copy-btn:hover{background: var(--5);}
+#aiModal button{padding: 10px 20px;background: var(--d);color: var(--6);border: none;border-radius: 4px;cursor: pointer;font-size: 14px;margin-right: 10px;}
+#aiModal button:hover{background: var(--5);}
+#aiModal button:disabled{opacity: 0.5;cursor: not-allowed;}
+#aiModal #applyShaderBtn{display: none;background: var(--a);margin-top: 10px;color:var(--1);}
+#aiModal #applyShaderBtn.show{display: inline-block;}
+#aiModal #applyShaderBtn:hover{background: var(--ah);}
+#aiModal select{margin-top:6rem;padding: 10px;background: var(--3);color: var(--6);border: 1px solid var(--4);border-radius: 4px;cursor: pointer;font-size: 14px;margin-bottom: 15px;width: 100%;box-sizing: border-box;}
+#aiModal .loading{display: none;margin-left: 10px;font-style: italic;color: var(--6);}
+#aiModal .loading.show{display: inline;}
+#AIBtn{z-index: 2;position: absolute;top: 42px;right: 74px;width: 2rem;height: 2rem;cursor: pointer;border-radius: 0px;background: var(--d);color: var(--6);border: none;display: flex;align-items: center;justify-content: center;}
+#AIBtn svg{width: 1.2rem;height: 1.2rem;}
+#AIBtn:hover{background: var(--5);}
+
 /* api.js */
 #publicShaderList { display: flex; flex-direction: column; gap: 10px; }
 .shader-card { border: 0.2px solid var(--4); padding: 8px; border-radius:2px;background: var(--3); }
