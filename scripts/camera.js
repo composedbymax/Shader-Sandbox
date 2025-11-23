@@ -301,7 +301,6 @@ void main() {
             requestAnimationFrame(() => this.forceAnimationReset());
         }
         openModal() {
-            this.modal.remove();
             (document.fullscreenElement ||
             document.webkitFullscreenElement ||
             document.mozFullScreenElement ||

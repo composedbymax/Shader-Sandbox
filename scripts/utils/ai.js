@@ -16,6 +16,8 @@
         <option value="deepseek/deepseek-r1-0528-qwen3-8b:free">deepseek-r1-qwen3-8b</option>
         <option value="deepseek/deepseek-r1:free">deepseek-r1</option>
         <option value="deepseek/deepseek-r1-distill-llama-70b:free">deepseek-r1-distill-llama-70b</option>
+        <option value="tngtech/deepseek-r1t-chimera:free">deepseek-r1t-chimera</option>
+        <option value="tngtech/deepseek-r1t2-chimera:free">deepseek-r1t2-chimera</option>
         <option value="google/gemma-3-12b-it:free">gemma-3-12b-it</option>
         <option value="google/gemma-3-27b-it:free">gemma-3-27b-it</option>
         <option value="google/gemma-3-4b-it:free">gemma-3-4b-it</option>
@@ -47,8 +49,6 @@
         <option value="qwen/qwen3-4b:free">qwen3-4b</option>
         <option value="qwen/qwen2.5-vl-32b-instruct:free">qwen2.5-vl-32b-instruct</option>
         <option value="qwen/qwen3-coder:free">qwen3-coder</option>
-        <option value="tngtech/deepseek-r1t-chimera:free">deepseek-r1t-chimera</option>
-        <option value="tngtech/deepseek-r1t2-chimera:free">deepseek-r1t2-chimera</option>
         <option value="z-ai/glm-4.5-air:free">glm-4.5-air</option>
       </select>
       <textarea id="aiPrompt" placeholder="Ask for an edit or describe a new shader idea..."></textarea>
@@ -205,4 +205,7 @@ Do not include any explanation, just the shader code between the tags.`;
       sendBtn.click();
     }
   });
+  document.addEventListener('fullscreenchange', () =>
+    (document.fullscreenElement || document.body).appendChild(btn)
+  );
 })();
