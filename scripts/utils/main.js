@@ -1,5 +1,14 @@
 !function() {
     let e = !1;
+    const key = '01z7L6a';
+    function decrypt(encoded) {
+        const data = atob(encoded);
+        let result = '';
+        for (let i = 0; i < data.length; i++) {
+            result += String.fromCharCode(data.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+        }
+        return JSON.parse(result);
+    }
     function n() {
         const e = document.getElementById("loader-overlay");
         e && e.remove();
@@ -24,7 +33,8 @@
                 console.warn('Could not load protected scripts');
                 return [];
             }
-            const data = await response.json();
+            const encrypted = await response.json();
+            const data = decrypt(encrypted.data);
             return data.scripts || [];
         } catch (error) {
             console.warn('Error loading protected scripts:', error);
@@ -64,7 +74,7 @@
             "scripts/sequencer.js",
             "scripts/syntax.js",
             "scripts/onboarding.js",
-            "scripts/offlinesave.js"
+            "scripts/offlinesave.js",
         ];
         const protectedScripts = await loadProtectedScripts();
         const build = [...baseScripts, ...protectedScripts];
