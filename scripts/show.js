@@ -3,58 +3,71 @@
     let isPerformanceMode = false;
     let originalStyles = new Map();
     let originalClasses = new Map();
+    let wasEditorsVisible = false;
     function enterPerformanceMode() {
-        const elementsToHide = [
-            '#editors',
-            '#divider',
-            '#fsBtn',
-            '#lint',
-            '.lbtn',
-            '#shaderWindow'
-        ];
-        elementsToHide.forEach(selector => {
-            const elements = document.querySelectorAll(selector);
-            elements.forEach(element => {
-                originalStyles.set(element, element.style.display);
-                element.classList.add('performance-mode-hidden');
-            });
-        });
-        const canvas = document.getElementById('glcanvas');
-        const previewPanel = document.getElementById('preview-panel');
-        const app = document.getElementById('app');
-        if (canvas && previewPanel && app) {
-            originalStyles.set('canvas', {
-                width: canvas.style.width,
-                height: canvas.style.height,
-                position: canvas.style.position,
-                top: canvas.style.top,
-                left: canvas.style.left,
-                zIndex: canvas.style.zIndex
-            });
-            originalStyles.set('previewPanel', {
-                width: previewPanel.style.width,
-                height: previewPanel.style.height,
-                position: previewPanel.style.position,
-                top: previewPanel.style.top,
-                left: previewPanel.style.left,
-                zIndex: previewPanel.style.zIndex
-            });
-            originalStyles.set('app', {
-                overflow: app.style.overflow
-            });
-            originalClasses.set(canvas, canvas.className);
-            originalClasses.set(previewPanel, previewPanel.className);
-            originalClasses.set(app, app.className);
-            originalClasses.set(document.body, document.body.className);
-            canvas.classList.add('performance-mode-canvas');
-            previewPanel.classList.add('performance-mode-preview');
-            app.classList.add('performance-mode-app');
-            document.body.classList.add('performance-mode-body');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            window.dispatchEvent(new Event('resize'));
+        const editors = document.getElementById('editors');
+        wasEditorsVisible = editors && editors.style.display !== 'none';
+        if (wasEditorsVisible && window.toggleEditors) {
+            window.toggleEditors();
         }
-        isPerformanceMode = true;
+        setTimeout(() => {
+            const elementsToHide = [
+                '#editors',
+                '#divider',
+                '#fsBtn',
+                '#lint',
+                '.lbtn',
+                '#shaderWindow'
+            ];
+            elementsToHide.forEach(selector => {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(element => {
+                    originalStyles.set(element, element.style.display);
+                    element.classList.add('performance-mode-hidden');
+                });
+            });
+            const canvas = document.getElementById('glcanvas');
+            const previewPanel = document.getElementById('preview-panel');
+            const app = document.getElementById('app');
+            if (canvas && previewPanel && app) {
+                originalStyles.set('canvas', {
+                    width: canvas.style.width,
+                    height: canvas.style.height,
+                    position: canvas.style.position,
+                    top: canvas.style.top,
+                    left: canvas.style.left,
+                    zIndex: canvas.style.zIndex
+                });
+                originalStyles.set('previewPanel', {
+                    width: previewPanel.style.width,
+                    height: previewPanel.style.height,
+                    position: previewPanel.style.position,
+                    top: previewPanel.style.top,
+                    left: previewPanel.style.left,
+                    zIndex: previewPanel.style.zIndex
+                });
+                originalStyles.set('app', {
+                    overflow: app.style.overflow,
+                    gridTemplateColumns: app.style.gridTemplateColumns
+                });
+                originalClasses.set(canvas, canvas.className);
+                originalClasses.set(previewPanel, previewPanel.className);
+                originalClasses.set(app, app.className);
+                originalClasses.set(document.body, document.body.className);
+                canvas.classList.add('performance-mode-canvas');
+                previewPanel.classList.add('performance-mode-preview');
+                app.classList.add('performance-mode-app');
+                document.body.classList.add('performance-mode-body');
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                if (window.resizeCanvas) {
+                    window.resizeCanvas();
+                } else {
+                    window.dispatchEvent(new Event('resize'));
+                }
+            }
+            isPerformanceMode = true;
+        }, 20);
     }
     function exitPerformanceMode() {
         originalStyles.forEach((originalDisplay, element) => {
@@ -86,10 +99,24 @@
             Object.assign(previewPanel.style, previewStyles);
         }
         if (app && originalStyles.has('app')) {
-            app.style.overflow = originalStyles.get('app').overflow;
+            const appStyles = originalStyles.get('app');
+            app.style.overflow = appStyles.overflow;
+            app.style.gridTemplateColumns = appStyles.gridTemplateColumns;
         }
-        window.dispatchEvent(new Event('resize'));
         isPerformanceMode = false;
+        setTimeout(() => {
+            if (wasEditorsVisible && window.toggleEditors) {
+                const editors = document.getElementById('editors');
+                if (editors && editors.style.display === 'none') {
+                    window.toggleEditors();
+                }
+            }
+            if (window.resizeCanvas) {
+                window.resizeCanvas();
+            } else {
+                window.dispatchEvent(new Event('resize'));
+            }
+        }, 20);
     }
     function togglePerformanceMode() {
         if (isPerformanceMode) {

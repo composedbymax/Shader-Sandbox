@@ -240,7 +240,11 @@ function rebuildProgram() {
     gl.linkProgram(p);
     if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
         const linkError = gl.getProgramInfoLog(p);
-        if (linkError.includes('FRAGMENT varying') && linkError.includes('does not match any VERTEX varying')) {
+        if (
+            linkError.includes('FRAGMENT varying') &&
+            (linkError.includes('does not match any VERTEX varying') ||
+            linkError.includes('has static-use in the frag shader, but is undeclared in the vert shader'))
+        ) {
             const match = linkError.match(/varying\s+(\w+)/);
             if (match) {
                 const varyingName = match[1];
@@ -432,4 +436,5 @@ window.render = render;
 window.editorsVisible = true;
 window.pauseAnimation = pauseAnimation;
 window.resumeAnimation = resumeAnimation;
+window.toggleEditors = toggleEditors;
 })();
