@@ -1,60 +1,62 @@
 <!-- 
- ____  _   _    _    ____   _____  ____  
-/ ___|| | | |  /_\  |  _ \ | ____||  _ \ 
-\___ \| |_| | / _ \ | | | ||  _|  | |_) |
-|____/|_| |_|/_/ \_\|____/ |_____||_| \_\
-
-                  Sandbox
-
+░█▀▀░█░█░█▀█░█▀▄░█▀▀░█▀▄    
+░▀▀█░█▀█░█▀█░█░█░█▀▀░█▀▄    
+░▀▀▀░▀░▀░▀░▀░▀▀░░▀▀▀░▀░▀    
+░█▀▀░█▀█░█▀█░█▀▄░█▀▄░█▀█░█░█
+░▀▀█░█▀█░█░█░█░█░█▀▄░█░█░▄▀▄
+░▀▀▀░▀░▀░▀░▀░▀▀░░▀▀░░▀▀▀░▀░▀
 Created By Max Warren
 https://max.x10.mx/
 -->
-<?php require '../session.php' ?>
+<?php
+ob_start();
+require '../session.php'
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>CODEVANILLA - SHADER</title>
+  <title>MW - SHADER</title>
   <meta charset="UTF-8">
-  <meta name="description" content="A browser-based GLSL editor for writing, previewing, and exporting real-time WebGL shaders with audio-reactive support, video recording, and full HTML export">
-  <meta name="keywords" content="GLSL, WebGL, shader editor, live coding, Max, browser shader tool, WebGL editor, visual coding, audio reactive shader">
+  <meta name="description" content="A browser-based animation editor for writing, previewing, recording, and exporting WebGL WebGPU and JS animations">
+  <meta name="keywords" content="GLSL, WebGL, shader editor, live coding, Max, browser shader tool, WebGL editor, animation coding, audio reactive shader, WebGPU, Render, Coding Sandbox, animation, audio reactive, record">
   <meta name="author" content="github.com/composedbymax">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#252525">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="GLSL Editor">
+  <meta name="apple-mobile-web-app-title" content="Shader Sandbox">
   <meta name="format-detection" content="telephone=no">
-  <meta name="application-name" content="GLSL Editor">
+  <meta name="application-name" content="Shader Sandbox">
   <meta name="HandheldFriendly" content="true">
   <meta name="apple-touch-fullscreen" content="yes">
-  <link rel="icon" sizes="192x192" href="/assets/img/icon-192.png">
-  <link rel="icon" sizes="512x512" href="/assets/img/icon-512.png">
-  <link rel="apple-touch-icon" href="/assets/img/icon-192.png">
-  <link rel="apple-touch-startup-image" href="/assets/img/icon-512.png">
+  <link rel="icon" sizes="192x192" href="/_assets/img/icon-192.png">
+  <link rel="icon" sizes="512x512" href="/_assets/img/icon-512.png">
+  <link rel="apple-touch-icon" href="/_assets/img/icon-192.png">
+  <link rel="apple-touch-startup-image" href="/_assets/img/icon-512.png">
   <meta name="msapplication-TileColor" content="#252525">
-  <meta name="msapplication-TileImage" content="/assets/img/icon-192.png">
-  <link rel="shortcut icon" href="/favicon.ico">
+  <meta name="msapplication-TileImage" content="/_assets/img/icon-192.png">
   <meta name="robots" content="index, nofollow">
   <meta name="referrer" content="no-referrer">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="GLSL Editor Application">
-  <meta name="twitter:description" content="Write and preview GLSL shaders in real-time. Audio reactive support, WebGL, and full HTML export.">
-  <meta name="twitter:image" content="https://max.wuaze.com/assets/img/glsl.jpeg">
+  <meta name="twitter:title" content="Shader Sandbox">
+  <meta name="twitter:description" content="A browser-based animation editor for writing, previewing, recording, and exporting WebGL WebGPU and JS animations">
+  <meta name="twitter:image" content="https://max.x10.mx/_assets/img/shader.webp">
   <meta name="twitter:site" content="@composedbymax">
-  <meta property="og:title" content="GLSL Editor Application" />
+  <meta property="og:title" content="Shader Sandbox" />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://max.wuaze.com/glsl" />
-  <meta property="og:image" content="https://max.wuaze.com/assets/img/glsl.jpeg" />
-  <meta property="og:description" content="An interactive GLSL editor for experimenting with shaders directly in your browser." />
-  <meta property="og:site_name" content="GLSL Editor by Max Wuaze" />
+  <meta property="og:url" content="https://max.x10.mx/shader" />
+  <meta property="og:image" content="https://max.x10.mx/_assets/img/shader.webp" />
+  <meta property="og:description" content=" browser-based animation editor for writing, previewing, recording, and exporting WebGL WebGPU and JS animations" />
+  <meta property="og:site_name" content="Shader Sandbox" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self';script-src 'self' 'unsafe-inline' 'unsafe-eval';worker-src 'self' blob:;style-src 'self' 'unsafe-inline';img-src 'self' data:;connect-src 'self';font-src 'self';object-src 'none';media-src 'self' blob:;">
   <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
-  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(self), camera=(), fullscreen=(self), clipboard-read=(self), clipboard-write=(self)">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(self), camera=(self), fullscreen=(self), clipboard-read=(self), clipboard-write=(self)">
   <meta http-equiv="X-XSS-Protection" content="1; mode=block">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <script>window.userLoggedIn = <?php echo isset($_SESSION['user']) ? 'true' : 'false'; ?>;window.userRole = <?php echo isset($_SESSION['user_role']) ? json_encode($_SESSION['user_role']) : 'null'; ?>;</script>
+  <link rel="preload" as="script" href="/auth/check.js.php">
+  <script src="/auth/check.js.php"></script>
   <script>"serviceWorker"in navigator&&navigator.serviceWorker.register("/shader/sw.js",{scope:"/shader/"});</script>
   <link rel="preload" as="script" href="scripts/utils/cover.js">
   <link rel="preload" href="css/style.css" as="style">
