@@ -79,7 +79,7 @@
     if (!query) return showInitialMessage();
     resultsContainer.innerHTML = `<div class="initial-message"><div class="spinner">⟳</div><p>Searching...</p></div>`;
     try {
-      const res = await fetch(`/shader/api/find.php?q=${encodeURIComponent(query)}`);
+      const res = await fetch(`api/find.php?q=${encodeURIComponent(query)}`);
       const { success, results, error } = await res.json();
       success ? displayResults(results) : showError(error || 'Search failed');
     } catch {

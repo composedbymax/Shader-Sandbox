@@ -1,5 +1,5 @@
 (function () {
-    const PROXY_URL = './api/proxy.php';
+    const PROXY_URL = 'api/proxy.php';
     let currentPage = 0;
     async function fetchGLSLSandboxShaders() {
         const container = document.getElementById('publicShaderList');
