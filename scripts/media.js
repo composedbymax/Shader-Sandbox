@@ -445,15 +445,44 @@ void main() {
     updateActiveEffectsList();
     updateShaderCode();
   };
-  function handleMediaFile(file) {
+  async function handleMediaFile(file) {
     const isVideo = file.type.startsWith('video/');
-    const isImage = file.type.startsWith('image/');
+    let isImage = file.type.startsWith('image/');
+    const isHeic = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
     const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (isImage && !allowedImageTypes.includes(file.type)) {
+    if (isHeic) {
+      try {
+        if (typeof heic2any === 'undefined') {
+          await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = '/shader/scripts/utils/heic2any.min.js';
+            script.onload = resolve;
+            script.onerror = () => reject(new Error('Failed to load heic2any library'));
+            document.head.appendChild(script);
+          });
+        }
+        window.showToast('Converting HEIC image...', 'info');
+        const convertedBlob = await heic2any({
+          blob: file,
+          toType: 'image/jpeg',
+          quality: 0.9
+        });
+        file = new File([convertedBlob], file.name.replace(/\.heic$/i, '.jpg').replace(/\.heif$/i, '.jpg'), {
+          type: 'image/jpeg'
+        });
+        isImage = true;
+        window.showToast('HEIC conversion complete', 'success');
+      } catch (error) {
+        console.error('HEIC conversion error:', error);
+        window.showToast(`Failed to convert HEIC image: ${error.message}`, 'error');
+        return;
+      }
+    }
+    if (isImage && !allowedImageTypes.includes(file.type) && !isHeic) {
       window.showToast(`Unsupported image format: ${file.name}`, 'error');
       return;
     }
-    if (!isVideo && !isImage) {
+    if (!isVideo && !isImage && !isHeic) {
       window.showToast(`Unsupported media type: ${file.name}`, 'error');
       return;
     }
