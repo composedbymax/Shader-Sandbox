@@ -10,9 +10,11 @@
     if (fsEl && !fsEl.contains(uploadBtn)) {
       fsEl.appendChild(uploadBtn);
       fsEl.appendChild(fileInput);
+      fsEl.appendChild(editToggle);
     } else if (!fsEl) {
       document.body.appendChild(uploadBtn);
       document.body.appendChild(fileInput);
+      document.body.appendChild(editToggle);
     }
   });
   const uploadBtn = createEl('button', {
@@ -25,13 +27,93 @@
     type: 'file',
     accept: '.html,.js,.frag,.vert,.vs,.fs,.wgsl,.txt'
   });
+  const editToggle = createEl('button', {
+    id: 'editFileToggle',
+    textContent: 'Edit File',
+    title: 'Enable direct file editing with File System Access API'
+  });
+  editToggle.style.display = 'none';
+  let fileHandle = null;
+  let editMode = false;
   const vertEditor = document.getElementById('vertCode');
   const fragEditor = document.getElementById('fragCode');
   const vertNameEl = document.getElementById('vertFileName');
   const fragNameEl = document.getElementById('fragFileName');
+  const fsAccessSupported = 'showOpenFilePicker' in window;
+  let hoverTimeout;
+  const showToggle = () => {
+    if (fsAccessSupported) {
+      clearTimeout(hoverTimeout);
+      editToggle.style.display = 'block';
+    }
+  };
+  const hideToggle = () => {
+    hoverTimeout = setTimeout(() => {
+      if (!editMode) {
+        editToggle.style.display = 'none';
+      }
+    }, 300);
+  };
+  uploadBtn.addEventListener('mouseenter', showToggle);
+  uploadBtn.addEventListener('mouseleave', hideToggle);
+  uploadBtn.addEventListener('touchstart', showToggle);
+  uploadBtn.addEventListener('touchend', () => setTimeout(hideToggle, 2000));
+  editToggle.addEventListener('mouseenter', () => clearTimeout(hoverTimeout));
+  editToggle.addEventListener('mouseleave', hideToggle);
+  editToggle.addEventListener('click', async () => {
+    if (!editMode) {
+      try {
+        const [handle] = await window.showOpenFilePicker({
+          types: [{
+            description: 'Shader Files',
+            accept: {
+              'text/*': ['.html', '.js', '.frag', '.vert', '.vs', '.fs', '.wgsl', '.txt']
+            }
+          }],
+          multiple: false
+        });
+        fileHandle = handle;
+        const file = await handle.getFile();
+        const text = await file.text();
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (ext === 'wgsl') loadWGSL(text, file.name);
+        else if (ext === 'frag' || ext === 'fs') loadFragment(text, file.name);
+        else if (ext === 'vert' || ext === 'vs') loadVertex(text, file.name);
+        else if (ext === 'html') loadHTML(text, file.name);
+        else if (ext === 'js') loadJS(text, file.name);
+        editMode = true;
+        editToggle.textContent = 'Save File';
+        editToggle.style.background = 'var(--5)';
+        uploadBtn.textContent = 'Close';
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('File access error:', err);
+        }
+      }
+    } else if (fileHandle) {
+      try {
+        const writable = await fileHandle.createWritable();
+        const content = vertEditor.value + '\n\n' + fragEditor.value;
+        await writable.write(content);
+        await writable.close();
+        console.log('File saved successfully');
+      } catch (err) {
+        console.error('File save error:', err);
+      }
+    }
+  });
   uploadBtn.addEventListener('click', () => {
-    fileInput.value = '';
-    fileInput.click();
+    if (editMode) {
+      editMode = false;
+      fileHandle = null;
+      editToggle.textContent = 'Edit File';
+      editToggle.style.background = '';
+      uploadBtn.textContent = 'Upload';
+      editToggle.style.display = 'none';
+    } else {
+      fileInput.value = '';
+      fileInput.click();
+    }
   });
   fileInput.addEventListener('change', () => {
     const file = fileInput.files[0];
