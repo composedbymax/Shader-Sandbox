@@ -91,6 +91,13 @@
     `;
     document.body.appendChild(btn);
   btn.addEventListener('click', () => {
+    if (!window.editorsVisible && typeof window.toggleEditors === 'function') {
+        window.toggleEditors();
+    }
+    if (modal.style.display === 'flex') {
+      modal.style.display = 'none';
+      return;
+    }
     promptInput.value = '';
     responseArea.textContent = '';
     responseArea.classList.remove('show');

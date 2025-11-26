@@ -193,6 +193,7 @@ function toggleEditors() {
         fsBtn.title = 'Show Editors (2 quick clicks for fullscreen)';
         app.style.gridTemplateColumns = '1fr auto 1fr';
     }
+    try {window.editorsVisible = editorsVisible;} catch (e) {}
     setTimeout(resizeCanvas, 10);
 }
 function compileShader(src, type) {
