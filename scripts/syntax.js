@@ -73,16 +73,16 @@
         restoreSelectionFromOffsets(editor, selStart, selEnd);
       }
     }, 100);
-    editor.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
+    editor.addEventListener('beforeinput', (e) => {
+      if (e.inputType === 'insertParagraph') {
         e.preventDefault();
         const [selStart, selEnd] = getSelectionCharacterOffsets(editor);
         let raw = editor.innerText.replace(/\r\n/g, '\n');
-        raw = raw.slice(0, selStart) + '\n' + raw.slice(selEnd);
-        textarea.value = raw;
-        renderHighlightedCode(editor, raw);
+        const updated = raw.slice(0, selStart) + "\n" + raw.slice(selEnd);
+        textarea.value = updated;
+        renderHighlightedCode(editor, updated);
         restoreSelectionFromOffsets(editor, selStart + 1, selStart + 1);
-        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        textarea.dispatchEvent(new Event("input", { bubbles: true }));
       }
     });
     ['dragover','dragleave'].forEach(evt => 
