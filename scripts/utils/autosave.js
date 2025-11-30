@@ -296,25 +296,14 @@ self.onmessage = async function(e) {
             textContent: 'Yes, Load Data' 
         }, 'autosave-btn autosave-btn-yes');
         const buttonContainer = create('div', {}, 'autosave-button-container', [noBtn, yesBtn]);
-        const dialog = create('div', {}, 'autosave-dialog', [title, message, buttonContainer]);
+        const dialog = create('div', {}, 'autosave-dialog', [
+            title,
+            message,
+            buttonContainer
+        ]);
         overlay.appendChild(dialog);
-        const handleKey = e => {
-            if (e.key === 'Enter') restoreEditors(data);
-            if (e.key === 'Enter' || e.key === 'Escape') {
-                overlay.remove();
-                document.removeEventListener('keydown', handleKey);
-            }
-        };
-        document.addEventListener('keydown', handleKey);
-        noBtn.onclick = () => overlay.remove();
-        yesBtn.onclick = () => { restoreEditors(data); overlay.remove(); };
-        const handleEscape = e => {
-            if (e.key === 'Escape') {
-                overlay.remove();
-                document.removeEventListener('keydown', handleEscape);
-            }
-        };
-        document.addEventListener('keydown', handleEscape);
+        noBtn.onclick = () => {overlay.remove();};
+        yesBtn.onclick = () => {estoreEditors(data);overlay.remove();};
         document.body.appendChild(overlay);
     }
     function getTimeAgo(timestamp) {

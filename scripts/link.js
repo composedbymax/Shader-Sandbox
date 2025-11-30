@@ -64,7 +64,7 @@
     const data = {v: vert, f: frag, t: title};
     const compressed = compressString(JSON.stringify(data));
     const baseUrl = window.location.origin + window.location.pathname;
-    const shareUrl = `${baseUrl}?s=${compressed}`;
+    const shareUrl = `${baseUrl}#s=${compressed}`;
     copyToClipboard(shareUrl).then(() => {
       if (btn) btn.textContent = 'Copied!';
       setTimeout(() => { if (btn) btn.textContent = orig; }, 2e3);
@@ -109,7 +109,9 @@
     return false;
   }
   async function loadShaderFromUrl() {
-    const p = new URLSearchParams(window.location.search), c = p.get('s');
+    const hash = window.location.hash.slice(1);
+    const p = new URLSearchParams(hash);
+    const c = p.get('s');
     if (!c) return false;
     try {
       const js = decompressString(c);
@@ -119,7 +121,7 @@
       if (vertTA && data.v) vertTA.value = data.v;
       if (fragTA && data.f) fragTA.value = data.f;
       if (titleEl && data.t) titleEl.value = data.t;
-      window.history.replaceState({}, document.title, window.location.origin + window.location.pathname);
+      window.history.replaceState({}, document.title, window.location.href.split('#')[0]);
       const vert = data.v||'', frag = data.f||'', isWGSL = looksLikeWGSL(vert, frag);
       if (isWGSL) {
         if (typeof window.toggleWebGPU === 'function') {
