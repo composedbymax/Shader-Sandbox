@@ -24,62 +24,60 @@
         `;
         container.appendChild(paginationTop);
         const pageNumber = document.getElementById('pageNumber');
-        pageNumber.addEventListener('dblclick', () => {
-            const input = document.createElement('input');
-            input.type = 'number';
-            input.min = '1';
-            input.value = currentPage + 1;
-            input.className = 'page-input';
-            input.style.cssText = 'width: 60px; padding: 4px; text-align: center; background: var(--3); color: var(--l); border: 1px solid var(--4); border-radius: 2px;';
-            pageNumber.replaceWith(input);
-            input.focus();
-            input.select();
-            const handlePageJump = () => {
-                const newPage = parseInt(input.value) - 1;
-                if (newPage >= 0 && !isNaN(newPage)) {
-                    currentPage = newPage;
+            pageNumber.addEventListener('dblclick', () => {
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.min = '1';
+                input.value = currentPage + 1;
+                input.className = 'page-input';
+                pageNumber.replaceWith(input);
+                input.focus();
+                input.select();
+                const handlePageJump = () => {
+                    const newPage = parseInt(input.value) - 1;
+                    if (newPage >= 0 && !isNaN(newPage)) {
+                        currentPage = newPage;
+                        fetchGLSLSandboxShaders();
+                    } else {
+                        const span = document.createElement('span');
+                        span.className = 'pi-pg-n';
+                        span.id = 'pageNumber';
+                        span.textContent = `Page ${currentPage + 1}`;
+                        input.replaceWith(span);
+                    }
+                };
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        handlePageJump();
+                    }
+                });
+                input.addEventListener('blur', handlePageJump);
+            });
+            data.shaders.forEach(shader => {
+                const card = createPublicShaderCard({
+                    title: `Sandbox #${shader.id}`,
+                    user: 'GLSL Sandbox',
+                    preview: `${PROXY_URL}?type=image&path=${encodeURIComponent(shader.thumb)}`,
+                    token: shader.id,
+                    sandbox: true
+                });
+                container.appendChild(card);
+            });
+            document.getElementById('prevSandboxPage').onclick = () => {
+                if (currentPage > 0) {
+                    currentPage--;
                     fetchGLSLSandboxShaders();
-                } else {
-                    const span = document.createElement('span');
-                    span.className = 'pi-pg-n';
-                    span.id = 'pageNumber';
-                    span.textContent = `Page ${currentPage + 1}`;
-                    input.replaceWith(span);
                 }
             };
-            input.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    handlePageJump();
-                }
-            });
-            input.addEventListener('blur', handlePageJump);
-        });
-        data.shaders.forEach(shader => {
-            const card = createPublicShaderCard({
-                title: `Sandbox #${shader.id}`,
-                user: 'GLSL Sandbox',
-                preview: `${PROXY_URL}?type=image&path=${encodeURIComponent(shader.thumb)}`,
-                token: shader.id,
-                sandbox: true
-            });
-            container.appendChild(card);
-        });
-        
-        document.getElementById('prevSandboxPage').onclick = () => {
-            if (currentPage > 0) {
-                currentPage--;
+            document.getElementById('nextSandboxPage').onclick = () => {
+                currentPage++;
                 fetchGLSLSandboxShaders();
-            }
-        };
-        document.getElementById('nextSandboxPage').onclick = () => {
-            currentPage++;
-            fetchGLSLSandboxShaders();
-        };
-    } catch (err) {
-        console.error('Error loading GLSL Sandbox shaders:', err);
-        container.innerHTML = `<div style="color:#ff6961;">Error: ${err.message}</div>`;
+            };
+        } catch (err) {
+            console.error('Error loading GLSL Sandbox shaders:', err);
+            container.innerHTML = `<div style="color:#ff6961;">Error: ${err.message}</div>`;
+        }
     }
-}
     window.loadPublicShader = async function (token) {
         const isSandbox = typeof token === 'string' && /^\d+(\.\d+)?$/.test(token);
         if (!isSandbox) {
@@ -139,10 +137,13 @@
         const savedState = localStorage.getItem('useSandboxAPI');
         if (savedState === 'true') {
             checkbox.checked = true;
+            currentPage = 0;
+            fetchGLSLSandboxShaders();
         }
         checkbox.addEventListener('change', (e) => {
             localStorage.setItem('useSandboxAPI', e.target.checked);
             if (e.target.checked) {
+                currentPage = 0;
                 fetchGLSLSandboxShaders();
             } else {
                 if (window.fetchPublicShaders) window.fetchPublicShaders();
@@ -154,4 +155,5 @@
     } else {
         addSandboxToggle();
     }
+    window.fetchGLSLSandboxShaders = fetchGLSLSandboxShaders;
 })();

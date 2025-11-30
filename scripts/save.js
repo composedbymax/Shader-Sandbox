@@ -175,6 +175,13 @@
     if (tab === "public") {
       const sandbox = document.getElementById("useSandboxAPI");
       if (sandbox && sandbox.checked) {
+        if (window.fetchGLSLSandboxShaders) {
+          window.fetchGLSLSandboxShaders();
+        } else if (typeof fetchGLSLSandboxShaders === 'function') {
+          fetchGLSLSandboxShaders();
+        } else {
+          fetchPublicShaders();
+        }
       } else {
         fetchPublicShaders();
       }
@@ -470,4 +477,5 @@
   window.enableAllLoadButtons = enableAllLoadButtons;
   window.disableAllLoadButtons = disableAllLoadButtons;
   window.loadShaderData = loadShaderData;
+  window.fetchPublicShaders = fetchPublicShaders;
 })();
