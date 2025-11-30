@@ -2,52 +2,84 @@
     const PROXY_URL = 'api/proxy.php';
     let currentPage = 0;
     async function fetchGLSLSandboxShaders() {
-        const container = document.getElementById('publicShaderList');
-        if (!container) return;
-        container.innerHTML = '<div>Loading GLSL Sandbox shaders...</div>';
-        try {
-            const response = await fetch(`${PROXY_URL}?type=gallery&page=${currentPage}`);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
-            if (!data.shaders || data.shaders.length === 0) {
-                container.innerHTML = '<div>No shaders found.</div>';
-                return;
-            }
-            container.innerHTML = '';
-            const paginationTop = document.createElement('div');
-            paginationTop.className = 'pagination';
-            paginationTop.innerHTML = `
-                <button class="sbtn" id="prevSandboxPage" ${currentPage === 0 ? 'disabled' : ''}>◀ Previous</button>
-                <span style="color:#dadada; margin:0 10px;">Page ${currentPage + 1}</span>
-                <button class="sbtn" id="nextSandboxPage">Next ▶</button>
-            `;
-            container.appendChild(paginationTop);
-            data.shaders.forEach(shader => {
-                const card = createPublicShaderCard({
-                    title: `Sandbox #${shader.id}`,
-                    user: 'GLSL Sandbox',
-                    preview: `${PROXY_URL}?type=image&path=${encodeURIComponent(shader.thumb)}`,
-                    token: shader.id,
-                    sandbox: true
-                });
-                container.appendChild(card);
-            });
-            document.getElementById('prevSandboxPage').onclick = () => {
-                if (currentPage > 0) {
-                    currentPage--;
+    const container = document.getElementById('publicShaderList');
+    if (!container) return;
+    container.innerHTML = '<div>Loading GLSL Sandbox shaders...</div>';
+    try {
+        const response = await fetch(`${PROXY_URL}?type=gallery&page=${currentPage}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        if (!data.shaders || data.shaders.length === 0) {
+            container.innerHTML = '<div>No shaders found.</div>';
+            return;
+        }
+        container.innerHTML = '';
+        const paginationTop = document.createElement('div');
+        paginationTop.className = 'pagination';
+        paginationTop.innerHTML = `
+            <button class="sbtn" id="prevSandboxPage" ${currentPage === 0 ? 'disabled' : ''}>◀ Previous</button>
+            <span class="pi-pg-n" id="pageNumber">Page ${currentPage + 1}</span>
+            <button class="sbtn" id="nextSandboxPage">Next ▶</button>
+        `;
+        container.appendChild(paginationTop);
+        const pageNumber = document.getElementById('pageNumber');
+        pageNumber.addEventListener('dblclick', () => {
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.min = '1';
+            input.value = currentPage + 1;
+            input.className = 'page-input';
+            input.style.cssText = 'width: 60px; padding: 4px; text-align: center; background: var(--3); color: var(--l); border: 1px solid var(--4); border-radius: 2px;';
+            pageNumber.replaceWith(input);
+            input.focus();
+            input.select();
+            const handlePageJump = () => {
+                const newPage = parseInt(input.value) - 1;
+                if (newPage >= 0 && !isNaN(newPage)) {
+                    currentPage = newPage;
                     fetchGLSLSandboxShaders();
+                } else {
+                    const span = document.createElement('span');
+                    span.className = 'pi-pg-n';
+                    span.id = 'pageNumber';
+                    span.textContent = `Page ${currentPage + 1}`;
+                    input.replaceWith(span);
                 }
             };
-            document.getElementById('nextSandboxPage').onclick = () => {
-                currentPage++;
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handlePageJump();
+                }
+            });
+            input.addEventListener('blur', handlePageJump);
+        });
+        data.shaders.forEach(shader => {
+            const card = createPublicShaderCard({
+                title: `Sandbox #${shader.id}`,
+                user: 'GLSL Sandbox',
+                preview: `${PROXY_URL}?type=image&path=${encodeURIComponent(shader.thumb)}`,
+                token: shader.id,
+                sandbox: true
+            });
+            container.appendChild(card);
+        });
+        
+        document.getElementById('prevSandboxPage').onclick = () => {
+            if (currentPage > 0) {
+                currentPage--;
                 fetchGLSLSandboxShaders();
-            };
-        } catch (err) {
-            console.error('Error loading GLSL Sandbox shaders:', err);
-            container.innerHTML = `<div style="color:#ff6961;">Error: ${err.message}</div>`;
-        }
+            }
+        };
+        document.getElementById('nextSandboxPage').onclick = () => {
+            currentPage++;
+            fetchGLSLSandboxShaders();
+        };
+    } catch (err) {
+        console.error('Error loading GLSL Sandbox shaders:', err);
+        container.innerHTML = `<div style="color:#ff6961;">Error: ${err.message}</div>`;
     }
+}
     window.loadPublicShader = async function (token) {
         const isSandbox = typeof token === 'string' && /^\d+(\.\d+)?$/.test(token);
         if (!isSandbox) {
