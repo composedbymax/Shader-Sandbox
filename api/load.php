@@ -3,7 +3,6 @@ include '../../check_auth.php';
 header('Content-Type: application/json');
 $key = '01z7L6a';
 if (!empty($_SESSION['user'])) {
-    $users = include __DIR__ . '/../../auth/users.php';
     if (isset($users[$_SESSION['user']])) {
         $response = [
             'success' => true,

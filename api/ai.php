@@ -26,7 +26,7 @@ $options = [
                      "Authorization: Bearer $apiKey\r\n",
         'method'  => 'POST',
         'content' => json_encode($data),
-        'timeout' => 15
+        'timeout' => 60
     ]
 ];
 $context  = stream_context_create($options);
