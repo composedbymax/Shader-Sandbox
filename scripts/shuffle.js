@@ -155,6 +155,7 @@
     loadLocalShaderByIndex(localShaderIndex);
   }
   function handleKeyDown(event) {
+    if (!event.key) return;
     const key = event.key.toLowerCase();
     keysPressed.add(key);
     if (keysPressed.has('p')) {
@@ -177,6 +178,7 @@
     }
   }
   function handleKeyUp(event) {
+    if (!event || typeof event.key !== 'string') return;
     const key = event.key.toLowerCase();
     keysPressed.delete(key);
   }

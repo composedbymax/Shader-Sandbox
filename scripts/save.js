@@ -220,7 +220,7 @@
     if (!title) return showToast("Please provide a title", 'warning');
     if (!img) return showToast("Please upload a preview image", 'warning');
     compressImage(img, (compressedDataUrl) => {
-      fetch('../shader/api/save.php', {
+      fetch('api/save.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -256,7 +256,7 @@
       }
     }
     console.log('Fetch');
-    fetch('../shader/api/fetch.php?action=list')
+    fetch('api/fetch.php?action=list')
       .then(r => r.json())
       .then(async list => {
         if (list.error) {
@@ -277,7 +277,7 @@
     console.log('DB FETCH');
     try {
       await shaderCache.clearCache();
-      const response = await fetch('../shader/api/fetch.php?action=list');
+      const response = await fetch('api/fetch.php?action=list');
       const list = await response.json();
       if (list.error) {
         container.innerHTML = `<div>Error: ${list.error}</div>`;
@@ -318,7 +318,7 @@
     div.innerHTML = `
       <div class="shader-card-header">
         <strong class="shader-title" title="${shader.title}">${shader.title}</strong>
-        <span class="shader-author">by ${shader.user}</span>
+        <span class="shader-author ellips">by ${shader.user}</span>
       </div>
       <img src="${shader.preview}" class="img"><br>
       <button class="ldbtn ellips" data-public-token="${shader.token}">Load</button>
@@ -361,7 +361,7 @@
       enableAllLoadButtons();
     }
     try {
-      const res = await fetch(`../shader/api/fetch.php?action=load&token=${token}`);
+      const res = await fetch(`api/fetch.php?action=load&token=${token}`);
       const shader = await res.json();
       if (shader.error) {
         handleShaderError(shader.error);

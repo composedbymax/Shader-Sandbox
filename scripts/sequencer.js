@@ -2,7 +2,7 @@
   if (document.getElementById('pm-root')) return;
   const toggleBtn = document.createElement('button');
   toggleBtn.id = 'pm-toggle-btn';
-  toggleBtn.title = 'Performance Manager';
+  toggleBtn.title = 'Sequencer';
   toggleBtn.innerHTML = `
     <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none"
         xmlns="http://www.w3.org/2000/svg">
@@ -52,7 +52,7 @@
   const mainVertTA = document.getElementById('vertCode');
   const mainFragTA = document.getElementById('fragCode');
   if (!mainVertTA || !mainFragTA) {
-    console.warn('Performance Manager: main shader textareas (#vertCode or #fragCode) not found. The manager will still load but playback will do nothing.');
+    console.warn('Main shader textareas (#vertCode or #fragCode) not found. The manager will still load but playback will do nothing.');
   }
   let steps = [];
   let isPlaying = false;
