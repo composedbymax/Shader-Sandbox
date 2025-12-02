@@ -212,7 +212,7 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
     };
     const initWebGPU = async () => {
         if (!navigator.gpu) {
-            console.error('WebGPU not supported');
+            console.error('WebGPU not supported. See: https://max.x10.mx/test');
             return false;
         }
         try {
@@ -581,16 +581,24 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
     };
     const init = async () => {
         if (!navigator.gpu) {
-            console.log('WebGPU not supported');
+            console.error('WebGPU not supported. See: https://max.x10.mx/test');
             return;
         }
-        const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
-        if (!adapter) {
-            console.log('WebGPU not supported');
+        try {
+            const adapter = await navigator.gpu.requestAdapter({ 
+                powerPreference: 'high-performance' 
+            });
+            if (!adapter) {
+                console.error('WebGPU not supported. See: https://max.x10.mx/test');
+                return;
+            }
+            const toggleBtn = createWebGPUToggle();
+            toggleBtn.addEventListener('click', toggleWebGPU);
+        } catch (error) {
+            console.error('WebGPU not supported. See: https://max.x10.mx/test');
+            console.error('Details:', error.message);
             return;
         }
-        const toggleBtn = createWebGPUToggle();
-        toggleBtn.addEventListener('click', toggleWebGPU);
     };
     window.webgpuState = {
         isWebGPUMode: () => isWebGPUMode,
