@@ -307,7 +307,7 @@
 /* link.js */
 /* NONE */
 
-/* media.js */
+/* media.js + drop.js*/
 #mediaUploadBtn{z-index: 2;cursor: pointer;position: absolute;top: 42px;right: 10px;background: var(--d);color: var(--6);border: none;width: 2rem;height: 2rem;padding: 0.25rem;display: flex;align-items: center;justify-content: center;}
 #mediaUploadBtn svg{width: 1.25rem;height: 1.25rem;}
 #mediaUploadBtn:hover{background: var(--5);}

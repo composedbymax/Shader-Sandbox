@@ -382,11 +382,9 @@ class AudioReactive {
     this.modal.querySelector('#info-toggle').title = 'Show Documentation';
     this.barAnimation();
   }
-  
   hide() {
     this.modal.style.display = 'none';
   }
-  
   barAnimation() {
     const loop = () => {
       if (this.modal.style.display === 'none') return;
@@ -409,7 +407,6 @@ class AudioReactive {
     };
     requestAnimationFrame(loop);
   }
-  
   cleanupMicrophone() {
     if (this.micStream) {
       this.micStream.getTracks().forEach(track => track.stop());
@@ -453,6 +450,48 @@ class AudioReactive {
     } catch (error) {
       this.cleanupMicrophone();
       throw error;
+    }
+  }
+  async loadFileFromDrop(file) {
+    this.clearFileAudio();
+    const oldAudio = this.modal.querySelector('#file-audio');
+    if (oldAudio && oldAudio.parentNode) {
+      oldAudio.parentNode.removeChild(oldAudio);
+    }
+    const audioEl = this.EL('audio', {
+      id: 'file-audio',
+      controls: false,
+      src: URL.createObjectURL(file)
+    }, 'audio-reactive-file-audio');
+    const dropZone = this.modal.querySelector('#file-drop');
+    dropZone.appendChild(audioEl);
+    const clearBtn = this.modal.querySelector('#clear-file-btn');
+    clearBtn.style.display = 'block';
+    try {
+      if (!this.audioContext || this.audioContext.state === 'closed') {
+        this.audioContext = new AudioContext();
+      }
+      if (this.audioContext.state === 'suspended') {
+        await this.audioContext.resume();
+      }
+      this.cleanupMicrophone();
+      this.analyser = this.audioContext.createAnalyser();
+      this.analyser.fftSize = 512;
+      this.analyser.smoothingTimeConstant = .3;
+      this.fileSource = this.audioContext.createMediaElementSource(audioEl);
+      this.fileSource.connect(this.analyser);
+      this.analyser.connect(this.audioContext.destination);
+      this.isActive = true;
+      this.fileActive = true;
+      this.button.style.backgroundColor = 'var(--a)';
+      this.updateMicrophoneUI(false, 'Audio file active - Click to switch to microphone');
+      await new Promise((resolve, reject) => {
+        audioEl.addEventListener('loadedmetadata', resolve, { once: true });
+        audioEl.addEventListener('error', reject, { once: true });
+      });
+    } catch (error) {
+      console.error('Failed to load audio file from drop:', error);
+      this.clearFile();
     }
   }
   async loadFile(file) {

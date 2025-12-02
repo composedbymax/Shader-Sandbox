@@ -7,6 +7,7 @@ const ASSETS = [
     "/shader/scripts/banner.js",
     "/shader/scripts/camera.js",
     "/shader/scripts/color.js",
+    "/shader/scripts/drop.js",
     "/shader/scripts/export.js",
     "/shader/scripts/flowchart.js",
     "/shader/scripts/format.js",

@@ -10,7 +10,6 @@
   let animationId = null;
   let activeEffects = [];
   let currentView = 'upload';
-  const previewPanel = document.getElementById('preview-panel');
   function toGLSLFloat(value) {
     const num = parseFloat(value);
     return isNaN(num) ? '0.0' : (num % 1 === 0 ? num + '.0' : num.toString());
@@ -296,13 +295,6 @@ void main() {
     </div>
   `;
   document.body.appendChild(modal);
-  const dragOverlay = document.createElement('div');
-  dragOverlay.id = 'mediaDragOverlay';
-  dragOverlay.innerHTML = `
-    <div>Drop media to upload</div>
-    <div class="filename"></div>
-  `;
-  previewPanel.appendChild(dragOverlay);
   const dropButton = modal.querySelector('#mediaDropButton');
   const preview = modal.querySelector('#mediaPreview');
   const closeBtn = modal.querySelector('#mediaCloseBtn');
@@ -319,8 +311,6 @@ void main() {
   const videoControls = modal.querySelector('#videoControls');
   const playPauseBtn = modal.querySelector('#playPauseBtn');
   const videoProgress = modal.querySelector('#videoProgress');
-  const filenameDiv = dragOverlay.querySelector('.filename');
-  let dragCounter = 0;
   let selectedEffectType = null;
   uploadTab.addEventListener('click', () => {
     currentView = 'upload';
@@ -542,6 +532,8 @@ void main() {
       gl.uniform1i(loc, 0);
     }
   }
+  window.mediaUpload = window.mediaUpload || {};
+  window.mediaUpload.onFileReceived = handleMediaFile;
   playPauseBtn.addEventListener('click', () => {
     if (!mediaElement || mediaType !== 'video') return;
     if (mediaElement.paused) {
@@ -604,64 +596,12 @@ void main() {
   });
   dropButton.addEventListener('drop', e => {
     const file = e.dataTransfer.files[0];
-    if (!file) return;
-    const isVideo = file.type.startsWith('video/');
-    const isImage = file.type.startsWith('image/');
-    const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (isImage && !allowedImageTypes.includes(file.type)) {
-      window.showToast(`Unsupported image format: ${file.name}`, 'error');
-      return;
-    }
-    if (!isVideo && !isImage) {
-      window.showToast(`Unsupported media type: ${file.name}`, 'error');
-      return;
-    }
-    handleMediaFile(file);
-  });
-  function isOverPreviewPanel(e) {
-    const rect = previewPanel.getBoundingClientRect();
-    return (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom);
-  }
-  window.addEventListener('dragenter', e => {
-    e.preventDefault();
-    dragCounter++;
-    if (
-      modal.style.display !== 'flex' &&
-      e.dataTransfer.items &&
-      [...e.dataTransfer.items].some(item => 
-        item.kind === 'file' && (item.type.startsWith('image/') || item.type.startsWith('video/'))
-      ) &&
-      isOverPreviewPanel(e)
-    ) {
-      const mediaItem = [...e.dataTransfer.items].find(item => 
-        item.kind === 'file' && (item.type.startsWith('image/') || item.type.startsWith('video/'))
-      );
-      filenameDiv.textContent = mediaItem?.getAsFile()?.name || 'Media file';
-      dragOverlay.style.display = 'flex';
-    }
-  });
-  window.addEventListener('dragover', e => e.preventDefault());
-  window.addEventListener('dragleave', e => {
-    e.preventDefault();
-    dragCounter = Math.max(dragCounter - 1, 0);
-    if (!isOverPreviewPanel(e) || dragCounter === 0) {
-      dragOverlay.style.display = 'none';
-    }
-  });
-  window.addEventListener('drop', e => {
-    e.preventDefault();
-    dragOverlay.style.display = 'none';
-    dragCounter = 0;
-    const file = e.dataTransfer.files[0];
-    if (file && (file.type.startsWith('image/') || file.type.startsWith('video/')) && isOverPreviewPanel(e)) {
-      handleMediaFile(file);
-      modal.style.display = 'flex';
-    }
+    if (file) handleMediaFile(file);
   });
   populateEffectsGrid();
   document.addEventListener('fullscreenchange', () => {
     const parent = document.fullscreenElement || document.body;
-    [uploadBtn, modal, dragOverlay].forEach(el => parent.appendChild(el));
+    [uploadBtn, modal].forEach(el => parent.appendChild(el));
   });
   window.addEventListener('beforeunload', () => {
     if (mediaElement && mediaType === 'video') {
