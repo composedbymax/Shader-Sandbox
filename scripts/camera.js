@@ -49,47 +49,50 @@ void main() {
 }`;
         }
         createUI() {
-            const previewPanel = document.getElementById('preview-panel');
-            this.cameraBtn = document.createElement('button');
-            this.cameraBtn.className = 'camera-btn';
-            this.cameraBtn.innerHTML = `${CAMERA_SVG}`;
-            this.cameraBtn.title = 'Webcam Support';
-            previewPanel.appendChild(this.cameraBtn);
-            this.modal = document.createElement('div');
-            this.modal.className = 'camera-modal';
-            this.modal.innerHTML = `
-                <div class="camera-content">
-                    <div class="camera-header">
-                        <h3>Webcam Setup</h3>
-                        <button class="camera-close">×</button>
-                    </div>
-                    <video class="camera-preview" id="cameraPreview" autoplay muted playsinline></video>
-                    <div class="camera-controls">
-                        <select class="camera-device-select" id="cameraDeviceSelect">
-                            <option value="">Select Camera...</option>
-                        </select>
-                        <div class="camera-auto-inject">
-                            <label>
-                                <input type="checkbox" id="autoInjectCheckbox" checked>
-                                Auto-inject camera preview shader
-                            </label>
+            if (!this.cameraBtn) {
+                this.cameraBtn = document.createElement('button');
+                this.cameraBtn.className = 'camera-btn';
+                this.cameraBtn.innerHTML = `${CAMERA_SVG}`;
+                this.cameraBtn.title = 'Webcam Support';
+                document.body.appendChild(this.cameraBtn);
+            }
+            if (!this.modal) {
+                this.modal = document.createElement('div');
+                this.modal.className = 'camera-modal';
+                this.modal.innerHTML = `
+                    <div class="camera-content">
+                        <div class="camera-header">
+                            <h3>Webcam Setup</h3>
+                            <button class="camera-close">×</button>
                         </div>
-                        <div class="camera-buttons">
-                            <button class="camera-control-btn" id="startCameraBtn">Start Camera</button>
-                            <button class="camera-control-btn stop" id="stopCameraBtn" disabled>Stop Camera</button>
+                        <video class="camera-preview" id="cameraPreview" autoplay muted playsinline></video>
+                        <div class="camera-controls">
+                            <select class="camera-device-select" id="cameraDeviceSelect">
+                                <option value="">Select Camera...</option>
+                            </select>
+                            <div class="camera-auto-inject">
+                                <label>
+                                    <input type="checkbox" id="autoInjectCheckbox" checked>
+                                    Auto-inject camera preview shader
+                                </label>
+                            </div>
+                            <div class="camera-buttons">
+                                <button class="camera-control-btn" id="startCameraBtn">Start Camera</button>
+                                <button class="camera-control-btn stop" id="stopCameraBtn" disabled>Stop Camera</button>
+                            </div>
+                            <div class="camera-status" id="cameraStatus">Camera not active</div>
                         </div>
-                        <div class="camera-status" id="cameraStatus">Camera not active</div>
+                        <div class="camera-info">
+                            <h4>Using Camera in Shaders:</h4>
+                            <p>Once enabled, use <code>uniform sampler2D u_camera;</code> to access the webcam texture in your fragment shader.</p>
+                            <p>Example: <code>vec4 camColor = texture2D(u_camera, uv);</code></p>
+                            <p><strong>Note:</strong> Camera texture coordinates are flipped horizontally by default for mirror effect.</p>
+                            <p><strong>Auto-inject:</strong> When enabled, starting the camera will temporarily replace your fragment shader with a camera preview. Stopping the camera restores your original code.</p>
+                        </div>
                     </div>
-                    <div class="camera-info">
-                        <h4>Using Camera in Shaders:</h4>
-                        <p>Once enabled, use <code>uniform sampler2D u_camera;</code> to access the webcam texture in your fragment shader.</p>
-                        <p>Example: <code>vec4 camColor = texture2D(u_camera, uv);</code></p>
-                        <p><strong>Note:</strong> Camera texture coordinates are flipped horizontally by default for mirror effect.</p>
-                        <p><strong>Auto-inject:</strong> When enabled, starting the camera will temporarily replace your fragment shader with a camera preview. Stopping the camera restores your original code.</p>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(this.modal);
+                `;
+                document.body.appendChild(this.modal);
+            }
             this.preview = document.getElementById('cameraPreview');
             this.deviceSelect = document.getElementById('cameraDeviceSelect');
             this.startBtn = document.getElementById('startCameraBtn');
