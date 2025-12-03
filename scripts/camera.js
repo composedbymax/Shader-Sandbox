@@ -105,9 +105,10 @@ void main() {
             this.autoInjectCheckbox = document.getElementById('autoInjectCheckbox');
             document.addEventListener('fullscreenchange', () => {
                 const fsParent = document.fullscreenElement || document.body;
-                if (!fsParent.contains(this.cameraBtn)) {
-                    fsParent.appendChild(this.cameraBtn);
+                if (this.cameraBtn.parentNode) {
+                    this.cameraBtn.parentNode.removeChild(this.cameraBtn);
                 }
+                fsParent.appendChild(this.cameraBtn);
             });
         }
         setupEventListeners() {

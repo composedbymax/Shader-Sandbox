@@ -479,7 +479,10 @@
     document.addEventListener(event, () => {
       [toggleBtn, root].forEach(el => {
         const container = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || document.body;
-        if (!container.contains(el)) container.appendChild(el);
+        if (el.parentNode) {
+          el.parentNode.removeChild(el);
+        }
+        container.appendChild(el);
       });
     });
   });

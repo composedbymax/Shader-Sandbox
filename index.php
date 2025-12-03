@@ -132,6 +132,7 @@ uniform float u_volume;
 uniform float u_treble;
 uniform float u_mid;
 uniform float u_bass;
+uniform vec2 u_scroll;
 uniform vec2 mouse;
 vec2 axel = vec2(1.0);
 float hash(vec2 p) {
@@ -172,7 +173,7 @@ void main() {
     axel = mouse;
     vec2 uv = (gl_FragCoord.xy / u_resolution) * 2.0 - 1.0 + (axel * 0.1);
     uv.x *= u_resolution.x / u_resolution.y;
-    vec3 ro = vec3(0.0, 2.0, u_time * 5.0);
+    vec3 ro = vec3(0.0, 2.0, u_time *5.0 - (0.1*u_scroll));
     vec3 lookAt = vec3(0.0, 2.0, ro.z + 5.0);
     vec3 forward = normalize(lookAt - ro);
     vec3 right = normalize(cross(vec3(0.0,1.0,0.0), forward));
