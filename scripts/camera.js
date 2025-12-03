@@ -54,7 +54,10 @@ void main() {
                 this.cameraBtn.className = 'camera-btn';
                 this.cameraBtn.innerHTML = `${CAMERA_SVG}`;
                 this.cameraBtn.title = 'Webcam Support';
-                document.body.appendChild(this.cameraBtn);
+            }
+            const parent = document.fullscreenElement || document.body;
+            if (!parent.contains(this.cameraBtn)) {
+                parent.appendChild(this.cameraBtn);
             }
             if (!this.modal) {
                 this.modal = document.createElement('div');
@@ -100,6 +103,12 @@ void main() {
             this.status = document.getElementById('cameraStatus');
             this.closeBtn = this.modal.querySelector('.camera-close');
             this.autoInjectCheckbox = document.getElementById('autoInjectCheckbox');
+            document.addEventListener('fullscreenchange', () => {
+                const fsParent = document.fullscreenElement || document.body;
+                if (!fsParent.contains(this.cameraBtn)) {
+                    fsParent.appendChild(this.cameraBtn);
+                }
+            });
         }
         setupEventListeners() {
             this.cameraBtn.addEventListener('click', () => this.openModal());
