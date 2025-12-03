@@ -56,7 +56,7 @@
   };
   uploadBtn.addEventListener('mouseenter', showToggle);
   uploadBtn.addEventListener('mouseleave', hideToggle);
-  uploadBtn.addEventListener('touchstart', showToggle);
+  uploadBtn.addEventListener('touchstart', showToggle, { passive: true });
   uploadBtn.addEventListener('touchend', () => setTimeout(hideToggle, 2000));
   editToggle.addEventListener('mouseenter', () => clearTimeout(hoverTimeout));
   editToggle.addEventListener('mouseleave', hideToggle);
