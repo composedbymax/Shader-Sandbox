@@ -26,18 +26,25 @@
     if (!dataTransfer.items) return false;
     return [...dataTransfer.items].some(item => {
       if (item.kind !== 'file') return false;
-      if (item.type.startsWith('image/') || 
-          item.type.startsWith('video/') || 
-          item.type.startsWith('audio/')) {
+      const t = item.type.toLowerCase();
+      if (t.startsWith('image/') || t.startsWith('video/') || t.startsWith('audio/')) {
         return true;
       }
-      if (item.type === 'text/html' || 
-          item.type === 'text/plain' || 
-          item.type === 'application/javascript' ||
-          item.type === 'text/javascript') {
+      if (
+        t === 'text/html' ||
+        t === 'text/plain' ||
+        t === 'application/javascript' ||
+        t === 'text/javascript'
+      ) {
         return true;
       }
-      if (item.type === '' || !item.type) {
+      if (
+        t === 'application/octet-stream' ||
+        t.startsWith('model/')
+      ) {
+        return true;
+      }
+      if (t === '' || !t) {
         return true;
       }
       return false;
@@ -70,6 +77,10 @@
       return 'audio';
     }
     const ext = file.name.split('.').pop().toLowerCase();
+    const modelExtensions = ['obj', 'ply', 'stl', 'off'];
+    if (modelExtensions.includes(ext)) {
+      return '3dmodel';
+    }
     const codeExtensions = ['html', 'js', 'frag', 'vert', 'vs', 'fs', 'wgsl', 'txt'];
     if (codeExtensions.includes(ext)) {
       return 'code';
@@ -84,12 +95,15 @@
   window.mediaUpload.isModalOpen = function() {
     const modal = document.getElementById('mediaModal');
     const audioModal = document.querySelector('.audio-reactive-modal');
+    const threedModal = document.getElementById('threedModalBg');
     return (modal && modal.style.display === 'flex') || 
-           (audioModal && audioModal.style.display === 'block');
+           (audioModal && audioModal.style.display === 'block') ||
+           (threedModal && threedModal.classList.contains('show'));
   };
   window.mediaUpload.onFileReceived = null;
   window.mediaUpload.onCodeFileReceived = null;
   window.mediaUpload.onAudioFileReceived = null;
+  window.mediaUpload.on3DModelReceived = null;
   window.mediaUpload.showDragOverlay = function(show, filename = '') {
     if (show) {
       filenameDiv.textContent = filename || 'File';
@@ -101,9 +115,26 @@
   function handleFile(file) {
     if (!file) return;
     const fileType = getFileType(file);
+    
     if (fileType === 'unknown') {
       if (window.showToast) {
         window.showToast(`Unsupported file type: ${file.name}`, 'error');
+      }
+      return;
+    }
+    if (fileType === '3dmodel') {
+      if (window.mediaUpload.on3DModelReceived) {
+        window.mediaUpload.on3DModelReceived(file);
+      } else {
+        const fileInput = document.getElementById('objFileInput');
+        if (fileInput) {
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(file);
+          fileInput.files = dataTransfer.files;
+          fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+        } else {
+          console.warn('No 3D model file handler registered and objFileInput not found');
+        }
       }
       return;
     }
@@ -180,6 +211,11 @@
           const modal = document.getElementById('mediaModal');
           if (modal) {
             modal.style.display = 'flex';
+          }
+        } else if (fileType === '3dmodel') {
+          const modalBg = document.getElementById('threedModalBg');
+          if (modalBg) {
+            modalBg.classList.add('show');
           }
         }
       }

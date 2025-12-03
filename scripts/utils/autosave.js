@@ -303,7 +303,7 @@ self.onmessage = async function(e) {
         ]);
         overlay.appendChild(dialog);
         noBtn.onclick = () => {overlay.remove();};
-        yesBtn.onclick = () => {estoreEditors(data);overlay.remove();};
+        yesBtn.onclick = () => {restoreEditors(data);overlay.remove();};
         document.body.appendChild(overlay);
     }
     function getTimeAgo(timestamp) {
