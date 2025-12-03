@@ -15,6 +15,7 @@ const ASSETS = [
     "/shader/scripts/info.js",
     "/shader/scripts/js.js",
     "/shader/scripts/keyboard.js",
+    "/shader/scripts/keyhelpers.js",
     "/shader/scripts/link.js",
     "/shader/scripts/media.js",
     "/shader/scripts/offlinesave.js",

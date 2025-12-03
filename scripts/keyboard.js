@@ -110,6 +110,12 @@
             keys: 'Option + V', 
             highlight: ['alt', 'v'],
             id: 'visualize'
+        },
+        {
+            desc: 'Delete one line and copy to clipboard', 
+            keys: 'Command + X', 
+            highlight: ['command', 'x'],
+            id: 'Cut'
         }
     ];
     if (window.userLoggedIn) {

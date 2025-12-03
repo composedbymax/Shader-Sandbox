@@ -75,6 +75,7 @@
             "scripts/syntax.js",
             "scripts/onboarding.js",
             "scripts/offlinesave.js",
+            "scripts/keyhelpers.js",
         ];
         const protectedScripts = await loadProtectedScripts();
         const build = [...baseScripts, ...protectedScripts];
