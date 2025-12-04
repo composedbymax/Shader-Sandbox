@@ -222,7 +222,7 @@
     }
   });
   document.addEventListener('fullscreenchange', () => {
-    const parent = document.fullscreenElement || document.body;
+    const parent = document.fullscreenElement || previewPanel;
     parent.appendChild(dragOverlay);
   });
   window.addEventListener('beforeunload', () => {
