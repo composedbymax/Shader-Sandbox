@@ -165,6 +165,9 @@ if (mouse.x > 0 && mouse.y > 0) {
             setTimeout(() => toggleMode(), 200);
             return;
         }
+        if (!jsMode && window.is3DModelActive?.()) {
+            window.deactivate3DModel?.();
+        }
         const toggleBtn = $('jsToggleBtn');
         const vertPanel = $('vertPanel');
         const fragPanel = $('fragPanel');

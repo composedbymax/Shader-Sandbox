@@ -82,6 +82,14 @@ function initModelLoader() {
         hide: () => modalBg.classList.remove("show"),
       };
     }
+    function ensureGLSLMode() {
+      const currentType = window.getCurrentAnimationType?.();
+      if (currentType && currentType !== 'webgl') {
+        window.switchToAnimationType?.('webgl');
+        return new Promise(resolve => setTimeout(resolve, 100));
+      }
+      return Promise.resolve();
+    }
     let originalShaderCode = {
       vertex: "",
       fragment: "",
@@ -121,6 +129,17 @@ void main() {
     : mix(base, timeColor * 0.3 + base, 0.3) * (ambient + diffuse) + vec3(1.0) * specular;
   gl_FragColor = vec4(color, 1.0);
 }`,
+    };
+    window.is3DModelActive = function() {
+      return window.objCanvasActive === true;
+    };
+    window.deactivate3DModel = function() {
+      if (scene) {
+        scene = null;
+      }
+      mesh = null;
+      switchToOriginalCanvas(UI);
+      window.objCanvasActive = false;
     };
     function storeOriginalShaderCode() {
       const vertCode = document.getElementById("vertCode");
@@ -520,11 +539,12 @@ void main() {
         });
       });
     }
-    UI.fileInput.addEventListener("change", (e) => {
+    UI.fileInput.addEventListener("change", async (e) => {
       const f = e.target.files[0];
       if (!f) return;
       UI.err.style.display = "none";
       UI.info.textContent = "Loading...";
+      await ensureGLSLMode();
       const ext = f.name.toLowerCase().split('.').pop();
       const isBinary = ['stl', 'ply'].includes(ext);
       const r = new FileReader();
