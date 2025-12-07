@@ -73,7 +73,6 @@
             "scripts/camera.js",
             "scripts/sequencer.js",
             "scripts/syntax.js",
-            "scripts/onboarding.js",
             "scripts/offlinesave.js",
             "scripts/keyhelpers.js",
         ];

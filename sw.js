@@ -19,7 +19,6 @@ const ASSETS = [
     "/shader/scripts/link.js",
     "/shader/scripts/media.js",
     "/shader/scripts/offlinesave.js",
-    "/shader/scripts/onboarding.js",
     "/shader/scripts/parse.js",
     "/shader/scripts/performance.js",
     "/shader/scripts/player.js",
