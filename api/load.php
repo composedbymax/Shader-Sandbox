@@ -10,7 +10,8 @@ if (!empty($_SESSION['user'])) {
                 'scripts/utils/find.js',
                 'scripts/utils/p2p.js',
                 'scripts/utils/api.js',
-                'scripts/utils/ai.js'
+                'scripts/utils/ai.js',
+                'css/member.css'
             ]
         ];
         echo json_encode(['data' => base64_encode(json_encode($response) ^ str_repeat($key, 100))]);

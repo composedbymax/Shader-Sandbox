@@ -78,13 +78,25 @@
         ];
         const protectedScripts = await loadProtectedScripts();
         const build = [...baseScripts, ...protectedScripts];
-        build.reduce(((n, r) => n.then(() => new Promise((e, n) => {
-            const o = document.createElement("script");
-            o.src = r;
-            o.onload = e;
-            o.onerror = () => n(new Error(`Failed to load ${r}`));
-            document.head.appendChild(o);
-        }))), Promise.resolve())
+        build.reduce((p, file) => 
+            p.then(() => new Promise((resolve, reject) => {
+                if (file.endsWith(".css")) {
+                    const link = document.createElement("link");
+                    link.rel = "stylesheet";
+                    link.href = file;
+                    link.onload = resolve;
+                    link.onerror = () => reject(new Error(`Failed to load ${file}`));
+                    document.head.appendChild(link);
+                } else {
+                    const script = document.createElement("script");
+                    script.src = file;
+                    script.onload = resolve;
+                    script.onerror = () => reject(new Error(`Failed to load ${file}`));
+                    document.head.appendChild(script);
+                }
+            })), 
+            Promise.resolve()
+        )
         .then(() => console.log("Initialized"))
         .catch(e => console.error(e))
         .finally(() => {
