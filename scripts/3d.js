@@ -544,6 +544,10 @@ void main() {
       if (!f) return;
       UI.err.style.display = "none";
       UI.info.textContent = "Loading...";
+      if (window.cameraSystem?.isActive) {
+        await window.cameraSystem.stopCamera();
+        await new Promise(resolve => setTimeout(resolve, 250));
+      }
       await ensureGLSLMode();
       const ext = f.name.toLowerCase().split('.').pop();
       const isBinary = ['stl', 'ply'].includes(ext);

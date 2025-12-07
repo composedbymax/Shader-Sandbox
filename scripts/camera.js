@@ -226,6 +226,11 @@ void main() {
         }
         async startCamera() {
             try {
+                const currentType = window.getCurrentAnimationType?.();
+                if (currentType && currentType !== 'webgl') {
+                    window.switchToAnimationType?.('webgl');
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
                 if (this.stream) {
                     this.stopCamera();
                 }

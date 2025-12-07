@@ -497,6 +497,10 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
         if (!isWebGPUMode && window.is3DModelActive?.()) {
             window.deactivate3DModel?.();
         }
+        if (!isWebGPUMode && window.cameraSystem?.isActive) {
+            await window.cameraSystem.stopCamera();
+            await new Promise(resolve => setTimeout(resolve, 250));
+        }
         const toggleBtn = document.getElementById('webgpuToggle');
         const setToggleState = (text, className) => {
             toggleBtn.textContent = text;

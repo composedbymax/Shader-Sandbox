@@ -168,6 +168,12 @@ if (mouse.x > 0 && mouse.y > 0) {
         if (!jsMode && window.is3DModelActive?.()) {
             window.deactivate3DModel?.();
         }
+        if (!jsMode && window.cameraSystem?.isActive) {
+            window.cameraSystem.stopCamera().then(() => {
+                setTimeout(() => toggleMode(), 250);
+            });
+            return;
+        }
         const toggleBtn = $('jsToggleBtn');
         const vertPanel = $('vertPanel');
         const fragPanel = $('fragPanel');

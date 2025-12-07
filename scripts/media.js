@@ -558,10 +558,28 @@ void main() {
     const percentage = clickX / rect.width;
     mediaElement.currentTime = percentage * mediaElement.duration;
   });
-  baseImportBtn.addEventListener('click', () => {
+  baseImportBtn.addEventListener('click', async () => {
+    const currentType = window.getCurrentAnimationType?.();
+    if (currentType && currentType !== 'webgl') {
+      window.switchToAnimationType?.('webgl');
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
+    if (window.cameraSystem?.isActive) {
+      await window.cameraSystem.stopCamera();
+      await new Promise(resolve => setTimeout(resolve, 250));
+    }
     activeEffects = [];
     updateActiveEffectsList();
     updateShaderCode();
+    await new Promise(resolve => setTimeout(resolve, 100));
+    if (window.rebuildProgram) {
+      window.rebuildProgram();
+    }
+    await new Promise(resolve => setTimeout(resolve, 100));
+    if (mediaElement && mediaTexture) {
+      setupMediaTexture();
+      updateMediaTexture();
+    }
   });
   applyEffectsBtn.addEventListener('click', () => {
     updateShaderCode();
