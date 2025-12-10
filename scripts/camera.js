@@ -432,7 +432,14 @@ void main() {
     } else {
         initCamera();
     }
-    window.addEventListener('beforeunload', () => {
+    window.addEventListener('beforeunload', (e) => {
+        if (window.cameraSystem && window.cameraSystem.isActive) {
+            if (window.cameraSystem.stream) {
+                window.cameraSystem.stream.getTracks().forEach(track => track.stop());
+            }
+        }
+    });
+    window.addEventListener('unload', () => {
         if (window.cameraSystem) {
             window.cameraSystem.destroy();
         }
