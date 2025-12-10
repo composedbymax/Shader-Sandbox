@@ -439,9 +439,11 @@ void main() {
             }
         }
     });
-    window.addEventListener('unload', () => {
-        if (window.cameraSystem) {
-            window.cameraSystem.destroy();
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden' && window.cameraSystem && window.cameraSystem.isActive) {
+            if (window.cameraSystem.stream) {
+                window.cameraSystem.stream.getTracks().forEach(track => track.stop());
+            }
         }
     });
 })();
