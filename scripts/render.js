@@ -122,10 +122,18 @@ canvas.addEventListener('touchstart', e => updateMouse(e, true, 'down'), { passi
 canvas.addEventListener('touchend', e => updateMouse(e, true, 'up'), { passive: false });
 canvas.addEventListener('wheel', e => {
     if (drag.type) return;
-    mouse.scrollDeltaX = e.deltaX;
-    mouse.scrollDeltaY = e.deltaY;
-    mouse.scrollX += e.deltaX;
-    mouse.scrollY += e.deltaY;
+    let scale = 1;
+    if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) {
+        scale = 16;
+    } else if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
+        scale = canvas.height;
+    }
+    const dx = e.deltaX * scale;
+    const dy = e.deltaY * scale;
+    mouse.scrollDeltaX += dx;
+    mouse.scrollDeltaY += dy;
+    mouse.scrollX += dx;
+    mouse.scrollY += dy;
     e.preventDefault();
 }, { passive: false });
 const togglePauseState = () => {
