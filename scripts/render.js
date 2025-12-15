@@ -26,8 +26,12 @@ let mouse = {
     clickX: 0,
     clickY: 0,
     isPressed: false,
-    lastClickTime: 0
-};
+    lastClickTime: 0,
+    scrollX: 0,
+    scrollY: 0,
+    scrollDeltaX: 0,
+    scrollDeltaY: 0
+}
 gl = canvas.getContext('webgl2');
 if (!gl) {
     console.warn('WebGL2 not available, falling back to WebGL1.');
@@ -116,6 +120,14 @@ canvas.addEventListener('mouseleave', () => { mouse.isPressed = false; });
 canvas.addEventListener('touchmove', e => updateMouse(e, true, 'move'), { passive: false });
 canvas.addEventListener('touchstart', e => updateMouse(e, true, 'down'), { passive: false });
 canvas.addEventListener('touchend', e => updateMouse(e, true, 'up'), { passive: false });
+canvas.addEventListener('wheel', e => {
+    if (drag.type) return;
+    mouse.scrollDeltaX = e.deltaX;
+    mouse.scrollDeltaY = e.deltaY;
+    mouse.scrollX += e.deltaX;
+    mouse.scrollY += e.deltaY;
+    e.preventDefault();
+}, { passive: false });
 const togglePauseState = () => {
     const shouldPause = document.hidden || !document.hasFocus();
     pauseOnBlurEnabled && (shouldPause ? pauseAnimation() : resumeAnimation());
@@ -363,6 +375,10 @@ function render() {
     setUniform(['u_mouse_click_time', 'uMouseClickTime', 'iMouseClickTime'], loc =>
         gl.uniform1f(loc, (performance.now() - mouse.lastClickTime) * 0.001)
     );
+    setUniform(['u_scroll', 'uScroll', 'iScroll'], loc => gl.uniform2f(loc, mouse.scrollX, mouse.scrollY));
+    setUniform(['u_scroll_delta', 'uScrollDelta', 'iScrollDelta'], loc => gl.uniform2f(loc, mouse.scrollDeltaX, mouse.scrollDeltaY));
+    mouse.scrollDeltaX *= 0.9;
+    mouse.scrollDeltaY *= 0.9;
     if (uniforms.uColor) {
         gl.uniform3f(uniforms.uColor.loc, 1.0, 1.0, 1.0);
     }
