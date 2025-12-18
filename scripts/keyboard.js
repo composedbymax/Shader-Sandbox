@@ -82,6 +82,12 @@
             id: 'focus'
         },
         { 
+            desc: 'Play / Pause loaded audio', 
+            keys: 'Option + P', 
+            highlight: ['alt', 'p'],
+            id: 'play'
+        },
+        { 
             desc: 'Performance mode (hide buttons)', 
             keys: 'Control + Shift + D', 
             highlight: ['ctrl', 'shift', 'd'],

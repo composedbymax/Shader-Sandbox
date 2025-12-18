@@ -324,4 +324,17 @@
   if (existingAudio) {
     initCustomPlayer(existingAudio);
   }
+  document.addEventListener('keydown', (e) => {
+    if (!e.altKey) return;
+    if (e.code !== 'KeyP') return;
+    e.preventDefault();
+    e.stopPropagation();
+    const audio = document.getElementById('file-audio');
+    if (!audio) return;
+    if (audio.paused) {
+      audio.play().catch(() => {});
+    } else {
+      audio.pause();
+    }
+  }, true);
 })();
