@@ -494,7 +494,7 @@ input, select{padding: 1rem;border-radius: 5px;border: 0px;width: 100%;backgroun
 /* show.js */
 .performance-mode-canvas{position: fixed;top: 0;left: 0;width: 100vw;height: 100vh;z-index: 99999999;}
 .performance-mode-preview{position: fixed;top: 0;left: 0;width: 100vw;height: 100vh;z-index: 99999998;}
-.performance-mode-body{overflow: hidden;}
+.performance-mode-body{overflow: hidden;cursor: none !important;}
 .performance-mode-app{overflow: hidden;}
 .performance-mode-hidden{display: none;}
 
