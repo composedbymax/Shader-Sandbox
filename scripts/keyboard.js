@@ -1,5 +1,12 @@
 (function() {
     'use strict';
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0 || 
+                  navigator.userAgent.toUpperCase().indexOf('MAC') >= 0;
+    const osKeys = {
+        modifier: isMac ? 'Cmd' : 'Win',
+        alt: isMac ? 'Opt' : 'Alt',
+        control: isMac ? 'Ctrl' : 'Ctrl'
+    };
     const keyboardLayout = [
         {
             row: 1,
@@ -49,13 +56,13 @@
         {
             row: 6,
             keys: [
-                { key: 'Ctrl', width: '4em', class: 'modifier', id: 'ctrl' }, 
-                { key: 'Win', width: '3em', class: 'modifier' },
-                { key: 'Alt', width: '3em', class: 'modifier', id: 'alt' }, 
+                { key: osKeys.control, width: '4em', class: 'modifier', id: 'ctrl' }, 
+                { key: osKeys.modifier, width: '3em', class: 'modifier', id: 'command' },
+                { key: osKeys.alt, width: '3em', class: 'modifier', id: 'alt' }, 
                 { key: 'Space', width: '18em' },
-                { key: 'Alt', width: '3em', class: 'modifier', id: 'alt-right' }, 
+                { key: osKeys.alt, width: '3em', class: 'modifier', id: 'alt-right' }, 
                 { key: 'Menu', width: '3em', class: 'modifier' },
-                { key: 'Ctrl', width: '4em', class: 'modifier', id: 'ctrl-right' },
+                { key: osKeys.control, width: '4em', class: 'modifier', id: 'ctrl-right' },
                 { key: '←', width: '3em', id: 'arrow-left' },
                 { key: 'UD', width: '3em', id: 'arrow-stack', isStack: true },
                 { key: '→', width: '3em', id: 'arrow-right' }
@@ -71,25 +78,25 @@
         },
         { 
             desc: 'Fullscreen/Open + Close Editor panel', 
-            keys: 'Control + F', 
-            highlight: ['ctrl', 's'],
+            keys: `${osKeys.control} + F`, 
+            highlight: ['ctrl', 'f'],
             id: 'Open'
         },
         { 
             desc: 'Enable / Disable Window Focus', 
-            keys: 'Control + P', 
+            keys: `${osKeys.control} + P`, 
             highlight: ['ctrl', 'p'],
             id: 'focus'
         },
         { 
             desc: 'Play / Pause loaded audio', 
-            keys: 'Option + P', 
+            keys: `${osKeys.alt} + P`, 
             highlight: ['alt', 'p'],
             id: 'play'
         },
         { 
             desc: 'Performance mode (hide buttons)', 
-            keys: 'Control + Shift + D', 
+            keys: `${osKeys.control} + Shift + D`, 
             highlight: ['ctrl', 'shift', 'd'],
             id: 'performance'
         },
@@ -107,32 +114,31 @@
         },
         { 
             desc: 'Format/minify code', 
-            keys: 'Option + M', 
+            keys: `${osKeys.alt} + M`, 
             highlight: ['alt', 'm'],
             id: 'format'
         },
         {
             desc: 'Visualize code with flowchart modal', 
-            keys: 'Option + V', 
+            keys: `${osKeys.alt} + V`, 
             highlight: ['alt', 'v'],
             id: 'visualize'
         },
         {
             desc: 'Delete one line and copy to clipboard', 
-            keys: 'Command + X', 
+            keys: `${osKeys.modifier} + X`, 
             highlight: ['command', 'x'],
             id: 'Cut'
         }
     ];
     if (window.userLoggedIn) {
-        shortcuts.push(
-        {
+        shortcuts.push({
             desc: 'Find code snippets', 
-            keys: 'Control + S', 
+            keys: `${osKeys.control} + S`, 
             highlight: ['ctrl', 's'],
             id: 'find'
-        }
-    );}
+        });
+    }
     function createHTML() {
         return `
         <div class="shortcut-modal" id="shortcut-modal">
@@ -302,7 +308,6 @@
                 document.querySelectorAll('.key.highlight').forEach(el => {
                     el.classList.remove('highlight');
                 });
-                
                 this.currentHighlight = null;
             }
         },
