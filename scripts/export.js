@@ -1,37 +1,31 @@
-const [app, previewPanel, vertTA, fragTA, vertFileBtn, fragFileBtn, vertFileName, fragFileName] = 
-    ['app', 'preview-panel', 'vertCode', 'fragCode', 'vertFileBtn', 'fragFileBtn', 'vertFileName', 'fragFileName'].map($);
-const downloadFile = (content, filename, type = 'text/plain') => {
+function downloadFile(content, filename, type = 'text/plain') {
     const blob = new Blob([content], { type });
     const url = URL.createObjectURL(blob);
     const a = Object.assign(document.createElement('a'), { href: url, download: filename });
     a.click();
     URL.revokeObjectURL(url);
-};
-const escapeTemplate = str => str.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${').replace(/\r?\n/g, '\\n');
-const handleFile = (file, ta, nameSpan) => {
+}
+function escapeTemplate(str) {
+    return str.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${').replace(/\r?\n/g, '\\n');
+}
+function handleFile(file, ta, nameSpan) {
     const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
     if (!['.txt', '.vert', '.vs', '.frag', '.fs', '.wgsl', '.js'].includes(ext)) return;
     const reader = new FileReader();
     reader.onload = e => { ta.value = e.target.result; rebuildProgram(); };
     reader.readAsText(file);
     if (nameSpan) nameSpan.textContent = file.name;
-};
-const setupFileInput = (btn, input, ta, nameSpan) => {
+}
+function setupFileInput(btn, input, ta, nameSpan) {
     btn.onclick = () => input.click();
     input.onchange = () => {
         if (nameSpan) nameSpan.textContent = input.files[0]?.name || '';
         if (input.files[0]) handleFile(input.files[0], ta);
     };
-};
-setupFileInput(vertFileBtn, vertFile, vertTA, vertFileName);
-setupFileInput(fragFileBtn, fragFile, fragTA, fragFileName);
-[vertTA, fragTA].forEach(ta => {
-    ['dragover', 'dragenter'].forEach(evt => ta.addEventListener(evt, e => e.preventDefault()));
-    ta.addEventListener('drop', e => {
-        e.preventDefault();
-        if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0], ta, ta === vertTA ? vertFileName : fragFileName);
-    });
-});
+}
+function exportShader(ext, content) {
+    downloadFile(content, `shader.${ext}`);
+}
 const templates = {
     js: jsSource => `<!DOCTYPE html>
 <html lang="en">
@@ -315,6 +309,9 @@ canvas { width: 100vw; height: 100vh; display: block; }
 </html>`
 };
 function exportFullHTML() {
+    const $ = window.$ || (id => document.getElementById(id));
+    const vertTA = $('vertCode');
+    const fragTA = $('fragCode');
     const isJSMode = window.jsCanvasState?.isJSMode();
     const isWebGPU = window.webgpuState?.isWebGPUMode();
     const vert = vertTA?.value || '';
@@ -331,13 +328,52 @@ function exportFullHTML() {
         downloadFile(templates.webgl(vert, frag), 'webgl-shader.html', 'text/html');
     }
 }
-const exportShader = (ext, content) => downloadFile(content, `shader.${ext}`);
 function addExportButtons() {
     if (document.querySelector('.export-added')) return;
+    const $ = window.$ || (id => document.getElementById(id));
+    const vertPanel = $('vertPanel');
+    const fragPanel = $('fragPanel');
+    const previewPanel = $('preview-panel');
+    const vertTA = $('vertCode');
+    const fragTA = $('fragCode');
+    const vertFile = $('vertFile');
+    const fragFile = $('fragFile');
+    const vertFileBtn = $('vertFileBtn');
+    const fragFileBtn = $('fragFileBtn');
+    const vertFileName = $('vertFileName');
+    const fragFileName = $('fragFileName');
+    if (!vertPanel || !fragPanel || !previewPanel || !vertTA || !fragTA) {
+        console.warn('Export buttons: Elements not ready yet');
+        return;
+    }
     document.body.classList.add('export-added');
+    if (vertFileBtn && vertFile && vertFileName) {
+        setupFileInput(vertFileBtn, vertFile, vertTA, vertFileName);
+    }
+    if (fragFileBtn && fragFile && fragFileName) {
+        setupFileInput(fragFileBtn, fragFile, fragTA, fragFileName);
+    }
+    [vertTA, fragTA].forEach(ta => {
+        ['dragover', 'dragenter'].forEach(evt => ta.addEventListener(evt, e => e.preventDefault()));
+        ta.addEventListener('drop', e => {
+            e.preventDefault();
+            if (e.dataTransfer.files[0]) {
+                handleFile(e.dataTransfer.files[0], ta, ta === vertTA ? vertFileName : fragFileName);
+            }
+        });
+    });
     const addBtn = (parent, title, onClick) => {
-        const btn = Object.assign(document.createElement('button'), { textContent: 'Export', title, onclick: onClick });
-        parent.querySelector('.panel-header').appendChild(btn);
+        const header = parent.querySelector('.panel-header');
+        if (!header) {
+            console.warn('Panel header not found for', parent.id);
+            return;
+        }
+        const btn = Object.assign(document.createElement('button'), { 
+            textContent: 'Export', 
+            title, 
+            onclick: onClick 
+        });
+        header.appendChild(btn);
     };
     addBtn(vertPanel, 'Export Vertex Shader', () => {
         const isJSMode = window.jsCanvasState?.isJSMode();
@@ -357,8 +393,9 @@ function addExportButtons() {
     fullBtn.classList.add('expbtn');
     previewPanel.appendChild(fullBtn);
 }
+window.addExportButtons = addExportButtons;
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', addExportButtons);
 } else {
-    addExportButtons();
+    setTimeout(addExportButtons, 0);
 }
