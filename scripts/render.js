@@ -71,20 +71,20 @@ gl.enable(gl.BLEND);
 gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 gl.clearColor(0.0, 0.0, 0.0, 1.0);
 gl.clear(gl.COLOR_BUFFER_BIT);
-function preprocessShader(src) {
-    const lines = src.split('\n');
-    const extensions = [];
-    const otherLines = [];
-    for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed.startsWith('#extension')) {
-            extensions.push(line);
+function preprocessShader(src, isFragment = false) {
+    if (isFragment && src.includes('fwidth')) {
+        const ext = gl.getExtension('OES_standard_derivatives');
+        if (!ext) {
+            console.warn('fwidth fallback injected (OES_standard_derivatives not available)');
+            return `#ifdef GL_OES_standard_derivatives
+#extension GL_OES_standard_derivatives : enable
+#else
+#define fwidth(x) (0.0)
+#endif
+${src}`;
         } else {
-            otherLines.push(line);
+            return `#extension GL_OES_standard_derivatives : enable\n${src}`;
         }
-    }
-    if (extensions.length > 0) {
-        return extensions.join('\n') + '\n' + otherLines.join('\n');
     }
     return src;
 }
@@ -96,7 +96,6 @@ const getPos = (e, isTouch = false) => {
         y: rect.height - (point.clientY - rect.top),
     };
 };
-
 const updateMouse = (e, isTouch = false, type) => {
     if (drag.type) return;
     const pos = getPos(e, isTouch);
@@ -248,7 +247,7 @@ function rebuildProgram() {
     if (program) gl.deleteProgram(program);
     const errors = [];
     const vs = compileShader(vertTA.value, gl.VERTEX_SHADER);
-    const fs = compileShader(fragTA.value, gl.FRAGMENT_SHADER);
+    const fs = compileShader(preprocessShader(fragTA.value, true), gl.FRAGMENT_SHADER);
     if (vs.error) errors.push('Vertex: ' + vs.error);
     if (fs.error) errors.push('Fragment: ' + fs.error);
     if (errors.length) {
@@ -394,10 +393,17 @@ function render() {
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     animationId = requestAnimationFrame(render);
 }
-window.addEventListener('load', () => {
+function init() {
     initSplit();
-    addExportButtons();
-});
+    if (typeof addExportButtons === 'function') {
+        addExportButtons();
+    }
+}
+if (document.readyState === 'loading') {
+    window.addEventListener('load', init);
+} else {
+    init();
+}
 window.addEventListener('resize', initSplit);
 ['mousedown', 'touchstart'].forEach(evt => {
     rowDivider.addEventListener(evt, e => {
@@ -462,4 +468,5 @@ window.editorsVisible = true;
 window.pauseAnimation = pauseAnimation;
 window.resumeAnimation = resumeAnimation;
 window.toggleEditors = toggleEditors;
+window.initApp = init;
 })();

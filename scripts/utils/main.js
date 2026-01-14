@@ -44,6 +44,7 @@
     async function r() {
         createLoader();
         const baseScripts = [
+            "scripts/drop.js",
             "scripts/switch.js",
             "scripts/save.js",
             "scripts/gpu.js",
@@ -97,7 +98,12 @@
             })), 
             Promise.resolve()
         )
-        .then(() => console.log("Initialized"))
+        .then(() => {
+            console.log("Initialized");
+            if (typeof window.initApp === 'function') {
+                window.initApp();
+            }
+        })
         .catch(e => console.error(e))
         .finally(() => {
             n();
