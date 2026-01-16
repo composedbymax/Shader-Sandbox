@@ -25,7 +25,14 @@
         "--b": "#1e293b",
         "--m": "#94a3b8",
         "--r": "#b91040",
-        "--rh": "rgba(227, 48, 98, 0.79)"
+        "--rh": "rgba(227, 48, 98, 0.79)",
+        "--token-comment": "#6A9955",
+        "--token-keyword": "#569CD6",
+        "--token-type": "#4EC9B0",
+        "--token-number": "#B5CEA8",
+        "--token-function": "#DCDCAA",
+        "--token-builtin": "#DCDCAA",
+        "--token-variable": "#9CDCFE"
       };
       this.fontOptions = [
         { name: "Courier New", value: "'Courier New', Courier, monospace" },
@@ -59,7 +66,15 @@
           "--l": "#f8fafc",
           "--m": "#94a3b8",
           "--r": "#b91040",
-          "--rh": "rgba(227, 48, 98, 1)"
+          "--rh": "rgba(227, 48, 98, 1)",
+          "--token-comment": "#6A9955",
+          "--token-keyword": "#569CD6",
+          "--token-type": "#4EC9B0",
+          "--token-number": "#B5CEA8",
+          "--token-function": "#DCDCAA",
+          "--token-builtin": "#DCDCAA",
+          "--token-variable": "#9CDCFE"
+
         },
         "DARK": {
           "--0": "rgba(0, 0, 0, 0.9)",
@@ -78,17 +93,24 @@
           "--b": "#1e293b",
           "--m": "#94a3b8",
           "--r": "rgba(199, 0, 0, 1)",
-          "--rh": "rgba(255, 20, 20, 0.84)"
+          "--rh": "rgba(255, 20, 20, 0.84)",
+          "--token-comment": "#6A9955",
+          "--token-keyword": "#569CD6",
+          "--token-type": "#4EC9B0",
+          "--token-number": "#B5CEA8",
+          "--token-function": "#DCDCAA",
+          "--token-builtin": "#DCDCAA",
+          "--token-variable": "#9CDCFE"
         },
         "LIGHT": {
           "--0": "rgba(255, 255, 255, 0.9)",
-          "--1": "#ffffff",
-          "--2": "rgba(245, 245, 245, 0.99)",
-          "--3": "rgba(186, 186, 186, 0.76)",
-          "--4": "rgba(220, 220, 220, 0.9)",
-          "--5": "rgba(223, 223, 223, 0.9)",
-          "--6": "rgba(27, 28, 28, 0.9)",
-          "--7": "rgba(113, 113, 113, 0.9)",
+          "--1": "rgba(255, 255, 255, 0.99)",
+          "--2": "rgba(217, 217, 217, 0.98)",
+          "--3": "rgba(186, 186, 186, 0.61)",
+          "--4": "rgba(174, 174, 174, 0.86)",
+          "--5": "rgba(156, 156, 156, 0.9)",
+          "--6": "rgba(9, 9, 9, 0.9)",
+          "--7": "rgba(37, 37, 37, 0.9)",
           "--d": "rgba(255, 255, 255, 0.23)",
           "--D": "rgba(78, 78, 78, 0.3)",
           "--l": "#0f172a",
@@ -97,7 +119,14 @@
           "--b": "#e2e8f0",
           "--m": "#475569",
           "--r": "rgba(199, 0, 0, 1)",
-          "--rh": "rgba(255, 20, 20, 0.84)"
+          "--rh": "rgba(255, 20, 20, 0.84)",
+          "--token-comment": "#1f6200",
+          "--token-keyword": "#003865",
+          "--token-type": "#006f59",
+          "--token-number": "#3ba800",
+          "--token-function": "#9e9e00",
+          "--token-builtin": "#a0a000",
+          "--token-variable": "#006ca6"
         }
       };
       this.init();
@@ -720,7 +749,6 @@
         section.style.display = "none";
       }
       localStorage.setItem("currentTheme", this.currentTheme);
-      
       const fontSelect = document.getElementById("font-select");
       if (fontSelect) {
         localStorage.setItem("currentFont", fontSelect.value);
