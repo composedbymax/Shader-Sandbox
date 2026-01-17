@@ -1,62 +1,85 @@
 <?php
 include '../../check_auth.php';
-define('CACHE_FILE', __DIR__ . '/api_cache.json');
+define('CACHE_DIR', __DIR__ . '/GsCache');
+define('CACHE_GALLERIES_DIR', CACHE_DIR . '/galleries');
+define('CACHE_SHADERS_DIR', CACHE_DIR . '/shaders');
+define('CACHE_IMAGES_DIR', CACHE_DIR . '/images');
 define('CACHE_ENABLED', true);
 class CacheManager {
-    private $cacheFile;
-    private $cache;
-    public function __construct($file) {
-        $this->cacheFile = $file;
-        $this->loadCache();
+    private $galleriesDir;
+    private $shadersDir;
+    private $imagesDir;
+    public function __construct() {
+        $this->galleriesDir = CACHE_GALLERIES_DIR;
+        $this->shadersDir = CACHE_SHADERS_DIR;
+        $this->imagesDir = CACHE_IMAGES_DIR;
+        $this->ensureDirectories();
     }
-    private function loadCache() {
-        if (file_exists($this->cacheFile)) {
-            $json = file_get_contents($this->cacheFile);
-            $this->cache = json_decode($json, true) ?? [];
-        } else {
-            $this->cache = [
-                'galleries' => [],
-                'shaders' => [],
-                'images' => []
-            ];
+    private function ensureDirectories() {
+        $dirs = [$this->galleriesDir, $this->shadersDir, $this->imagesDir];
+        foreach ($dirs as $dir) {
+            if (!is_dir($dir)) {
+                mkdir($dir, 0755, true);
+            }
         }
     }
-    private function saveCache() {
-        $json = json_encode($this->cache, JSON_PRETTY_PRINT);
-        file_put_contents($this->cacheFile, $json, LOCK_EX);
+    private function sanitizeFilename($name) {
+        return preg_replace('/[^a-zA-Z0-9._-]/', '_', $name);
     }
     public function getGallery($page) {
-        return $this->cache['galleries'][$page] ?? null;
+        $file = $this->galleriesDir . '/page_' . $page . '.json';
+        if (!file_exists($file)) {
+            return null;
+        }
+        $cachedAt = filemtime($file);
+        $data = json_decode(file_get_contents($file), true);
+        return [
+            'data' => $data,
+            'cached_at' => $cachedAt
+        ];
     }
     public function setGallery($page, $data) {
-        $this->cache['galleries'][$page] = [
-            'data' => $data,
-            'cached_at' => time()
-        ];
-        $this->saveCache();
+        $file = $this->galleriesDir . '/page_' . $page . '.json';
+        file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT), LOCK_EX);
     }
     public function getShader($id) {
-        return $this->cache['shaders'][$id] ?? null;
+        $filename = $this->sanitizeFilename($id);
+        $file = $this->shadersDir . '/' . $filename . '.json';
+        if (!file_exists($file)) {
+            return null;
+        }
+        $cachedAt = filemtime($file);
+        $data = file_get_contents($file);
+        return [
+            'data' => $data,
+            'cached_at' => $cachedAt
+        ];
     }
     public function setShader($id, $data) {
-        $this->cache['shaders'][$id] = [
-            'data' => $data,
-            'cached_at' => time()
-        ];
-        $this->saveCache();
+        $filename = $this->sanitizeFilename($id);
+        $file = $this->shadersDir . '/' . $filename . '.json';
+        file_put_contents($file, $data, LOCK_EX);
     }
     public function getImage($path) {
-        return $this->cache['images'][$path] ?? null;
-    }
-    public function setImage($path, $base64Data) {
-        $this->cache['images'][$path] = [
-            'data' => $base64Data,
-            'cached_at' => time()
+        $filename = $this->sanitizeFilename(basename($path));
+        $file = $this->imagesDir . '/' . $filename;
+        if (!file_exists($file)) {
+            return null;
+        }
+        $cachedAt = filemtime($file);
+        $data = file_get_contents($file);
+        return [
+            'data' => $data,
+            'cached_at' => $cachedAt
         ];
-        $this->saveCache();
+    }
+    public function setImage($path, $imageData) {
+        $filename = $this->sanitizeFilename(basename($path));
+        $file = $this->imagesDir . '/' . $filename;
+        file_put_contents($file, $imageData, LOCK_EX);
     }
 }
-$cacheManager = new CacheManager(CACHE_FILE);
+$cacheManager = new CacheManager();
 $allowedTypes = ['gallery', 'shader', 'image'];
 $type = $_GET['type'] ?? '';
 if (!in_array($type, $allowedTypes)) {
@@ -103,8 +126,7 @@ if ($type === 'gallery') {
                 ]);
                 $imageData = @file_get_contents($imageUrl, false, $context);
                 if ($imageData !== false) {
-                    $base64 = base64_encode($imageData);
-                    $cacheManager->setImage($thumbPath, $base64);
+                    $cacheManager->setImage($thumbPath, $imageData);
                 }
             }
         }
@@ -136,10 +158,7 @@ if ($type === 'gallery') {
     if (CACHE_ENABLED) {
         $cached = $cacheManager->getShader($id);
         if ($cached !== null) {
-            $response = $cached['data'];
-            if (!is_array($response)) {
-                $response = json_decode($response, true);
-            }
+            $response = json_decode($cached['data'], true);
             if (is_array($response)) {
                 $response['cached'] = true;
                 $response['cached_at'] = date('Y-m-d H:i:s', $cached['cached_at']);
@@ -178,12 +197,11 @@ if ($type === 'gallery') {
     if (CACHE_ENABLED) {
         $cached = $cacheManager->getImage($path);
         if ($cached !== null) {
-            $imageData = base64_decode($cached['data']);
             header('Content-Type: image/png');
-            header('Content-Length: ' . strlen($imageData));
+            header('Content-Length: ' . strlen($cached['data']));
             header('Cache-Control: public, max-age=86400');
             header('X-Cache: HIT');
-            echo $imageData;
+            echo $cached['data'];
             exit;
         }
     }
@@ -202,8 +220,7 @@ if ($type === 'gallery') {
         exit;
     }
     if (CACHE_ENABLED) {
-        $base64 = base64_encode($imageData);
-        $cacheManager->setImage($path, $base64);
+        $cacheManager->setImage($path, $imageData);
     }
     header('Content-Type: image/png');
     header('Content-Length: ' . strlen($imageData));
