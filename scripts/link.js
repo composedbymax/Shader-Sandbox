@@ -61,7 +61,8 @@
     const orig = btn ? btn.textContent : 'Copy Link';
     const vertEl = document.getElementById('vertCode'), fragEl = document.getElementById('fragCode'), titleEl = document.getElementById('shaderTitle');
     const vert = vertEl?.value || '', frag = fragEl?.value || '', title = titleEl?.value || 'Untitled Shader';
-    const data = {v: vert, f: frag, t: title};
+    const animType = window.getCurrentAnimationType?.() || 'webgl';
+    const data = {v: vert, f: frag, t: title, type: animType};
     const compressed = compressString(JSON.stringify(data));
     const baseUrl = window.location.origin + window.location.pathname;
     const shareUrl = `${baseUrl}#s=${compressed}`;
@@ -73,9 +74,6 @@
       setTimeout(() => { if (btn) btn.textContent = orig; }, 2e3);
       try { prompt('Copy this link:', shareUrl); } catch {}
     });
-  }
-  function looksLikeWGSL(v, f) {
-    return /@vertex|@fragment|@group|@binding|@location|struct\s+\w+|fn\s+\w+/.test((v||'')+'\n'+(f||''));
   }
   function waitForCondition(fn, to = 5e3, intv = 100) {
     return new Promise(res => {
@@ -122,32 +120,41 @@
       if (fragTA && data.f) fragTA.value = data.f;
       if (titleEl && data.t) titleEl.value = data.t;
       window.history.replaceState({}, document.title, window.location.href.split('#')[0]);
-      const vert = data.v||'', frag = data.f||'', isWGSL = looksLikeWGSL(vert, frag);
-      if (isWGSL) {
-        if (typeof window.toggleWebGPU === 'function') {
-          try {
-            const p = window.toggleWebGPU();
-            if (p?.then) await p;
-            await waitForCondition(() => window.webgpuState?.isWebGPUMode?.(), 6e3, 120);
-          } catch {}
-        } else {
-          const foundToggle = await waitForElement('#webgpuToggle', 4e3);
-          if (foundToggle) {
-            const toggleBtn = document.getElementById('webgpuToggle'), already = window.webgpuState?.isWebGPUMode?.();
-            if (!already && toggleBtn) {
-              try { toggleBtn.click(); } catch {}
-            }
-            await waitForCondition(() => window.webgpuState?.isWebGPUMode?.(), 7e3, 120);
-            await waitForCondition(() => typeof window.webgpuState?.getCanvas === 'function' && window.webgpuState.getCanvas(), 4e3, 120);
-          }
-        }
+      const targetType = data.type || 'webgl';
+      const switchReady = await waitForCondition(() => 
+        typeof window.switchToAnimationType === 'function' && 
+        typeof window.getCurrentAnimationType === 'function', 
+        10000, 100
+      );
+      if (!switchReady) {
+        console.error('Switch functions not available, falling back to rebuild');
         await callRebuildOnceAvailable(3500);
         return true;
-      } else {
-        await callRebuildOnceAvailable(2e3);
-        return true;
       }
-    } catch {
+      if (targetType === 'js') {
+        await waitForElement('#jsToggleBtn', 10000);
+      } else if (targetType === 'webgpu') {
+        await waitForElement('#webgpuToggle', 10000);
+      }
+      await new Promise(resolve => setTimeout(resolve, 200));
+      try {
+        window.switchToAnimationType(targetType);
+        if (targetType === 'js') {
+          await waitForCondition(() => window.jsCanvasState?.isJSMode?.(), 8000, 150);
+        } else if (targetType === 'webgpu') {
+          await waitForCondition(() => window.webgpuState?.isWebGPUMode?.(), 8000, 150);
+          await waitForCondition(() => typeof window.webgpuState?.getCanvas === 'function' && window.webgpuState.getCanvas(), 5000, 150);
+        } else if (targetType === '3d') {
+          await waitForCondition(() => window.is3DModelActive?.(), 8000, 150);
+        }
+        await new Promise(resolve => setTimeout(resolve, 300));
+      } catch (err) {
+        console.error('Error switching animation type:', err);
+      }
+      await callRebuildOnceAvailable(4000);
+      return true;
+    } catch (err) {
+      console.error('Failed to load from URL:', err);
       return false;
     }
   }
