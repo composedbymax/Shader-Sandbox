@@ -56,7 +56,29 @@
       document.body.removeChild(ta);
     }
   }
-  function saveLink() {
+  function isPremiumUser() {
+    return window.userRole === 'admin' || window.userRole === 'premium';
+  }
+  async function createShortLink(compressedData) {
+    try {
+      const response = await fetch('/shader/api/link.php?action=create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ data: compressedData })
+      });
+      if (!response.ok) {
+        throw new Error('Failed to create short link');
+      }
+      const result = await response.json();
+      return result.url;
+    } catch (error) {
+      console.error('Error creating short link:', error);
+      return null;
+    }
+  }
+  async function saveLink() {
     const btn = document.querySelector('button[onclick="saveLink()"]') || document.querySelector('.savebtn2') || document.querySelector('button.savebtn2');
     const orig = btn ? btn.textContent : 'Copy Link';
     const vertEl = document.getElementById('vertCode'), fragEl = document.getElementById('fragCode'), titleEl = document.getElementById('shaderTitle');
@@ -64,8 +86,18 @@
     const animType = window.getCurrentAnimationType?.() || 'webgl';
     const data = {v: vert, f: frag, t: title, type: animType};
     const compressed = compressString(JSON.stringify(data));
-    const baseUrl = window.location.origin + window.location.pathname;
-    const shareUrl = `${baseUrl}#s=${compressed}`;
+    let shareUrl;
+    if (isPremiumUser()) {
+      shareUrl = await createShortLink(compressed);
+      if (!shareUrl) {
+        const baseUrl = window.location.origin + window.location.pathname;
+        shareUrl = `${baseUrl}#s=${compressed}`;
+        console.warn('Short link creation failed, using fallback');
+      }
+    } else {
+      const baseUrl = window.location.origin + window.location.pathname;
+      shareUrl = `${baseUrl}#s=${compressed}`;
+    }
     copyToClipboard(shareUrl).then(() => {
       if (btn) btn.textContent = 'Copied!';
       setTimeout(() => { if (btn) btn.textContent = orig; }, 2e3);
@@ -109,17 +141,34 @@
   async function loadShaderFromUrl() {
     const hash = window.location.hash.slice(1);
     const p = new URLSearchParams(hash);
-    const c = p.get('s');
-    if (!c) return false;
+    const hashCompressed = p.get('s');
+    const urlParams = new URLSearchParams(window.location.search);
+    const shortCode = urlParams.get('c');
+    let compressed = hashCompressed;
+    if (shortCode) {
+      try {
+        const response = await fetch(`api/link.php?action=get&code=${shortCode}`);
+        if (response.ok) {
+          const result = await response.json();
+          compressed = result.data;
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      } catch (error) {
+        console.error('Error loading short link:', error);
+      }
+    }
+    if (!compressed) return false;
     try {
-      const js = decompressString(c);
+      const js = decompressString(compressed);
       if (!js) throw 0;
       const data = JSON.parse(js);
       const vertTA = document.getElementById('vertCode'), fragTA = document.getElementById('fragCode'), titleEl = document.getElementById('shaderTitle');
       if (vertTA && data.v) vertTA.value = data.v;
       if (fragTA && data.f) fragTA.value = data.f;
       if (titleEl && data.t) titleEl.value = data.t;
-      window.history.replaceState({}, document.title, window.location.href.split('#')[0]);
+      if (hashCompressed) {
+        window.history.replaceState({}, document.title, window.location.href.split('#')[0]);
+      }
       const targetType = data.type || 'webgl';
       const switchReady = await waitForCondition(() => 
         typeof window.switchToAnimationType === 'function' && 
