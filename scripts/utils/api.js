@@ -120,6 +120,10 @@
             }
         }
     };
+    document.addEventListener('scroll', () => {
+        const p = document.querySelector('#tabPublic .pagination');
+        if (p) p.classList.toggle('sticky', p.getBoundingClientRect().top <= 0);
+    });
     function addSandboxToggle() {
         const tab = document.getElementById('tabPublic');
         if (!tab) return;

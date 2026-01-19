@@ -21,14 +21,14 @@
 #AIBtn:hover{background: var(--5);}
 
 /* api.js */
-#publicShaderList { display: flex; flex-direction: column; gap: 10px; }
-.shader-card { border: 0.2px solid var(--4); padding: 8px; border-radius:2px;background: var(--3); }
-.pagination { text-align: center; margin: 10px 0; }
-.sbtn {background: var(--4); color: var(--l); border: none; padding: 6px 12px; cursor: pointer; border-radius: 2px; }
-.sbtn:disabled { opacity: 0.5; cursor: default; }
-#useSandboxContainer { display: flex; align-items: center; gap: 8px; color: var(--l); margin-top: 10px; }
-.api-pg-n {color:var(--6); margin:0 10px;}
+#publicShaderList{display: flex;flex-direction: column;gap: 10px;}
+.shader-card{border: 0.2px solid var(--4);padding: 8px;border-radius:2px;background: var(--3);}
+.sbtn{background: var(--4);color: var(--l);border: none;padding: 6px 12px;cursor: pointer;border-radius: 2px;}
+.sbtn:disabled{opacity: 0.5;cursor: default;}
+#useSandboxContainer{display: flex;align-items: center;gap: 8px;color: var(--l);margin-top: 10px;}
+.api-pg-n{color:var(--6);margin:0 10px;}
 .page-input{width: 60px;padding: 4px;text-align: center;background: var(--3);color: var(--l);border: 1px solid var(--4);border-radius: 2px;}
+.pagination{text-align: center;margin: 10px 0;position: sticky;top: -1rem;background: var(--2);z-index: 10;padding: 8px 0;border-bottom: 1px solid var(--4);}
 
 /* find.js */
 #findBtn{position: absolute;top: 74px;right: 42px;z-index: 1;width: 2rem;height: 2rem;background: var(--d);color: var(--6);border: none;font-size: 16px;cursor: pointer;display: flex;align-items: center;justify-content: center;transition: background 0.3s ease;}
