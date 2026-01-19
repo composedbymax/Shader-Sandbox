@@ -86,3 +86,14 @@ For full functionality, this application requires browsers that support:
 - https://shadertoy.com/  
 - https://glsl.app/  
 - https://kaleidosync.com/
+
+---
+
+## License
+
+This project is licensed under the **GNU General Public License v3.0 (GPLv3)**.
+
+You may use, modify, and distribute this software, but **any derivative work
+must also be licensed under GPLv3 and remain open-source**.
+
+See the LICENSE file for full details.

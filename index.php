@@ -5,7 +5,9 @@
 ░█▀▀░█▀█░█▀█░█▀▄░█▀▄░█▀█░█░█
 ░▀▀█░█▀█░█░█░█░█░█▀▄░█░█░▄▀▄
 ░▀▀▀░▀░▀░▀░▀░▀▀░░▀▀░░▀▀▀░▀░▀
-Created By Max Warren
+
+Copyright (C) 2026 Max Warren
+SPDX-License-Identifier: GPL-3.0-or-later
 https://max.x10.mx/
 -->
 <?php
