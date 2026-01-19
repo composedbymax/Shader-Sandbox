@@ -93,7 +93,7 @@
             const shader = {
                 title: `Sandbox #${token}`,
                 vert: 'attribute vec2 a_position;\nvoid main() {\n  gl_Position = vec4(a_position, 0., 1.);\n}',
-                frag: '// Loaded from GLSL Sandbox\n' + data.code,
+                frag: `//loaded from https://glslsandbox.com/e#${token}\n` + data.code,
                 animationType: data.animationType || 'webgl'
             };
             if (typeof window.loadShaderData === 'function') {
