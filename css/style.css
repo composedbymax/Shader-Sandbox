@@ -1,3 +1,4 @@
+html {font-family: var(--font-main, monospace);}
 #app { display: flex; height: 100%; }
 #editors {z-index: 100; width: 33%; background: var(--2); display: flex; flex-direction: column; border-right: 2px solid var(--4); position: relative; }
 .editor-panel { flex: none; display: flex; flex-direction: column; overflow: hidden;white-space: nowrap;z-index:2;}

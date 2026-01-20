@@ -328,8 +328,9 @@ function exportFullHTML() {
         downloadFile(templates.webgl(vert, frag), 'webgl-shader.html', 'text/html');
     }
 }
+let exportButtonsAdded = false;
 function addExportButtons() {
-    if (document.querySelector('.export-added')) return;
+    if (exportButtonsAdded) return;
     const $ = window.$ || (id => document.getElementById(id));
     const vertPanel = $('vertPanel');
     const fragPanel = $('fragPanel');
@@ -346,7 +347,7 @@ function addExportButtons() {
         console.warn('Export buttons: Elements not ready yet');
         return;
     }
-    document.body.classList.add('export-added');
+    exportButtonsAdded = true;
     if (vertFileBtn && vertFile && vertFileName) {
         setupFileInput(vertFileBtn, vertFile, vertTA, vertFileName);
     }

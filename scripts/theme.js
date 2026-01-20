@@ -147,23 +147,11 @@
       });
     }
     applyDefaultFont() {
-      document.body.style.fontFamily = this.defaultFont;
-      const style = document.createElement('style');
-      style.id = 'theme-manager-font-style';
-      style.textContent = `* { font-family: ${this.defaultFont} !important; }`;
-      document.head.appendChild(style);
+      const root = document.documentElement;
+      root.style.setProperty('--font-main', this.defaultFont);
     }
     applyFont(fontFamily) {
-      const existingStyle = document.getElementById('theme-manager-font-style');
-      if (existingStyle) {
-        existingStyle.textContent = `* { font-family: ${fontFamily} !important; }`;
-      } else {
-        const style = document.createElement('style');
-        style.id = 'theme-manager-font-style';
-        style.textContent = `* { font-family: ${fontFamily} !important; }`;
-        document.head.appendChild(style);
-      }
-      document.body.style.fontFamily = fontFamily;
+      document.documentElement.style.setProperty('--font-main', fontFamily);
     }
     initDB() {
       return new Promise((resolve, reject) => {
