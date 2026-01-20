@@ -382,6 +382,9 @@
     }
   }
   function loadShaderData(shader) {
+    if (window.GLSLFormatter && window.GLSLFormatter.closeModal) {
+      window.GLSLFormatter.closeModal();
+    }
     if (shader.animationType) {
       switchToAnimationType(shader.animationType);
       const delay = shader.animationType === 'webgl' ? 500 : 300;
