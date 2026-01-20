@@ -9,47 +9,7 @@
       <span class="close-btn">&times;</span>
       <h3>AI Shader Assistant</h3>
       <select id="modelSelect">
-        <option value="alibaba/tongyi-deepresearch-30b-a3b:free">tongyi-deepresearch-30b-a3b</option>
-        <option value="arliai/qwq-32b-arliai-rpr-v1:free">qwq-32b-arliai-rpr-v1</option>
-        <option value="deepseek/deepseek-chat-v3-0324:free">deepseek-chat-v3-0324</option>
-        <option value="deepseek/deepseek-r1-0528:free">deepseek-r1-0528</option>
-        <option value="deepseek/deepseek-r1-0528-qwen3-8b:free">deepseek-r1-qwen3-8b</option>
-        <option value="deepseek/deepseek-r1:free">deepseek-r1</option>
-        <option value="deepseek/deepseek-r1-distill-llama-70b:free">deepseek-r1-distill-llama-70b</option>
-        <option value="google/gemma-3-12b-it:free">gemma-3-12b-it</option>
-        <option value="google/gemma-3-27b-it:free">gemma-3-27b-it</option>
-        <option value="google/gemma-3-4b-it:free">gemma-3-4b-it</option>
-        <option value="google/gemma-3n-e2b-it:free">gemma-3n-e2b-it</option>
-        <option value="google/gemma-3n-e4b-it:free">gemma-3n-e4b-it</option>
-        <option value="google/gemini-2.0-flash-exp:free">gemini-2.0-flash-exp</option>
-        <option value="kwaipilot/kat-coder-pro:free">kat-coder-pro</option>
-        <option value="meituan/longcat-flash-chat:free">longcat-flash-chat</option>
-        <option value="meta-llama/llama-3.2-3b-instruct:free">llama-3.2-3b-instruct</option>
-        <option value="meta-llama/llama-3.3-70b-instruct:free">llama-3.3-70b-instruct</option>
-        <option value="microsoft/mai-ds-r1:free">mai-ds-r1</option>
-        <option value="mistralai/mistral-7b-instruct:free">mistral-7b-instruct</option>
-        <option value="mistralai/mistral-nemo:free">mistral-nemo</option>
-        <option value="mistralai/mistral-small-24b-instruct-2501:free">mistral-small-24b-instruct-2501</option>
-        <option value="mistralai/mistral-small-3.1-24b-instruct:free">mistral-small-3.1-24b-instruct</option>
-        <option value="mistralai/mistral-small-3.2-24b-instruct:free">mistral-small-3.2-24b-instruct</option>
-        <option value="moonshotai/kimi-k2:free">kimi-k2</option>
-        <option value="nvidia/nemotron-nano-12b-v2-vl:free">nemotron-nano-12b-v2-vl</option>
-        <option value="nvidia/nemotron-nano-9b-v2:free">nemotron-nano-9b-v2</option>
-        <option value="nousresearch/hermes-3-llama-3.1-405b:free">hermes-3-llama-3.1-405b</option>
-        <option value="openai/gpt-oss-20b:free">gpt-oss-20b</option>
-        <option value="openrouter/sherlock-dash-alpha">sherlock-dash-alpha</option>
-        <option value="openrouter/sherlock-think-alpha">sherlock-think-alpha</option>
-        <option value="qwen/qwen-2.5-72b-instruct:free">qwen-2.5-72b-instruct</option>
-        <option value="qwen/qwen-2.5-coder-32b-instruct:free">qwen-2.5-coder-32b-instruct</option>
-        <option value="qwen/qwen3-14b:free">qwen3-14b</option>
-        <option value="qwen/qwen3-235b-a22b:free">qwen3-235b-a22b</option>
-        <option value="qwen/qwen3-30b-a3b:free">qwen3-30b-a3b</option>
-        <option value="qwen/qwen3-4b:free">qwen3-4b</option>
-        <option value="qwen/qwen2.5-vl-32b-instruct:free">qwen2.5-vl-32b-instruct</option>
-        <option value="qwen/qwen3-coder:free">qwen3-coder</option>
-        <option value="tngtech/deepseek-r1t-chimera:free">deepseek-r1t-chimera</option>
-        <option value="tngtech/deepseek-r1t2-chimera:free">deepseek-r1t2-chimera</option>
-        <option value="z-ai/glm-4.5-air:free">glm-4.5-air</option>
+        <option value="">Loading models...</option>
       </select>
       <textarea id="aiPrompt" placeholder="Ask for an edit or describe a new shader idea..."></textarea>
       <button id="sendBtn">Send</button>
@@ -71,6 +31,29 @@
   const copyBtn = modal.querySelector('#copyBtn');
   let extractedShaderCode = null;
   let fullResponse = null;
+  async function loadModels() {
+    try {
+      const res = await fetch('api/ai.php?action=models');
+      const data = await res.json();
+      if (data.error || !data.models || !data.models.length) {
+        modelSelect.innerHTML = '<option value="">No models available</option>';
+        return;
+      }
+      modelSelect.innerHTML = '';
+      data.models.forEach(model => {
+        const opt = document.createElement('option');
+        opt.value = model.id;
+        opt.textContent = model.name;
+        modelSelect.appendChild(opt);
+      });
+      if (modelSelect.options.length > 0) {
+        modelSelect.selectedIndex = 0;
+      }
+    } catch (err) {
+      console.error('Failed to load models:', err);
+      modelSelect.innerHTML = '<option value="">Error loading models</option>';
+    }
+  }
   closeBtn.addEventListener('click', () => modal.style.display = 'none');
   modal.addEventListener('click', e => { 
     if (e.target === modal) modal.style.display = 'none'; 
@@ -133,9 +116,8 @@
       }
     }
   });
-  sendBtn.addEventListener('click', async () => {
-    const userPrompt = promptInput.value.trim();
-    if (!userPrompt) {this.showToast("Please enter a prompt", "error");return;}
+  async function sendMessage(userPrompt, retryCount = 0) {
+    const maxRetries = 1;
     const vert = document.getElementById('vertCode');
     const frag = document.getElementById('fragCode');
     const vertCode = vert ? vert.value : '';
@@ -151,17 +133,12 @@ IMPORTANT: Respond with ONLY the revised fragment shader code wrapped in <SHADER
 // fragment shader code here
 </SHADER>
 Do not include any explanation, just the shader code between the tags.`;
-    sendBtn.disabled = true;
-    loadingText.classList.add('show');
-    responseArea.classList.remove('show');
-    applyBtn.classList.remove('show');
-    extractedShaderCode = null;
-    fullResponse = null;
     try {
       const res = await fetch('api/ai.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
+          action: 'chat',
           message: contextMessage,
           model: modelSelect.value
         })
@@ -170,6 +147,16 @@ Do not include any explanation, just the shader code between the tags.`;
         throw new Error(`HTTP error! status: ${res.status}`);
       }
       const data = await res.json();
+      if (data.error) {
+        if (data.rate_limited) {
+          throw new Error('Rate limit reached. Please try again later.');
+        }
+        if (data.retry && retryCount < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return sendMessage(userPrompt, retryCount + 1);
+        }
+        throw new Error(data.error);
+      }
       const reply = data.reply || 'No response from AI';
       fullResponse = reply;
       const shaderMatch = reply.match(/<SHADER>([\s\S]*?)<\/SHADER>/);
@@ -200,6 +187,28 @@ Do not include any explanation, just the shader code between the tags.`;
     } catch (err) {
       responseArea.innerHTML = '<button class="copy-btn" id="copyBtn">Copy</button>Error: ' + err.message;
       responseArea.classList.add('show');
+      throw err;
+    }
+  }
+  sendBtn.addEventListener('click', async () => {
+    const userPrompt = promptInput.value.trim();
+    if (!userPrompt) {
+      showToast("Please enter a prompt", "error");
+      return;
+    }
+    if (!modelSelect.value) {
+      showToast("Please select a model", "error");
+      return;
+    }
+    sendBtn.disabled = true;
+    loadingText.classList.add('show');
+    responseArea.classList.remove('show');
+    applyBtn.classList.remove('show');
+    extractedShaderCode = null;
+    fullResponse = null;
+    try {
+      await sendMessage(userPrompt);
+    } catch (err) {
       console.error(err);
     } finally {
       sendBtn.disabled = false;
@@ -215,4 +224,5 @@ Do not include any explanation, just the shader code between the tags.`;
   document.addEventListener('fullscreenchange', () =>
     (document.fullscreenElement || document.body).appendChild(btn)
   );
+  loadModels();
 })();
