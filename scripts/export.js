@@ -328,7 +328,7 @@ function exportFullHTML() {
         downloadFile(templates.webgl(vert, frag), 'webgl-shader.html', 'text/html');
     }
 }
-let exportButtonsAdded = false;
+var exportButtonsAdded = false;
 function addExportButtons() {
     if (exportButtonsAdded) return;
     const $ = window.$ || (id => document.getElementById(id));
@@ -364,16 +364,18 @@ function addExportButtons() {
         });
     });
     const addBtn = (parent, title, onClick) => {
+        if (!parent) return;
         const header = parent.querySelector('.panel-header');
         if (!header) {
             console.warn('Panel header not found for', parent.id);
             return;
         }
-        const btn = Object.assign(document.createElement('button'), { 
-            textContent: 'Export', 
-            title, 
-            onclick: onClick 
-        });
+        if (header.querySelector('button[data-export-btn]')) return;
+        const btn = document.createElement('button');
+        btn.textContent = 'Export';
+        btn.title = title;
+        btn.onclick = onClick;
+        btn.setAttribute('data-export-btn', 'true');
         header.appendChild(btn);
     };
     addBtn(vertPanel, 'Export Vertex Shader', () => {

@@ -35,16 +35,13 @@
         "--token-variable": "#9CDCFE"
       };
       this.fontOptions = [
-        { name: "Courier New", value: "'Courier New', Courier, monospace" },
         { name: "Courier", value: "Courier, 'Courier New', monospace" },
-        { name: "Lucida Console", value: "'Lucida Console', Monaco, monospace" },
+        { name: "Courier New", value: "'Courier New', Courier, monospace" },
         { name: "Monaco", value: "Monaco, 'Lucida Console', monospace" },
-        { name: "Consolas", value: "Consolas, 'Courier New', monospace" },
-        { name: "Andale Mono", value: "'Andale Mono', monospace" },
-        { name: "Menlo", value: "Menlo, Monaco, monospace" },
         { name: "Monospace", value: "monospace" },
-        { name: "Arial", value: "Arial, Helvetica, sans-serif" },
         { name: "Verdana", value: "Verdana, Geneva, sans-serif" },
+        { name: "Lucida Console", value: "'Lucida Console', Monaco, monospace" },
+        { name: "Arial", value: "Arial, Helvetica, sans-serif" },
         { name: "Sans-serif", value: "sans-serif" },
       ];
       this.defaultFont = "'JetBrains Mono', 'Fira Code', 'Courier New', monospace";
@@ -74,7 +71,6 @@
           "--token-function": "#DCDCAA",
           "--token-builtin": "#DCDCAA",
           "--token-variable": "#9CDCFE"
-
         },
         "DARK": {
           "--0": "rgba(0, 0, 0, 0.9)",
@@ -147,11 +143,18 @@
       });
     }
     applyDefaultFont() {
-      const root = document.documentElement;
-      root.style.setProperty('--font-main', this.defaultFont);
+        this.setHtmlFontClass(this.defaultFont);
     }
     applyFont(fontFamily) {
-      document.documentElement.style.setProperty('--font-main', fontFamily);
+        this.setHtmlFontClass(fontFamily);
+    }
+    setHtmlFontClass(fontFamily) {
+        const root = document.documentElement;
+        root.classList.forEach(cls => {
+            if (cls.startsWith("font-")) root.classList.remove(cls);
+        });
+        const fontClass = this.fontOptions.find(f => f.value === fontFamily)?.name.toLowerCase().replace(/\s+/g, "-") || "jetbrains";
+        root.classList.add(`font-${fontClass}`);
     }
     initDB() {
       return new Promise((resolve, reject) => {
