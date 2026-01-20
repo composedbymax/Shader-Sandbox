@@ -13,12 +13,23 @@
   `;
   const wrapper = document.createElement('div');
   wrapper.innerHTML = modalHTML;
-  document.body.appendChild(wrapper);
-  const modal = document.getElementById('downloadModal');
-  const sbtnCancel = document.getElementById('cancelDownload');
-  const sbtnConfirm = document.getElementById('confirmDownload');
-  function showModal() {modal.classList.add('active');}
-  function hideModal() {modal.classList.remove('active');}
+  const modal = wrapper.firstElementChild;
+  const cancelBtn = modal.querySelector('#cancelDownload');
+  const confirmBtn = modal.querySelector('#confirmDownload');
+  function mountModal() {
+    const fsParent = document.fullscreenElement || document.body;
+    if (modal.parentNode !== fsParent) {
+      modal.remove();
+      fsParent.appendChild(modal);
+    }
+  }
+  function showModal() {
+    mountModal();
+    modal.classList.add('active');
+  }
+  function hideModal() {
+    modal.classList.remove('active');
+  }
   function triggerServerDownload(filename = 'offline.html') {
     const a = document.createElement('a');
     a.href = filename;
@@ -27,14 +38,15 @@
     a.click();
     a.remove();
   }
-  sbtnCancel.addEventListener('click', hideModal);
-  sbtnConfirm.addEventListener('click', () => {
+  document.addEventListener('fullscreenchange', mountModal);
+  cancelBtn.addEventListener('click', hideModal);
+  confirmBtn.addEventListener('click', () => {
     hideModal();
-    triggerServerDownload('offline.html');
+    triggerServerDownload();
   });
   window.addEventListener(
     'keydown',
-    function (e) {
+    e => {
       if (e.key === 'Escape' && modal.classList.contains('active')) {
         hideModal();
         return;
