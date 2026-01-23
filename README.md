@@ -32,27 +32,33 @@ This application is built entirely with native PHP, HTML5, CSS, and JavaScript. 
 
 ## Features
 
-- **Real-Time Shader Preview**: Visualize your GLSL, WGSL or Javascript code on a canvas as you write.
-- **Vertex & Fragment Shaders**: Edit vertex and fragment shaders in separate panels.
-- **Syntax Linting**: View and copy error messages with line numbers to catch syntax issues.
-- **Responsive Layout**: Adjustable editor layout with drag-and-drop resizing for the panels.
-- **Public Shader Gallery**: Browse, save publicly or locally (via server or IndexedDB).
-- **Share Links**: Compress shader code into shareable URLs without requiring server storage.
-- **File Support**: Load or Export `.vert`, `.frag`, `.vs`, `.fs`, `.txt`, and `html` files, or generate a full .html file to run your shaders externally.
-- **Fullscreen Preview**: Toggle fullscreen mode for a larger preview area.
-- **Record WebM/MP4**: Record and preview your animation as a video file including audio, with adjustable dimensions and quality.
-- **Audio Reactive Support**: React animations to microphone input, internal system audio, or uploaded audio files, with adjustable sensitivity and separated frequency bands.
-- **Runtime Metrics**: Monitor WebGL canvas performance by tracking FPS, memory usage, GPU details, and draw calls.
-- **Theme Manager**: Customize editor colors with presets or individual color variables.  
-- **Generative Reports**: Generate flowchart visualizations or reports (`.json` or `.txt`) for shader analysis and export.
-- **Color Adjustment**: Use a modal slider to convert vec3/vec4 values into RGB sliders for real-time color control.
-- **Code Formatting**: Minify or format your code easily.
-- **Text Editor Tools**: Context menu via right-click or mobile long-hold for line numbering, change all occurrences, undo/redo, adjust value etc.
-- **GLSL Library Finder**: Search and insert code snippets from a server-hosted GLSL snippet library by keyword.
-- **WebRTC Collaboration**: Real-time text editor collaboration enabling remote shader compilation using Google STUN servers.
-- **Image Editor**: Apply custom JavaScript GLSL effects to images inside the editor.
-- **Perform Animations**: Navigate public animations with P + ←/→ or switch local animations using L + ←/→ hotkeys.
-- **Mouse Support**: Mouse movement uniforms to influence animation interactively.
+| Feature | Description | Source / URL |
+|--------|------------|--------------|
+| Real-Time GLSL Sandbox | Visualize GLSL fragment and vertex shaders live as you edit code. | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/render.js |
+| Real-Time WebGPU Sandbox | Live preview and editing of WebGPU shader pipelines. | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/gpu.js |
+| Real-Time JavaScript Sandbox | Execute and visualize JavaScript code in real time. | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/js.js |
+| Syntax Linting | Displays syntax errors with line numbers for quick debugging. | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/syntax.js |
+| Responsive Layout | Adjustable editor panels with drag-and-drop resizing. | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/render.js |
+| Public Shader Gallery | Browse, save, and load shaders publicly or locally via server or IndexedDB. | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/save.js, https://github.com/composedbymax/Shader-Sandbox/blob/main/api/load.php, https://github.com/composedbymax/Shader-Sandbox/blob/main/api/save.php |
+| Share Links | Compress shaders into shareable URLs; premium users can store and share short DB-backed strings. | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/link.js, https://github.com/composedbymax/Shader-Sandbox/blob/main/api/link.php |
+| File Upload & Export | Import and export `.vert`, `.frag`, `.vs`, `.fs`, `.txt`, `html`, `obj`, `ply`, `stl`, `off`, `mp3`, `mp4`, `wav`, `jpeg`, `png`, `heic`. | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/drop.js |
+| Record WebM / MP4 | Record animations (with audio) as video files with configurable quality and dimensions. | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/recorder.js |
+| Audio Reactive Support | Drive shader animations using microphone input, system audio, or uploaded audio files with frequency band separation. | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/audio.js |
+| Runtime Metrics | Monitor FPS, memory usage, GPU info, and draw calls in real time. | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/performance.js |
+| Autosave | Automatically saves editor code to IndexedDB every 30 seconds using a Web Worker, ensuring progress is preserved | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/utils/autosave.js |
+| Theme Manager | Customize editor themes using presets or individual CSS variables. | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/theme.js |
+| Generative Reports | Generate shader flowcharts or analysis reports in `.json` or `.txt` format. | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/flowchart.js |
+| Color Adjustment Tools | Convert `vec3` / `vec4` values into RGB sliders for live color tuning. | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/color.js |
+| Code Formatting | Minify or format shader and JavaScript code instantly. | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/format.js |
+| Text Editor Tools | Context menu tools for line numbers, multi-edit, undo/redo, and numeric adjustments. | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/right.js |
+| GLSL Library Finder | Search and insert GLSL snippets from a server-hosted library. | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/utils/find.js |
+| WebRTC Collaboration | Real-time collaborative editing with remote shader compilation via Google STUN servers. | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/utils/p2p.js |
+| Image Editor | Apply JavaScript-driven GLSL effects directly to media. | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/media.js |
+| Quickload Animations | Navigate public animations with `P + ←/→` or local animations with `L + ←/→`. | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/shuffle.js |
+| Mouse Interaction Support | Pass mouse movement and click data as uniforms for interactive shaders. | https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/render.js |
+| GLSL Sandbox API Support | Premium feature to load shaders and previews from GLSL Sandbox via cached proxy. | https://glslsandbox.com/, https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/utils/api.js, https://github.com/composedbymax/Shader-Sandbox/blob/main/api/proxy.php |
+| AI OpenRouter Model Support | AI-assisted code edits and restructuring using free OpenRouter models. | https://openrouter.ai/, https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/utils/ai.js, https://github.com/composedbymax/Shader-Sandbox/blob/main/api/ai.php |
+
 
 ---
 
@@ -68,8 +74,9 @@ This application is built entirely with native PHP, HTML5, CSS, and JavaScript. 
 
 ## Browser Support
 
-For full functionality, this application requires browsers that support:
+For full functionality, this application requires browsers/browser preferences that include:
 
+- Javascript (for main app functionality)
 - WebGL (for rendering)
 - WebGPU (for rendering)
 - File API (for file upload)  
