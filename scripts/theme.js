@@ -71,6 +71,7 @@
           "--token-function": "#DCDCAA",
           "--token-builtin": "#DCDCAA",
           "--token-variable": "#9CDCFE"
+
         },
         "DARK": {
           "--0": "rgba(0, 0, 0, 0.9)",
@@ -248,27 +249,26 @@
       const confirmModal = document.getElementById("theme-confirm-modal");
       const cancelBtn = document.getElementById("confirm-cancel");
       const deleteBtn = document.getElementById("confirm-delete");
-      const cancelConfirm = () => {
-        confirmModal.style.display = "none";
+      const hideModal = () => {
+        confirmModal.classList.add("none");
         this.confirmCallback = null;
       };
       const confirmDelete = () => {
         if (this.confirmCallback) {
           this.confirmCallback();
         }
-        confirmModal.style.display = "none";
-        this.confirmCallback = null;
+        hideModal();
       };
-      cancelBtn.onclick = cancelConfirm;
+      cancelBtn.onclick = hideModal;
       deleteBtn.onclick = confirmDelete;
       confirmModal.onclick = (e) => {
         if (e.target === confirmModal) {
-          cancelConfirm();
+          hideModal();
         }
       };
       document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && confirmModal.style.display !== "none") {
-          cancelConfirm();
+        if (e.key === "Escape" && !confirmModal.classList.contains("none")) {
+          hideModal();
         }
       });
     }
@@ -300,7 +300,7 @@
             </button>
           </div>
         </div>
-        <div id="color-editor-section" style="display: none;">
+        <div id="color-editor-section" class="none">
           <div class="color-editor-controls">
             <div class="theme-name-container">
               <label for="theme-name" class="theme-name-label">Theme Name:</label>
@@ -740,6 +740,7 @@
         section.style.display = "none";
       }
       localStorage.setItem("currentTheme", this.currentTheme);
+      
       const fontSelect = document.getElementById("font-select");
       if (fontSelect) {
         localStorage.setItem("currentFont", fontSelect.value);

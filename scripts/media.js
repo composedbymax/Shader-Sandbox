@@ -267,11 +267,11 @@ void main() {
         <p>Select an image or video to use in your shader.</p>
         <button id="mediaDropButton">Choose File or Drag and Drop</button>
         <div id="mediaPreview"></div>
-        <div class="video-controls" id="videoControls" style="display:none;">
+        <div class="video-controls" id="videoControls" class="none">
           <button id="playPauseBtn">Play</button>
           <div class="time-info" id="videoTimeInfo">0:00 / 0:00</div>
         </div>
-        <div class="video-progress" id="videoProgress" style="display:none;">
+        <div class="video-progress" id="videoProgress" class="none">
           <div class="video-progress-bar" id="videoProgressBar"></div>
         </div>
         <p class="loadmediawarn">Importing base shaders will delete current text area code</p>
@@ -281,7 +281,7 @@ void main() {
         <div id="effectsContent">
           <p>Select effects to apply to your ${mediaType || 'media'}:</p>
           <div class="effects-grid" id="effectsGrid"></div>
-          <div class="effect-controls" id="effectControls" style="display:none;">
+          <div class="effect-controls" id="effectControls" class="none">
             <h4>Effect Parameters</h4>
             <div id="controlsContainer"></div>
           </div>

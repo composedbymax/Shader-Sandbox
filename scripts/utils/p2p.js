@@ -35,7 +35,7 @@
       <button id="joinRoomBtn" class="connect-button">Join Room</button>
     </div>
     <div id="roomInfo" class="connect-room-info">
-      <div style="font-weight:bold; margin-bottom:8px;">Room Code:</div>
+      <div class="connect-title">Room Code:</div>
       <div id="roomCodeDisplay" class="connect-room-code"></div>
       <div id="waitingMessage" class="connect-waiting">Waiting for peer to join...</div>
     </div>

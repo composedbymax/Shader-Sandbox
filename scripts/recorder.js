@@ -76,7 +76,7 @@
         `}
       </select>
     </label>
-    <label style="display: flex; align-items: center;">
+    <label class="checkbox-label">
       Include Audio
       <div class="checkbox-container">
         <input type="checkbox" id="includeAudio" checked/>
@@ -96,8 +96,8 @@
     </div>
     <button class="start" id="startRec">Start Recording</button>
     <button class="stop" id="stopRec" disabled>Stop</button>
-    <a id="downloadLink" style="border:0px;border-radius:6px;background:var(--m);display:none;text-decoration:none; color:var(--1);">Download</a>
-    <div id="recStats" style="margin-top: 8px; display: none;"></div>
+    <a id="downloadLink" class="record-button">Download</a>
+    <div id="recStats" class="rec-stats"></div>
   `;
   container.appendChild(settingsPanel);
   settingsPanel.appendChild(videoPreview);

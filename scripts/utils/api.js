@@ -18,7 +18,7 @@
         const paginationTop = document.createElement('div');
         paginationTop.className = 'pagination';
         paginationTop.innerHTML = `
-            <button class="sbtn" id="prevSandboxPage" ${currentPage === 0 ? 'disabled' : ''}>◀ Previous</button>
+            <button class="sbtn" id="prevSandboxPage" ${currentPage === 0 ? 'disabled' : ''}>◀ Back</button>
             <span class="pi-pg-n" id="pageNumber">Page ${currentPage + 1}</span>
             <button class="sbtn" id="nextSandboxPage">Next ▶</button>
         `;
@@ -75,7 +75,7 @@
             };
         } catch (err) {
             console.error('Error loading GLSL Sandbox shaders:', err);
-            container.innerHTML = `<div style="color:#ff6961;">Error: ${err.message}</div>`;
+            container.innerHTML = `<div style="color:var(--red)">Error: ${err.message}</div>`;
         }
     }
     window.loadPublicShader = async function (token) {

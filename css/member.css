@@ -71,6 +71,7 @@
 .connect-disconnect-btn{width: 100%;padding: 10px;margin-bottom: 8px;background: var(--r);color: var(--7);border: none;border-radius: 6px;cursor: pointer;}
 .connect-disconnect-btn:hover{background: var(--rh);color:var(--1)}
 .connect-or{text-align: center;margin-bottom: 8px;color: var(--5);}
+.connect-title{font-weight:bold; margin-bottom:8px;}
 .connect-input{width: 100%;padding: 10px;margin-bottom: 8px;background: var(--0);color: var(--7);border: 1px solid var(--4);border-radius: 6px;font-family: monospace;}
 .connect-room-info{display: none;margin-bottom: 12px;padding: 10px;background: var(--0);border-radius: 6px;}
 .connect-room-code{font-size: 24px;font-weight: bold;color: var(--a);text-align: center;letter-spacing: 2px;margin-bottom: 8px;}

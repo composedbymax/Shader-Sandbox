@@ -465,7 +465,7 @@
         windowDiv.id = 'flowchartWindow';
         windowDiv.innerHTML = `
             <div class="flowchart-header">
-                <h3>Flowchart <span style="font-size:12px;color:var(--a)">(Hover nodes for details)</span></h3>
+                <h3>Flowchart <span class="flowchart-span">(Hover nodes for details)</span></h3>
                 <div class="flowchart-controls">
                     <div class="export-dropdown" id="exportDropdown">
                         <button onclick="glslFlowchart.toggleExport()">Export ▼</button>
