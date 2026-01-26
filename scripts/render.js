@@ -97,7 +97,6 @@ const getPos = (e, isTouch = false) => {
     };
 };
 const updateMouse = (e, isTouch = false, type) => {
-    if (drag.type) return;
     const pos = getPos(e, isTouch);
     if (type === 'move') {
         mouse.x = pos.x;
@@ -109,6 +108,8 @@ const updateMouse = (e, isTouch = false, type) => {
         mouse.lastClickTime = performance.now();
     } else if (type === 'up') {
         mouse.isPressed = false;
+        mouse.clickX = 0;
+        mouse.clickY = 0;
     }
     if (isTouch) e.preventDefault();
 };
