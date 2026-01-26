@@ -387,14 +387,16 @@ function addExportButtons() {
         const isWebGPU = window.webgpuState?.isWebGPUMode();
         exportShader(isWebGPU ? 'wgsl' : 'frag', fragTA.value);
     });
-    const fullBtn = Object.assign(document.createElement('button'), {
-        textContent: 'Export',
-        title: 'Export Full HTML',
-        onclick: exportFullHTML
-    });
-    fullBtn.style.position = 'absolute';
-    fullBtn.classList.add('expbtn');
-    previewPanel.appendChild(fullBtn);
+    if (!previewPanel.querySelector('.expbtn')) {
+        const fullBtn = Object.assign(document.createElement('button'), {
+            textContent: 'Export',
+            title: 'Export Full HTML',
+            onclick: exportFullHTML
+        });
+        fullBtn.style.position = 'absolute';
+        fullBtn.classList.add('expbtn');
+        previewPanel.appendChild(fullBtn);
+    }
 }
 window.addExportButtons = addExportButtons;
 if (document.readyState === 'loading') {
