@@ -470,4 +470,7 @@ window.pauseAnimation = pauseAnimation;
 window.resumeAnimation = resumeAnimation;
 window.toggleEditors = toggleEditors;
 window.initApp = init;
+window.pauseOnBlurEnabled = pauseOnBlurEnabled;
+window.setPauseOnBlur = (enabled) => {pauseOnBlurEnabled = enabled;};
+window.getPauseOnBlur = () => pauseOnBlurEnabled;
 })();

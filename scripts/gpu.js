@@ -24,6 +24,8 @@
     let fps = 60;
     const UNIFORM_BUFFER_SIZE = 80;
     let savedSnapshot = null;
+    let isWebGPUAnimationPaused = false;
+    let webgpuLastActiveTime = 0;
     const createWebGPUToggle = () => {
         const toggleBtn = Object.assign(document.createElement('button'), {
             id: 'webgpuToggle',
@@ -324,6 +326,27 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
         }
         return { bass: 0, mid: 0, treble: 0, volume: 0 };
     };
+    const pauseWebGPUAnimation = () => {
+        if (webgpuAnimationId && !isWebGPUAnimationPaused) {
+            cancelAnimationFrame(webgpuAnimationId);
+            webgpuAnimationId = null;
+            isWebGPUAnimationPaused = true;
+            webgpuLastActiveTime = performance.now();
+        }
+    };
+    const resumeWebGPUAnimation = () => {
+        if (isWebGPUAnimationPaused) {
+            startTime += performance.now() - webgpuLastActiveTime;
+            isWebGPUAnimationPaused = false;
+            webgpuRenderLoop();
+        }
+    };
+    const toggleWebGPUPauseState = () => {
+        if (!isWebGPUMode) return;
+        if (!window.getPauseOnBlur || !window.getPauseOnBlur()) return;
+        const shouldPause = document.hidden || !document.hasFocus();
+        shouldPause ? pauseWebGPUAnimation() : resumeWebGPUAnimation();
+    };
     const renderWebGPU = (time) => {
         if (!webgpuPipeline || !webgpuContext || !webgpuDevice || !webgpuCanvas) return;
         const currentTime = performance.now();
@@ -379,7 +402,7 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
         webgpuDevice.queue.submit([commandEncoder.finish()]);
     };
     const webgpuRenderLoop = () => {
-        if (!isWebGPUMode) return;
+        if (!isWebGPUMode || isWebGPUAnimationPaused) return;
         const currentTime = performance.now();
         const time = (currentTime - startTime) * 0.001;
         renderWebGPU(time);
@@ -536,6 +559,9 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
                 window.render = webgpuRenderLoop;
                 addWebGPUEventListeners();
                 setupWebGPUMouseEvents();
+                document.addEventListener('visibilitychange', toggleWebGPUPauseState);
+                window.addEventListener('focus', toggleWebGPUPauseState);
+                window.addEventListener('blur', toggleWebGPUPauseState);
                 setTimeout(() => {
                     rebuildWebGPUProgram();
                     webgpuRenderLoop();
@@ -547,6 +573,9 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
         } else {
             cleanupAnimation();
             hideWebGPUError();
+            document.removeEventListener('visibilitychange', toggleWebGPUPauseState);
+            window.removeEventListener('focus', toggleWebGPUPauseState);
+            window.removeEventListener('blur', toggleWebGPUPauseState);
             if (resizeObserver) {
                 resizeObserver.disconnect();
                 resizeObserver = null;
