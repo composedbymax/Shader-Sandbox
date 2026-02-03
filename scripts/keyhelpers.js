@@ -9,7 +9,7 @@
       "(": ")","[": "]","{": "}","\"": "\"","'": "'"
     };
     document.addEventListener("keydown", (e) => {
-      let editor = document.activeElement?.closest('.glsl-editor[contenteditable="true"]');
+      let editor = document.activeElement?.closest('.code-editor[contenteditable="true"]');
       if (!editor) return;
       const assoc = editor.getAttribute("data-associated-textarea-id");
       if (!validIDs.includes(assoc)) return;

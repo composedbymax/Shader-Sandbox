@@ -509,9 +509,9 @@ input, select{padding: 1rem;border-radius: 5px;border: 0px;width: 100%;backgroun
 /* NONE */
 
 /* syntax.js */
-.glsl-editor-wrapper{position: relative;box-sizing: border-box;width: 100%;height: 100%;}
-.glsl-editor{position: relative;width: 100%;height: 100%;box-sizing: border-box;font-family: inherit;font-size: inherit;line-height: inherit;border: inherit;outline: none;background: transparent;color: var(--6);overflow: auto;white-space: pre-wrap;word-wrap: break-word;caret-color: var(--caret, #ffffff);}
-.glsl-hidden-textarea{display: none !important;}
+.code-editor-wrapper{position: relative;box-sizing: border-box;width: 100%;height: 100%;}
+.code-editor{position: relative;width: 100%;height: 100%;box-sizing: border-box;font-family: inherit;font-size: inherit;line-height: inherit;border: inherit;outline: none;background: transparent;color: var(--6);overflow: auto;white-space: pre-wrap;word-wrap: break-word;caret-color: var(--caret, #ffffff);}
+.code-hidden-textarea{display: none !important;}
 .token-comment  { color: var(--token-comment); }
 .token-keyword  { color: var(--token-keyword); }
 .token-type     { color: var(--token-type); }

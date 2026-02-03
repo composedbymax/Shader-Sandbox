@@ -13,13 +13,13 @@
   function replaceTextareaWithEditor(textarea) {
     const computed = window.getComputedStyle(textarea);
     const wrapper = document.createElement('div');
-    wrapper.className = 'glsl-editor-wrapper';
+    wrapper.className = 'code-editor-wrapper';
     const editor = document.createElement('div');
-    editor.className = 'glsl-editor';
+    editor.className = 'code-editor';
     editor.setAttribute('contenteditable','true');
     editor.setAttribute('spellcheck','false');
     editor.setAttribute('data-associated-textarea-id', textarea.id);
-    textarea.classList.add('glsl-hidden-textarea');
+    textarea.classList.add('code-hidden-textarea');
     copyComputedStyle(textarea, wrapper, [
       'padding','margin',
       'width','height',
@@ -127,10 +127,10 @@
     const keywords = [
       'precision','uniform','attribute','varying','layout','const',
       'in','out','inout','if','else','for','while','do','return',
-      'break','continue','discard'
+      'break','continue','discard','struct','let'
     ];
     const types = [
-      'void','bool','int','float','vec2','vec3','vec4','mat2','mat3','mat4',
+      'void','bool','int','vec2','vec3','vec4','mat2','mat3','mat4',
       'bvec2','bvec3','bvec4','ivec2','ivec3','ivec4',
       'sampler2D','samplerCube','lowp','mediump','highp'
     ];
@@ -142,9 +142,13 @@
       'mix','step','smoothstep','length','distance','dot','cross',
       'normalize','faceforward','reflect','refract',
       'texture2D','textureCube','texture2DProj','texture2DLod',
-      'dFdx','dFdy','fwidth'
+      'dFdx','dFdy','fwidth','VertexOutput','Uniforms','f32'
     ];
-    const specialVars = ['time','mouse','resolution','iTime','iResolution'];
+    const specialVars = [
+      'time','mouse','mouse_click','mouse_pressed','resolution','iTime',
+      'iResolution','delta_time','frame','fps','pixel_size',
+      'bass','mid','treble','volume','padding','float'
+    ];
     const kwPattern = '\\b(?:' + keywords.join('|') + ')\\b';
     const typePattern = '\\b(?:' + types.join('|') + ')\\b';
     const builtinPattern = '\\b(?:' + builtins.join('|') + ')\\b';

@@ -165,7 +165,7 @@ class ColorPicker {
                     textarea.dataset.glslColorPickerAttached = 'true';
                 }
             });
-            const editors = document.querySelectorAll('.glsl-editor[contenteditable="true"]');
+            const editors = document.querySelectorAll('.code-editor[contenteditable="true"]');
             editors.forEach(editor => {
                 if (!editor.dataset.glslColorPickerAttached) {
                     this.attachToEditor(editor);
@@ -450,7 +450,7 @@ class ColorPicker {
             delete textarea.dataset.glslColorPickerAttached;
         });
         
-        const editors = document.querySelectorAll('.glsl-editor[data-glsl-color-picker-attached]');
+        const editors = document.querySelectorAll('.code-editor[data-glsl-color-picker-attached]');
         editors.forEach(editor => {
             if (editor._glslClickHandler) {
                 editor.removeEventListener('click', editor._glslClickHandler);
