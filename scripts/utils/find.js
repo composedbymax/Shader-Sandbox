@@ -42,8 +42,8 @@
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(() => performSearch(searchInput.value.trim()), 300);
     });
-    document.addEventListener('keydown', e => {
-      if (e.ctrlKey && e.key === 's') { e.preventDefault(); openFindModal(); }
+    document.addEventListener('keydown', (e) => {
+      if (e.altKey && e.shiftKey && e.code === 'KeyC') {e.preventDefault(); openFindModal();}
       if (e.key === 'Escape' && findModal.style.display === 'block') closeFindModal();
     });
     findModal.addEventListener('click', e => { if (e.target === findModal) closeFindModal(); });

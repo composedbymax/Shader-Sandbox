@@ -134,8 +134,8 @@
     if (window.userLoggedIn) {
         shortcuts.push({
             desc: 'Find code snippets', 
-            keys: `${osKeys.control} + S`, 
-            highlight: ['ctrl', 's'],
+            keys: `${osKeys.alt} + Shift + C`, 
+            highlight: ['alt', 'shift', 'c'],
             id: 'find'
         });
     }
