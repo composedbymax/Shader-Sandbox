@@ -43,6 +43,7 @@ if (!gl) {
     console.log(`${gl.getParameter(gl.VERSION)} context`);
 }
 if (!gl) { alert('WebGL not supported'); return; }
+window.gl = gl;
 let program = null,
     attribLoc = null,
     surfaceAttrLoc = null,
@@ -287,6 +288,7 @@ void main() {
         return;
     }
     program = p;
+    window.program = program;
     audioReactive.setGLContext(gl, program);
     gl.useProgram(program);
     const possibleAttrNames = ['a_position', 'position', 'aPosition', 'a_pos'];
@@ -463,6 +465,7 @@ fsBtn.onclick = _ => {
 rebuildProgram();
 render();
 window.rebuildProgram = rebuildProgram;
+window.gl = gl;
 window.$ = id => document.getElementById(id);
 window.render = render;
 window.editorsVisible = true;
