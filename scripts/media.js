@@ -206,6 +206,9 @@ vec3 blendOverlay(vec3 a, vec3 b) {
         createGLTexture(entry);
         pushShadersToEditor();
         renderTextureList();
+        vid.play();
+        entry.isPlaying = true;
+        startVideoLoop(entry);
       });
     } else {
       const reader = new FileReader();
@@ -259,7 +262,7 @@ vec3 blendOverlay(vec3 a, vec3 b) {
       <h3>Texture Manager</h3>
       <div id="textureDropZone">
         <span>Drop or click to add textures</span>
-        <span class="tex-drop-sub">Images &amp; videos — unlimited</span>
+        <span class="tex-drop-sub">Images &amp; videos</span>
       </div>
       <div id="textureListWrap">
         <div id="textureList"></div>
