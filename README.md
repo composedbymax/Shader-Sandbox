@@ -53,7 +53,7 @@ This application is built entirely with native PHP, HTML5, CSS, and JavaScript. 
 | GLSL Library Finder | Search and insert GLSL snippets from a server-hosted library | [find.js](https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/utils/find.js) |
 | WebRTC Collaboration | Real-time collaborative editing with remote shader compilation via Google STUN servers | [p2p.js](https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/utils/p2p.js) |
 | Texture Manager | Upload images and videos to combine on a single canvas | [media.js](https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/media.js) |
-| Media Effects | Apply JavaScript-driven GLSL effects directly to media | [media.js](https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/effects.js) |
+| Media Effects | Apply JavaScript-driven GLSL effects directly to media | [effects.js](https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/effects.js) |
 | Quickload Animations | Navigate public animations with `P + ←/→` or local animations with `L + ←/→` | [shuffle.js](https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/shuffle.js) |
 | Mouse Interaction Support | Pass mouse movement and click data as uniforms for interactive shaders | [render.js](https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/render.js) |
 | GLSL Sandbox API Support | Premium feature to load shaders and previews from GLSL Sandbox via cached proxy | [glslsandbox.com](https://glslsandbox.com/), [api.js](https://github.com/composedbymax/Shader-Sandbox/blob/main/scripts/utils/api.js), [proxy.php](https://github.com/composedbymax/Shader-Sandbox/blob/main/api/proxy.php) |
