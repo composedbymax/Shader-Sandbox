@@ -113,6 +113,12 @@
             id: 'public-shaders'
         },
         { 
+            desc: 'Media Effects', 
+            keys: `${osKeys.control} + E`, 
+            highlight: ['ctrl', 'e'],
+            id: 'media'
+        },
+        { 
             desc: 'Format/minify code', 
             keys: `${osKeys.alt} + M`, 
             highlight: ['alt', 'm'],
