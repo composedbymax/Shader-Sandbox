@@ -641,4 +641,5 @@ void main() {
   document.addEventListener('fullscreenchange', () => {
     (document.fullscreenElement || document.body).appendChild(modal);
   });
+  window.openEffectsModal = openModal;
 })();

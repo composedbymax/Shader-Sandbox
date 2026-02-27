@@ -275,7 +275,10 @@ vec3 blendOverlay(vec3 a, vec3 b) {
       </div>
       <div class="media-action-row">
         <p class="loadmediawarn">Importing base shaders will replace current shader code</p>
-        <button id="baseImportBtn">Import Base Shaders</button>
+        <div id="mediaActionBtns" class="medActBtn">
+          <button id="baseImportBtn">Import Base Shaders</button>
+          <button id="openEffectsBtn" class="none">Open Effects</button>
+        </div>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -291,6 +294,10 @@ vec3 blendOverlay(vec3 a, vec3 b) {
     if (textures.length === 0) {
       textureList.innerHTML = '<p class="tex-empty">No textures loaded yet.</p>';
       return;
+    }
+    const openEffectsBtn = document.getElementById('openEffectsBtn');
+    if (openEffectsBtn) {
+      openEffectsBtn.classList.toggle('none', textures.length !== 1);
     }
     textures.forEach((entry, i) => {
       const row = document.createElement('div');
@@ -444,6 +451,9 @@ vec3 blendOverlay(vec3 a, vec3 b) {
   document.addEventListener('fullscreenchange', () => {
     const parent = document.fullscreenElement || document.body;
     [uploadBtn, modal].forEach(el => parent.appendChild(el));
+  });
+  document.getElementById('openEffectsBtn').addEventListener('click', () => {
+    window.openEffectsModal?.();
   });
   window.addEventListener('beforeunload', () => {
     textures.forEach(entry => {
