@@ -239,13 +239,14 @@ vec3 blendOverlay(vec3 a, vec3 b) {
     renderTextureList();
   }
   const uploadBtn = document.createElement('button');
-  uploadBtn.id    = 'mediaUploadBtn';
-  uploadBtn.title = 'Textures / Media';
-  uploadBtn.innerHTML = `
-    <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path fill="currentColor" d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2ZM5 5h14v8.59l-3.29-3.3a1 1 0 0 0-1.42 0L8 17l-3-3V5Zm0 14v-2.41l3-3 5.29 5.3a1 1 0 0 0 1.42 0L19 15.41V19H5Z"/>
-      <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
-    </svg>`;
+    uploadBtn.id    = 'mediaUploadBtn';
+    uploadBtn.title = 'Textures / Media';
+    const mediaUploadSVG = `<svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path fill="currentColor" d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2ZM5 5h14v8.59l-3.29-3.3a1 1 0 0 0-1.42 0L8 17l-3-3V5Zm0 14v-2.41l3-3 5.29 5.3a1 1 0 0 0 1.42 0L19 15.41V19H5Z"/>
+    <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
+  </svg>`;
+  window.mediaUploadSVG = mediaUploadSVG;
+  uploadBtn.innerHTML = mediaUploadSVG;
   document.body.appendChild(uploadBtn);
   const fileInput = document.createElement('input');
   fileInput.type     = 'file';

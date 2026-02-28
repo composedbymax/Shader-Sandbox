@@ -196,6 +196,9 @@
 .effects-reset-btn{padding: 8px 10px;border: 1px solid var(--4);border-radius: 5px;background: transparent;color: var(--m);font-size: 10px;font-weight: 500;letter-spacing: 0.05em;cursor: pointer;white-space: nowrap;transition: border-color 0.15s, color 0.15s;}
 .effects-reset-btn:hover{border-color: var(--r);color: var(--rh);}
 @keyframes fx-slide-in{from{transform: translateX(-100%);opacity: 0;}to{transform: translateX(0);opacity: 1;}}
+#effectsBlocker{position: absolute;inset: 0;display: flex;align-items: center;justify-content: center;background: var(--shade);z-index: 9999;pointer-events: all;transition: opacity 0.3s ease;}
+#effectsBlockerMsg{display: flex;flex-direction: column;align-items: center;gap: 12px;background: var(--3);padding: 24px 32px;border-radius: 12px;text-align: center;color: var(--7);}
+#effectsBlockerMsg svg {width: 48px;height: 48px;}
 
 /* export.js */
 /* NONE */

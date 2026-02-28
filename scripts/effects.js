@@ -162,7 +162,7 @@ vec4 fx_stipple(vec4 color, vec2 uv, vec2 res, float sz, float density, float rn
   float bri = dot(color.rgb, vec3(0.299, 0.587, 0.114));
   float r = sz * 0.5 * (1.0 - bri) * density;
   float dot_ = 1.0 - step(r, d);
-  return vec4(vec3(dot_), 1.0);
+  return vec4(color.rgb * dot_, color.a);
 }`,
       call: p => `color = fx_stipple(color, uv, u_resolution, ${toF(p.size)}, ${toF(p.density)}, ${toF(p.randomness)});`,
       needsResolution: true
@@ -185,7 +185,8 @@ vec4 fx_edge(vec2 uv, vec2 res, float intensity, float invert) {
   vec3 dx = r - l, dy = b - t;
   float e = clamp(sqrt(dot(dx, dx) + dot(dy, dy)) * intensity, 0.0, 1.0);
   float v = mix(e, 1.0 - e, invert);
-  return vec4(vec3(v), 1.0);
+  vec3 base = texture2D(u_src, uv).rgb;
+  return vec4(base * v, 1.0);
 }`,
       call: p => `color = fx_edge(uv, u_resolution, ${toF(p.intensity)}, ${toF(p.invert)});`,
       needsResolution: true
@@ -221,7 +222,7 @@ vec4 fx_crosshatch(vec4 color, vec2 uv, float scale, float thr) {
   float h1 = step(thr, mod(p.x + p.y, 1.0));
   float h2 = step(thr, mod(p.x - p.y + 1.0, 1.0));
   float hatch = mix(h1 * h2, 1.0, bri);
-  return vec4(vec3(hatch), 1.0);
+  return vec4(color.rgb * hatch, color.a);
 }`,
       call: p => `color = fx_crosshatch(color, uv, ${toF(p.scale)}, ${toF(p.threshold)});`
     },
@@ -477,8 +478,8 @@ void main() {
       </div>
       <div id="effectsBlocker">
         <div id="effectsBlockerMsg">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-          <p>Import an image or video texture<br>to start adding effects.</p>
+          ${window.mediaUploadSVG}
+          <p>Import an image or video texture<br>to start adding effects</p>
         </div>
       </div>
     </div>`;
