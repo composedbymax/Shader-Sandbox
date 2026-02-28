@@ -639,7 +639,13 @@ void main() {
     window.showToast?.('Reset to passthrough', 'info');
   });
   document.addEventListener('fullscreenchange', () => {
-    (document.fullscreenElement || document.body).appendChild(modal);
+    const fs = document.fullscreenElement;
+    const editors = document.getElementById('editors');
+    if (fs === editors) {
+      editors.appendChild(modal);
+    } else if (editors) {
+      editors.appendChild(modal);
+    }
   });
   window.openEffectsModal = openModal;
 })();
