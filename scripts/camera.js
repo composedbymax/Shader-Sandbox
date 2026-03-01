@@ -74,9 +74,10 @@ void main() {
                                 <option value="">Select Camera...</option>
                             </select>
                             <div class="camera-auto-inject">
-                                <label>
+                                <label class="checkbox-container">
                                     <input type="checkbox" id="autoInjectCheckbox" checked>
-                                    Auto-inject camera preview shader
+                                    <span class="custom-checkbox"></span>
+                                    <span class="checkbox-label">Auto-inject camera preview shader</span>
                                 </label>
                             </div>
                             <div class="camera-buttons">

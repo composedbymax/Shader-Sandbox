@@ -440,7 +440,7 @@ window.addEventListener('resize', initSplit);
         }
         resizeCanvas();
         e.preventDefault();
-    });
+    }, { passive: false });
 });
 ['mouseup', 'touchend', 'touchcancel'].forEach(evt => {
     document.addEventListener(evt, () => drag.type = null);

@@ -81,9 +81,7 @@ class AudioReactive {
     const wrap = this.EL('div', {}, 'audio-reactive-modal-wrap');
     const header = this.EL('div', {}, '', 
       `<div class="audio-reactive-header">
-        <h3 class="audio-reactive-title">
-          ${this.SVG()} <span id="modal-title">Audio</span>
-        </h3>
+        <h3 class="audio-reactive-title"><span id="modal-title">Audio</span></h3>
         <div class="audio-reactive-button-group">
           <button id="info-toggle" class="audio-reactive-info-btn" title="Show Documentation">
             ${this.InfoSVG()}
