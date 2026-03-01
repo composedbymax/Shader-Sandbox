@@ -294,6 +294,7 @@ vec3 blendOverlay(vec3 a, vec3 b) {
     blendControls.style.display = textures.length > 1 ? 'flex' : 'none';
     if (textures.length === 0) {
       textureList.innerHTML = '<p class="tex-empty">No textures loaded yet.</p>';
+      if (typeof window.refreshEffectsModal === 'function') window.refreshEffectsModal();
       return;
     }
     const openEffectsBtn = document.getElementById('openEffectsBtn');
@@ -389,6 +390,7 @@ vec3 blendOverlay(vec3 a, vec3 b) {
       row.appendChild(controls);
       textureList.appendChild(row);
     });
+    if (typeof window.refreshEffectsModal === 'function') window.refreshEffectsModal();
   }
   blendModeSelect.addEventListener('change', () => {
     blendMode = blendModeSelect.value;

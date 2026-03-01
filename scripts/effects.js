@@ -6,25 +6,78 @@
     if (frag.includes('u_image')) return 'image';
     return null;
   }
-  function isPassthrough() {
-    const vert = document.getElementById('vertCode')?.value || '';
-    const frag = document.getElementById('fragCode')?.value || '';
-    const vertOk =
-      vert.includes('attribute vec2 a_position') &&
-      vert.includes('varying') &&
-      vert.includes('v_uv') &&
-      vert.includes('gl_Position');
-    const hasImage = frag.includes('u_image') || frag.includes('u_video');
-    const hasTexture = frag.includes('texture2D');
-    const hasMain = frag.includes('void main');
-    const nonCommentLines = frag.split('\n').filter(l => {
-      const t = l.trim();
-      return t.length > 0 && !t.startsWith('//');
+  function parseFragShaderToEffects(frag) {
+    const found = [];
+    const parsers = [
+      { tabId: 'basic', type: 'blur',
+        re: /color\s*=\s*fx_blur\(color,\s*uv,\s*([\d.]+)\);/,
+        parse: m => ({ strength: parseFloat(m[1]) }) },
+      { tabId: 'basic', type: 'sepia',
+        re: /color\s*=\s*fx_sepia\(color,\s*([\d.]+)\);/,
+        parse: m => ({ intensity: parseFloat(m[1]) }) },
+      { tabId: 'basic', type: 'vignette',
+        re: /color\s*=\s*fx_vignette\(color,\s*uv,\s*([\d.]+),\s*([\d.]+)\);/,
+        parse: m => ({ intensity: parseFloat(m[1]), radius: parseFloat(m[2]) }) },
+      { tabId: 'basic', type: 'chromatic',
+        re: /color\s*=\s*fx_chromatic\(uv,\s*([\d.]+)\);/,
+        parse: m => ({ strength: parseFloat(m[1]) }) },
+      { tabId: 'basic', type: 'contrast',
+        re: /color\s*=\s*fx_contrast\(color,\s*([\d.]+),\s*([\d.]+)\);/,
+        parse: m => ({ contrast: parseFloat(m[1]), brightness: parseFloat(m[2]) }) },
+      { tabId: 'basic', type: 'filmgrain',
+        re: /color\s*=\s*fx_filmgrain\(color,\s*uv,\s*([\d.]+),\s*([\d.]+)\);/,
+        parse: m => ({ amount: parseFloat(m[1]), speed: parseFloat(m[2]) }) },
+      { tabId: 'basic', type: 'glitch',
+        re: /color\s*=\s*fx_glitch\(uv,\s*([\d.]+),\s*([\d.]+)\);/,
+        parse: m => ({ intensity: parseFloat(m[1]), speed: parseFloat(m[2]) }) },
+      { tabId: 'pattern', type: 'pixelate',
+        re: /color\s*=\s*fx_pixelate\(uv,\s*([\d.]+)\);/,
+        parse: m => ({ size: parseFloat(m[1]) }) },
+      { tabId: 'pattern', type: 'stipple',
+        re: /color\s*=\s*fx_stipple\(color,\s*uv,\s*u_resolution,\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\);/,
+        parse: m => ({ size: parseFloat(m[1]), density: parseFloat(m[2]), randomness: parseFloat(m[3]) }) },
+      { tabId: 'pattern', type: 'edge',
+        re: /color\s*=\s*fx_edge\(uv,\s*u_resolution,\s*([\d.]+),\s*([\d.]+)\);/,
+        parse: m => ({ intensity: parseFloat(m[1]), invert: parseFloat(m[2]) }) },
+      { tabId: 'pattern', type: 'scanlines',
+        re: /color\s*=\s*fx_scanlines\(color,\s*uv,\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\);/,
+        parse: m => ({ frequency: parseFloat(m[1]), strength: parseFloat(m[2]), speed: parseFloat(m[3]) }) },
+      { tabId: 'pattern', type: 'crosshatch',
+        re: /color\s*=\s*fx_crosshatch\(color,\s*uv,\s*([\d.]+),\s*([\d.]+)\);/,
+        parse: m => ({ scale: parseFloat(m[1]), threshold: parseFloat(m[2]) }) },
+      { tabId: 'pattern', type: 'mosaic',
+        re: /color\s*=\s*fx_mosaic\(uv,\s*([\d.]+),\s*([\d.]+)\);/,
+        parse: m => ({ tiles: parseFloat(m[1]), rotation: parseFloat(m[2]) }) },
+      { tabId: 'color', type: 'hsl_adjust',
+        re: /color\s*=\s*fx_hsl_adjust\(color,\s*(-?[\d.]+),\s*([\d.]+),\s*([\d.]+)\);/,
+        parse: m => ({ hue: parseFloat(m[1]), saturation: parseFloat(m[2]), lightness: parseFloat(m[3]) }) },
+      { tabId: 'color', type: 'grayscale_isolate',
+        re: /color\s*=\s*fx_isolate\(color,\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\);/,
+        parse: m => ({ target_h: parseFloat(m[1]), tolerance: parseFloat(m[2]), softness: parseFloat(m[3]) }) },
+      { tabId: 'color', type: 'duotone',
+        re: /color\s*=\s*fx_duotone\(color,\s*vec3\(([\d.]+),([\d.]+),([\d.]+)\),\s*vec3\(([\d.]+),([\d.]+),([\d.]+)\)\);/,
+        parse: m => ({ shadow_r: parseFloat(m[1]), shadow_g: parseFloat(m[2]), shadow_b: parseFloat(m[3]),
+                       hi_r: parseFloat(m[4]), hi_g: parseFloat(m[5]), hi_b: parseFloat(m[6]) }) },
+      { tabId: 'color', type: 'channel_shift',
+        re: /color\s*=\s*fx_channel_mix\(color,\s*mat3\(([-\d.]+),([-\d.]+),([-\d.]+),([-\d.]+),([-\d.]+),([-\d.]+),([-\d.]+),([-\d.]+),([-\d.]+)\)\);/,
+        parse: m => ({ rr: parseFloat(m[1]), gr: parseFloat(m[2]), br: parseFloat(m[3]),
+                       rg: parseFloat(m[4]), gg: parseFloat(m[5]), gb: parseFloat(m[6]),
+                       rb: parseFloat(m[7]), bg: parseFloat(m[8]), bb: parseFloat(m[9]) }) },
+      { tabId: 'color', type: 'lut_grade',
+        re: /color\s*=\s*fx_lut_grade\(color,\s*vec3\(([-\d.]+),([-\d.]+),([-\d.]+)\),\s*([\d.]+),\s*([\d.]+)\);/,
+        parse: m => ({ lift_r: parseFloat(m[1]), lift_g: parseFloat(m[2]), lift_b: parseFloat(m[3]),
+                       gamma: parseFloat(m[4]), gain: parseFloat(m[5]) }) },
+    ];
+    const mainMatch = frag.match(/void\s+main\s*\(\s*\)\s*\{([\s\S]*)\}/);
+    if (!mainMatch) return found;
+    mainMatch[1].split('\n').forEach(line => {
+      const trimmed = line.trim();
+      for (const parser of parsers) {
+        const m = trimmed.match(parser.re);
+        if (m) { found.push({ tabId: parser.tabId, type: parser.type, params: parser.parse(m) }); break; }
+      }
     });
-    const fragOk = hasImage && hasTexture && hasMain &&
-      !frag.includes('u_time') &&
-      nonCommentLines.length < 14;
-    return vertOk && fragOk;
+    return found;
   }
   const basicEffects = {
     blur: {
@@ -593,9 +646,17 @@ void main() {
     window.showToast?.(`${def.name} added`, 'success');
   }
   function openModal() {
-    editingEnabled = isPassthrough();
+    editingEnabled = detectMediaType() !== null;
     modal.style.display = 'flex';
     modalOpen = true;
+    if (editingEnabled && activeEffects.length === 0) {
+      const frag = document.getElementById('fragCode')?.value || '';
+      const restored = parseFragShaderToEffects(frag);
+      if (restored.length > 0) {
+        activeEffects = restored;
+        window.showToast?.(`Restored ${restored.length} effect${restored.length > 1 ? 's' : ''} from shader`, 'info');
+      }
+    }
     renderLibrary();
     renderQueue();
     updateBlocker();
@@ -649,4 +710,15 @@ void main() {
     }
   });
   window.openEffectsModal = openModal;
+  window.refreshEffectsModal = function() {
+    const blocker = document.getElementById('effectsBlocker');
+    if (!blocker) return;
+    editingEnabled = detectMediaType() !== null;
+    if (modalOpen) {
+      updateBlocker();
+      if (editingEnabled) {
+        window.showToast?.('Media loaded — effects enabled.', 'success');
+      }
+    }
+  };
 })();
