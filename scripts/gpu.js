@@ -69,6 +69,8 @@
         if (vertTA && fragTA) {
             const webgpuHandler = () => {
                 if (isWebGPUMode) {
+                    sessionStorage.setItem('wgslVert', document.getElementById('vertCode').value);
+                    sessionStorage.setItem('wgslFrag', document.getElementById('fragCode').value);
                     rebuildWebGPUProgram();
                 }
             };
@@ -109,9 +111,8 @@
             const fragFile = document.getElementById('fragFile');
             if (vertFile) vertFile.accept = '.wgsl,.txt';
             if (fragFile) fragFile.accept = '.wgsl,.txt';
-            
             if (vertCode) {
-                vertCode.value = `// WebGPU Vertex Shader (WGSL)
+                vertCode.value = sessionStorage.getItem('wgslVert') ?? `// WebGPU Vertex Shader (WGSL)
 //  Created by Max Warren
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
@@ -126,7 +127,7 @@ fn vs_main(@location(0) position: vec2<f32>) -> VertexOutput {
 }`;
             }
             if (fragCode) {
-                fragCode.value = `// WebGPU Fragment Shader (WGSL)
+                fragCode.value = sessionStorage.getItem('wgslFrag') ?? `// WebGPU Fragment Shader (WGSL)
 struct Uniforms {
     resolution: vec2<f32>,
     time: f32,
@@ -176,7 +177,6 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             if (fragCode && originalFragmentCode !== null) {fragCode.value = originalFragmentCode;}
         }
     };
-
     const setupCanvasResizing = () => {
         if (!webgpuCanvas) return;
         if (resizeObserver) {

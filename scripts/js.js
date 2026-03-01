@@ -193,7 +193,7 @@ if (mouse.x > 0 && mouse.y > 0) {
             vertPanel.style.height = '100%';
             const vertHeader = vertPanel.querySelector('.panel-header span');
             vertHeader.textContent = 'JavaScript Animation';
-            vertTA.value = defaultJSAnimation;
+            vertTA.value = sessionStorage.getItem('jsCode') ?? defaultJSAnimation;
             glCanvas.style.display = 'none';
             createJSCanvas();
             setupJSMouseEvents();
@@ -212,6 +212,7 @@ if (mouse.x > 0 && mouse.y > 0) {
             fragPanel.style.height = '50%';
             const vertHeader = vertPanel.querySelector('.panel-header span');
             vertHeader.textContent = 'Vertex Shader';
+            sessionStorage.setItem('jsCode', vertTA.value);
             vertTA.value = savedShaderCode.vertex;
             fragTA.value = savedShaderCode.fragment;
             glCanvas.style.display = 'block';
@@ -321,6 +322,7 @@ if (mouse.x > 0 && mouse.y > 0) {
             if (!jsMode) return;
             clearTimeout(timeout);
             timeout = setTimeout(() => {
+                sessionStorage.setItem('jsCode', vertTA.value);
                 console.log('JavaScript code updated');
             }, 100);
         });
