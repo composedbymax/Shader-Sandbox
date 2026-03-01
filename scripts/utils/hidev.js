@@ -1,6 +1,5 @@
 !(function () {
-  const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  if (isMobile) return;
+  if (window.mobile) return;
   let hasGreeted = false;
   function greet() {
   if (hasGreeted) return;
@@ -16,7 +15,7 @@
     console.group('%c' + glsl, 'font-size:1rem; color:#00ffcc; font-weight:extra-bold; font-family: monospace; white-space: pre;');
     console.log('%cThis Site/App was created by: %cMax Warren', 'font-size:1rem; color:#dadada;', 'font-size:1rem; color:#fff; font-weight:bold;');
     console.log('%cContribute or ask questions: %ccompositionsbymax@gmail.com', 'font-size:1rem; color:#dadada;', 'font-size:0.8rem; color:#51f6d5;');
-    console.log('%cGithub Repo: %cgithub.com/composedbymax/WebGL-Sandbox', 'font-size:1rem; color:#dadada;', 'font-size:0.8rem; color:#51f6d5;');
+    console.log('%cGithub Repo: %chttps://github.com/composedbymax/WebGL-Sandbox', 'font-size:1rem; color:#dadada;', 'font-size:0.8rem; color:#51f6d5;');
     console.groupEnd();
   }
   function isDevToolsOpen() {

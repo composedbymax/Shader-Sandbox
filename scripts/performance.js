@@ -170,8 +170,7 @@ class GLSLPerformanceMonitor {
   }
   collectGPUInfo() {
     if (this.gl) {
-      const isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
-      if (isFirefox) {
+      if (window.isFirefox) {
         this.metrics.gpuInfo.vendor = this.gl.getParameter(this.gl.VENDOR) || "Unknown";
         this.metrics.gpuInfo.renderer = this.gl.getParameter(this.gl.RENDERER) || "Unknown";
       } else {

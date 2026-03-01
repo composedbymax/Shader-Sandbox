@@ -39,10 +39,9 @@
     </div>
     <div class="info" id="videoInfo"></div>
   `;
-  const ua = navigator.userAgent;
-  const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
-  const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-  const isFirefox = /firefox/i.test(ua);
+  const isSafari = window.isSafari;
+  const isIOS = window.isIOS;
+  const isFirefox = window.isFirefox;
   const settingsPanel = document.createElement('div');
   settingsPanel.id = 'recSettings';
   settingsPanel.innerHTML = `
@@ -270,12 +269,11 @@
         'video/mp4'
       ]
     };
-    const ua = navigator.userAgent;
-    const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-    const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
-    const bases = (isIOS && isSafari) ? (iOSCombinations[codec] || standardCombinations[codec]) : standardCombinations[codec];
+    const bases = (window.isIOS && window.isSafari)
+      ? (iOSCombinations[codec] || standardCombinations[codec])
+      : standardCombinations[codec];
     if (!bases) return null;
-    if (isIOS && isSafari && withAudio) {
+    if (window.isIOS && window.isSafari && withAudio) {
       for (const base of bases) {
         if (MediaRecorder.isTypeSupported(base)) {
           return base;
@@ -314,11 +312,8 @@
     hiddenCtx = hiddenCanvas.getContext('2d', { alpha: false });
     const videoStream = hiddenCanvas.captureStream(fps);
     let audioStream = includeAudio.checked && getAudioStream();
-    const ua = navigator.userAgent;
-    const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-    const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
     if (audioStream && !audioStream.getAudioTracks().length) audioStream = null;
-    if (isIOS && isSafari && includeAudio.checked && !audioStream) {
+    if (window.isIOS && window.isSafari && includeAudio.checked && !audioStream) {
       console.warn('Audio not available on iOS Safari, continuing with video-only recording');
       audioStatus.textContent = 'Audio: Not available on iOS';
     }
@@ -328,7 +323,7 @@
     const bits = recQuality.value * 1000;
     const want = recCodec.value;
     let mime = checkCodecSupport(want, !!audioStream);
-    if (!mime && isIOS && isSafari) {
+    if (!mime && window.isIOS && window.isSafari) {
       console.log('Trying iOS fallback codecs...');
       mime = checkCodecSupport('h264', false);
       if (mime) {
@@ -399,7 +394,11 @@
       const fileSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
       const duration = ((Date.now() - recordingStartTime) / 1000).toFixed(1);
       const hasAudio = stream.getAudioTracks().length > 0;
-      const canvasType = window.jsCanvasState && window.jsCanvasState.isJSMode() ? 'JavaScript' : window.webgpuState && window.webgpuState.isWebGPUMode() ? 'WebGPU' : 'WebGL';
+      const canvasType = window.jsCanvasState && window.jsCanvasState.isJSMode()
+        ? 'JavaScript'
+        : window.webgpuState && window.webgpuState.isWebGPUMode()
+          ? 'WebGPU'
+          : 'WebGL';
       if (currentVideoUrl) {
         URL.revokeObjectURL(currentVideoUrl);
       }
@@ -445,7 +444,7 @@
     drawLoop();
     recorder.start(1000);
     recIndicator.style.display = 'block';
-    startRec.disabled = true;
+    startRec.disabled = false;
     stopRec.disabled = false;
     const keyframeInterval = setInterval(() => {
       if (recorder && recorder.state === 'recording') {

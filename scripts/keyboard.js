@@ -1,7 +1,6 @@
 (function() {
     'use strict';
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0 || 
-                  navigator.userAgent.toUpperCase().indexOf('MAC') >= 0;
+    const isMac = window.isMac;
     const osKeys = {
         modifier: isMac ? 'Cmd' : 'Win',
         alt: isMac ? 'Opt' : 'Alt',
