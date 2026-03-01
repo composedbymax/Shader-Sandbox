@@ -197,7 +197,7 @@ vec4 fx_pixelate(vec2 uv, float sz) {
       call: p => `color = fx_pixelate(uv, ${toF(p.size)});`
     },
     stipple: {
-      name: 'Stipple / Halftone',
+      name: 'Stipple',
       params: { size: 8.0, density: 1.0, randomness: 0.4 },
       controls: [
         { name: 'size',       label: 'Dot Size',   type: 'range', min: 2, max: 32, step: 0.5 },
@@ -280,7 +280,7 @@ vec4 fx_crosshatch(vec4 color, vec2 uv, float scale, float thr) {
       call: p => `color = fx_crosshatch(color, uv, ${toF(p.scale)}, ${toF(p.threshold)});`
     },
     mosaic: {
-      name: 'Mosaic / Tile',
+      name: 'Mosaic',
       params: { tiles: 20.0, rotation: 0.0 },
       controls: [
         { name: 'tiles',    label: 'Tiles',    type: 'range', min: 4, max: 80, step: 1 },
@@ -557,7 +557,7 @@ void main() {
       card.className = 'effects-card';
       card.innerHTML = `
         <div class="effects-card-name">${def.name}</div>
-        <button class="effects-card-add" data-type="${type}" data-tab="${activeTab}" title="Add to stack">＋</button>`;
+        <button class="effects-card-add" data-type="${type}" data-tab="${activeTab}" title="Add to stack">+</button>`;
       card.querySelector('.effects-card-add').addEventListener('click', () => {
         if (!editingEnabled) {
           window.showToast?.('Import an image or video texture first.', 'warning');
@@ -721,4 +721,12 @@ void main() {
       }
     }
   };
+  const editorsEl = document.getElementById('editors');
+  if (editorsEl && window.ResizeObserver) {
+    new ResizeObserver(entries => {
+      const width = entries[0].contentRect.width;
+      const body = document.getElementById('effectsBody');
+      if (body) body.classList.toggle('narrow', width < 400);
+    }).observe(editorsEl);
+  }
 })();

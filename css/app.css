@@ -161,8 +161,8 @@
 .effects-card:last-child{border-bottom: none;}
 .effects-card:hover{background: var(--3);}
 .effects-card-name{font-size: 10.5px;color: var(--6);line-height: 1.3;flex: 1;min-width: 0;word-break: break-word;}
-.effects-card-add{flex-shrink: 0;width: 22px;height: 22px;border: 1px solid var(--4);border-radius: 4px;background: transparent;color: var(--a);font-size: 14px;line-height: 1;display: flex;align-items: center;justify-content: center;cursor: pointer;transition: background 0.12s, border-color 0.12s;}
-.effects-card-add:hover{background: var(--a);border-color: var(--a);}
+.effects-card-add{flex-shrink: 0;width: 22px;height: 22px;border: 1px solid var(--4);border-radius: 4px;background: transparent;color: var(--a);font-size: 16px;font-weight: 700;line-height: 1;display: flex;align-items: center;justify-content: center;cursor: pointer;transition: background 0.12s, border-color 0.12s;}
+.effects-card-add:hover{background: var(--a);border-color: var(--3);color:var(--1)}
 #effectsQueue{flex: 1;display: flex;flex-direction: column;min-width: 0;overflow: hidden;background: var(--3);}
 #effectsQueueHeader{display: flex;align-items: center;justify-content: space-between;padding: 8px 12px;border-bottom: 1px solid var(--4);flex-shrink: 0;}
 #effectsQueueHeader span{font-size: 10px;letter-spacing: 0.1em;text-transform: uppercase;color: var(--5);font-weight: 600;}
@@ -199,6 +199,8 @@
 #effectsBlocker{position: absolute;inset: 0;display: flex;align-items: center;justify-content: center;background: var(--shade);z-index: 9999;pointer-events: all;transition: opacity 0.3s ease;}
 #effectsBlockerMsg{display: flex;flex-direction: column;align-items: center;gap: 12px;background: var(--3);padding: 24px 32px;border-radius: 12px;text-align: center;color: var(--7);}
 #effectsBlockerMsg svg {width: 48px;height: 48px;}
+#effectsBody.narrow{flex-direction: column;}
+#effectsBody.narrow #effectsLibrary{width: 100%;min-width: unset;border-right: none;border-bottom: 1px solid var(--4);max-height: 30vh;}
 
 /* export.js */
 /* NONE */
