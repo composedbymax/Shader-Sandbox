@@ -346,13 +346,10 @@ void main() {
         updateTexture() {
             if (!this.gl || !this.texture || !this.preview || !this.isActive) return;
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
+            this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, false);
             try {
                 this.gl.texImage2D(
-                    this.gl.TEXTURE_2D,
-                    0,
-                    this.gl.RGBA,
-                    this.gl.RGBA,
-                    this.gl.UNSIGNED_BYTE,
+                    this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE,
                     this.preview
                 );
             } catch (error) {

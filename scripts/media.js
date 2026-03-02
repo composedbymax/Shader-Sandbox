@@ -18,6 +18,9 @@
     const orig = gl.drawArrays.bind(gl);
     gl.drawArrays = function(mode, first, count) {
       const prog = window.program;
+      if (window.cameraSystem?.isActive) {
+        return orig(mode, first, count);
+      }
       if (prog && textures.length > 0) {
         gl.useProgram(prog);
         textures.forEach((entry, i) => {
@@ -26,7 +29,9 @@
           gl.bindTexture(gl.TEXTURE_2D, entry.texture);
           if (entry.type === 'video' && entry.isPlaying &&
               entry.element && !entry.element.paused) {
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, entry.element);
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
           }
           const uname = textures.length === 1
             ? (entry.type === 'video' ? 'u_video' : 'u_image')
@@ -117,6 +122,7 @@ vec3 blendOverlay(vec3 a, vec3 b) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, entry.element);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     entry.texture = tex;
   }
   function startVideoLoop(entry) {
@@ -149,6 +155,19 @@ vec3 blendOverlay(vec3 a, vec3 b) {
     }
   }
   async function handleMediaFile(file) {
+    const currentType = window.getCurrentAnimationType?.();
+    if (currentType && currentType !== 'webgl') {
+      window.switchToAnimationType?.('webgl');
+      await new Promise(r => setTimeout(r, 300));
+    }
+    if (window.cameraSystem?.isActive) {
+      await window.cameraSystem.stopCamera();
+      await new Promise(r => setTimeout(r, 250));
+    }
+    if (window.is3DModelActive?.()) {
+      window.deactivate3DModel?.();
+      await new Promise(r => setTimeout(r, 150));
+    }
     const isVideo = file.type.startsWith('video/');
     let isImage   = file.type.startsWith('image/');
     const isHeic  = /\.(heic|heif)$/i.test(file.name);
