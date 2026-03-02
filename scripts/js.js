@@ -286,32 +286,30 @@ if (mouse.x > 0 && mouse.y > 0) {
     function renderJSAnimation() {
         if (!jsMode || !jsCanvas || !jsCtx) return;
         updateAudioData();
-        const vertTA = $('vertCode');
         const time = (Date.now() - jsStartTime) / 1000;
-        const width = jsCanvas.width;
-        const height = jsCanvas.height;
-        if (width === 0 || height === 0) {
-            resizeJSCanvas();
-        }
+        const width = jsCanvas.width, height = jsCanvas.height;
+        if (width === 0 || height === 0) resizeJSCanvas();
+        const lint = (msg, prefix) => {
+            const $ = id => document.getElementById(id);
+            const show = !!msg;
+            $('lintContent').textContent = msg ?? '';
+            ['copyErrorsBtn', 'closeLintBtn'].forEach(id => $(`${id}`).style.display = show ? 'block' : 'none');
+            $('lint').style.display = show ? 'block' : 'none';
+            if (!show) lastLoggedError = null;
+            if (show && msg !== lastLoggedError) {
+                lastLoggedError = msg;
+                console.error(prefix, msg);
+            }
+        };
         try {
-            const userCode = vertTA.value;
-            const wrappedCode = `
-                try {
-                    ${userCode}
-                } catch (e) {
-                    ctx.fillStyle = 'var(--r)';
-                    ctx.font = '14px monospace';
-                    ctx.fillText('Error: ' + e.message, 10, 30);
-                    console.error('Animation error:', e);
-                }
-            `;
-            const animateFunction = new Function('ctx', 'width', 'height', 'time', 'mouse', 'audio', wrappedCode);
-            animateFunction(jsCtx, width, height, time, jsMouse, audioData);
-        } catch (error) {
-            jsCtx.fillStyle = '#ff0000';
-            jsCtx.font = '14px monospace';
-            jsCtx.fillText('Error: ' + error.message, 10, 30);
-            console.error('JavaScript animation error:', error);
+            const errorContainer = { err: null };
+            new Function('ctx','width','height','time','mouse','audio','errorContainer',
+                `try { ${$('vertCode').value} } catch(e) { errorContainer.err = e; }`
+            )(jsCtx, width, height, time, jsMouse, audioData, errorContainer);
+            if (errorContainer.err) lint('Runtime error: ' + errorContainer.err.message, 'Animation error:');
+            else lint(null);
+        } catch (e) {
+            lint('Syntax error: ' + e.message, 'JavaScript animation error:');
         }
         jsAnimationId = requestAnimationFrame(renderJSAnimation);
     }
