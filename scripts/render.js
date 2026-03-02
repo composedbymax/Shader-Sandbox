@@ -123,20 +123,35 @@ canvas.addEventListener('touchstart', e => updateMouse(e, true, 'down'), { passi
 canvas.addEventListener('touchend', e => updateMouse(e, true, 'up'), { passive: false });
 canvas.addEventListener('wheel', e => {
     if (drag.type) return;
-    let scale = 1;
-    if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) {
-        scale = 16;
-    } else if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
-        scale = canvas.height;
-    }
-    const dx = e.deltaX * scale;
-    const dy = e.deltaY * scale;
-    mouse.scrollDeltaX += dx;
-    mouse.scrollDeltaY += dy;
-    mouse.scrollX += dx;
-    mouse.scrollY += dy;
+    const scale = e.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : e.deltaMode === WheelEvent.DOM_DELTA_PAGE ? canvas.height : 1;
+    const dx = e.deltaX * scale, dy = e.deltaY * scale;
+    mouse.scrollDeltaX += dx; mouse.scrollDeltaY += dy;
+    mouse.scrollX += dx; mouse.scrollY += dy;
     e.preventDefault();
 }, { passive: false });
+const twoFinger = { active: false, lastX: 0, lastY: 0 };
+canvas.addEventListener('touchstart', e => {
+    if (window.mobile && e.touches.length === 2) {
+        twoFinger.active = true;
+        twoFinger.lastX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        twoFinger.lastY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        e.preventDefault();
+    }
+}, { passive: false });
+canvas.addEventListener('touchmove', e => {
+    if (window.mobile && twoFinger.active && e.touches.length === 2) {
+        const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        const dx = twoFinger.lastX - cx, dy = twoFinger.lastY - cy;
+        twoFinger.lastX = cx; twoFinger.lastY = cy;
+        mouse.scrollDeltaX += dx; mouse.scrollDeltaY += dy;
+        mouse.scrollX += dx; mouse.scrollY += dy;
+        e.preventDefault();
+    }
+}, { passive: false });
+['touchend', 'touchcancel'].forEach(evt =>
+    canvas.addEventListener(evt, e => { if (e.touches.length < 2) twoFinger.active = false; }, { passive: false })
+);
 const togglePauseState = () => {
     const shouldPause = document.hidden || !document.hasFocus();
     pauseOnBlurEnabled && (shouldPause ? pauseAnimation() : resumeAnimation());
