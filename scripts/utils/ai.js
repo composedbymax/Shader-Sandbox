@@ -6,7 +6,7 @@
   modal.id = 'aiModal';
   modal.innerHTML = `
     <div class="modal-content">
-      <span class="close-btn">&times;</span>
+      <span class="modal-close-btn"></span>
       <h3>AI Shader Assistant</h3>
       <select id="modelSelect">
         <option value="">Loading models...</option>
@@ -26,7 +26,7 @@
   const sendBtn = modal.querySelector('#sendBtn');
   const loadingText = modal.querySelector('#loadingText');
   const responseArea = modal.querySelector('#responseArea');
-  const closeBtn = modal.querySelector('.close-btn');
+  const closeBtn = modal.querySelector('.modal-close-btn');
   const applyBtn = modal.querySelector('#applyShaderBtn');
   const copyBtn = modal.querySelector('#copyBtn');
   let extractedShaderCode = null;

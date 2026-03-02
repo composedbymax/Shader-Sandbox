@@ -148,7 +148,7 @@
         return `
         <div class="shortcut-modal" id="shortcut-modal">
             <div class="shortcut">
-                <button class="close-btn" onclick="KeyboardShortcuts.close()">&times;</button>
+                <button class="modal-close-btn" onclick="KeyboardShortcuts.close()">&times;</button>
                 <div class="shortcut-header">
                     <h2 class="shortcut-title">Keyboard Shortcuts</h2>
                 </div>

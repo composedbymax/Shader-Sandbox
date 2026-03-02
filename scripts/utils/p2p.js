@@ -26,7 +26,7 @@
   container.innerHTML = `
     <div class="connect-header">
       <div class="connect-title">WebRTC Shader Sync</div>
-      <button id="closeBtn" class="connect-close-btn">×</button>
+      <button id="closeBtn" class="modal-close-btn"></button>
     </div>
     <div id="joinCodeSection">
       <button id="createRoomBtn" class="connect-button">Create Room</button>

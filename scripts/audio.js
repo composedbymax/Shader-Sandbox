@@ -86,7 +86,7 @@ class AudioReactive {
           <button id="info-toggle" class="audio-reactive-info-btn" title="Show Documentation">
             ${this.InfoSVG()}
           </button>
-          <button id="close-modal" class="audio-reactive-close-btn">×</button>
+          <button id="close-modal" class="modal-close-btn"></button>
         </div>
       </div>`
     );

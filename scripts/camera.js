@@ -66,7 +66,7 @@ void main() {
                     <div class="camera-content">
                         <div class="camera-header">
                             <h3>Webcam Setup</h3>
-                            <button class="camera-close">×</button>
+                            <button class="modal-close-btn"></button>
                         </div>
                         <video class="camera-preview" id="cameraPreview" autoplay muted playsinline></video>
                         <div class="camera-controls">
@@ -102,7 +102,7 @@ void main() {
             this.startBtn = document.getElementById('startCameraBtn');
             this.stopBtn = document.getElementById('stopCameraBtn');
             this.status = document.getElementById('cameraStatus');
-            this.closeBtn = this.modal.querySelector('.camera-close');
+            this.closeBtn = this.modal.querySelector('.modal-close-btn');
             this.autoInjectCheckbox = document.getElementById('autoInjectCheckbox');
             document.addEventListener('fullscreenchange', () => {
                 const fsParent = document.fullscreenElement || document.body;

@@ -21,7 +21,7 @@
             <div class="glsl-formatter-modal-overlay" id="glslFormatterModal">
                 <div class="glsl-formatter-modal">
                     <div class="glsl-formatter-modal-header">
-                        <button class="glsl-formatter-modal-close" onclick="GLSLFormatter.closeModal()">×</button>
+                        <button class="modal-close-btn" onclick="GLSLFormatter.closeModal()">×</button>
                         <h2 class="glsl-formatter-modal-title">GLSL Formatter</h2>
                     </div>
                     <div class="glsl-formatter-switches">

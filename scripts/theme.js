@@ -286,7 +286,7 @@
         <div class="theme-modal-header">
           <div class="theme-modal-header-content">
             <h3 class="theme-modal-title">Theme Manager</h3>
-            <button id="close-modal" class="theme-modal-close-btn" aria-label="Close Theme Manager">×</button>
+            <button id="close-modal" class="modal-close-btn" aria-label="Close Theme Manager"></button>
           </div>
           <div class="theme-select-container">
             <label for="theme-select" class="theme-select-label">Select Theme:</label>

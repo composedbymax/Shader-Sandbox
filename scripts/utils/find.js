@@ -24,7 +24,9 @@
     const title = document.createElement('h2');
     title.textContent = 'GLSL Library';
     const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = '✕';
+    closeBtn.className = 'modal-close-btn';
+    closeBtn.type = 'button';
+    closeBtn.setAttribute('aria-label', 'Close modal');
     closeBtn.addEventListener('click', closeFindModal);
     header.append(title, closeBtn);
     searchInput = document.createElement('input');

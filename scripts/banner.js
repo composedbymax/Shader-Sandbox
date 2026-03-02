@@ -35,7 +35,7 @@
     text.textContent = message;
     text.appendChild(actionLink);
     const close = document.createElement('button');
-    close.className = 'banner-close';
+    close.className = 'right-close-btn';
     close.textContent = '✕';
     close.addEventListener('click', dismiss);
     banner.appendChild(text);

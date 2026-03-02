@@ -278,7 +278,7 @@ vec3 blendOverlay(vec3 a, vec3 b) {
   modal.id = 'mediaModal';
   modal.innerHTML = `
     <div class="modal-content">
-      <button id="mediaCloseBtn">×</button>
+      <button id="modal-close-btn" class="modal-close-btn"></button>
       <h3>Texture Manager</h3>
       <div id="textureDropZone">
         <span>Drop or click to add textures</span>
@@ -302,7 +302,7 @@ vec3 blendOverlay(vec3 a, vec3 b) {
       </div>
     </div>`;
   document.body.appendChild(modal);
-  const closeBtn        = modal.querySelector('#mediaCloseBtn');
+  const closeBtn        = modal.querySelector('#modal-close-btn');
   const textureDropZone = modal.querySelector('#textureDropZone');
   const textureList     = modal.querySelector('#textureList');
   const blendControls   = modal.querySelector('#blendControls');

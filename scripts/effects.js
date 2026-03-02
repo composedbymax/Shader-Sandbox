@@ -510,7 +510,7 @@ void main() {
           Effects
         </span>
         <div id="effectsHeaderRight">
-          <button id="effectsClose" title="Close (Esc)">×</button>
+          <button id="effectsClose" class="right-close-btn" title="Close (Esc)">×</button>
         </div>
       </div>
       <div id="effectsTabs">
