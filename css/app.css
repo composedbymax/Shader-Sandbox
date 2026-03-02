@@ -1,11 +1,10 @@
 .none {display:none;}
 
-.modal-close-btn{position: absolute;top: 14px;right: 14px;width: 36px;height: 36px;border-radius: 50%;border: none;cursor: pointer;background: transparent;backdrop-filter: blur(8px);transition: all 0.35s ease;box-shadow:0 4px 12px var(--0),inset 0 0 0 1px var(--5);}
-.modal-close-btn::before,
-.modal-close-btn::after{content: '';position: absolute;top: 50%;left: 50%;width: 18px;height: 2.5px;background: var(--l);transform-origin: center;transition: all 0.35s ease;}
+.modal-close-btn{position: absolute;top: 14px;right: 14px;width: 30px;height: 30px;border-radius: 50%;border: none;cursor: pointer;background: transparent;backdrop-filter: blur(8px);transition: all 0.35s ease;box-shadow:0 4px 12px var(--0),inset 0 0 0 1px var(--5);}
+.modal-close-btn::before, .modal-close-btn::after{content: '';position: absolute;top: 50%;left: 50%;width: 14px;height: 2.5px;background: var(--l);transform-origin: center;transition: all 0.35s ease;}
 .modal-close-btn::before{transform: translate(-50%, -50%) rotate(45deg);}
 .modal-close-btn::after{transform: translate(-50%, -50%) rotate(-45deg);}
-.modal-close-btn:hover{background: var(--5);transform: rotate(90deg) scale(1.1);box-shadow:0 0 20px var(--7),0 6px 18px var(--0);}
+.modal-close-btn:hover{background: var(--5);transform: rotate(90deg) scale(1.1);box-shadow:0 0 20px var(--r),0 6px 18px var(--0);}
 .modal-close-btn:active{transform: rotate(90deg) scale(0.95);}
 
 .right-close-btn{background: none;border: none;color: var(--7);font-size: 20px;cursor: pointer;margin-left: 20px;}
@@ -43,7 +42,7 @@
 .audio-reactive-header{position: relative;display: flex;align-items: center;margin-bottom: 20px;padding-right: 60px;}
 .audio-reactive-title{margin: 0;color: var(--7);display: flex;align-items: center;gap: 8px;}
 .audio-reactive-button-group{margin-left: auto;display: flex;align-items: center;gap: 8px;}
-.audio-reactive-info-btn{margin-top:18px;background: none;border: none;color: var(--7);font-size: 16px;cursor: pointer;padding: 4px;border-radius: 2px;transition: background .2s ease;}
+.audio-reactive-info-btn{margin-top:16px;background: none;border: none;color: var(--7);font-size: 16px;cursor: pointer;padding: 4px;border-radius: 2px;transition: background .2s ease;}
 .audio-reactive-info-btn:hover{background-color: var(--5);}
 .audio-reactive-mic-section{margin-bottom: 15px;}
 .audio-reactive-label{display: block;color: var(--7);margin-bottom: 8px;font-size: 14px;}
@@ -203,7 +202,7 @@
 .effects-reset-btn:hover{border-color: var(--r);color: var(--rh);}
 @keyframes fx-slide-in{from{transform: translateX(-100%);opacity: 0;}to{transform: translateX(0);opacity: 1;}}
 #effectsBlocker{position: absolute;inset: 0;display: flex;align-items: center;justify-content: center;background: var(--shade);z-index: 9999;pointer-events: all;transition: opacity 0.3s ease;}
-#effectsBlockerMsg{display: flex;flex-direction: column;align-items: center;gap: 12px;background: var(--3);padding: 24px 32px;border-radius: 12px;text-align: center;color: var(--7);}
+#effectsBlockerMsg{display: flex;flex-direction: column;align-items: center;gap: 12px;background: var(--3);padding: 24px 32px;border-radius: 12px;text-align: center;color: var(--7);margin:0rem 1rem;}
 #effectsBlockerMsg svg {width: 48px;height: 48px;}
 #effectsBody.narrow{flex-direction: column;}
 #effectsBody.narrow #effectsLibrary{width: 100%;min-width: unset;border-right: none;border-bottom: 1px solid var(--4);max-height: 30vh;}

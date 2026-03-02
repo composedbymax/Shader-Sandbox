@@ -26,7 +26,7 @@
           <input type="checkbox" id="pm-loop"> Loop
         </label>
       </div>
-      <button class="pm-btn" id="pm-close">✕</button>
+      <button class="modal-close-btn" id="pm-close"></button>
     </div>
     <div id="pm-body">
       <div id="pm-steps-area">
