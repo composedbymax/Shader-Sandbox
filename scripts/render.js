@@ -354,6 +354,7 @@ void main() {
         const camel = 'u' + name[0].toUpperCase() + name.slice(1);
         if (!(camel in uniforms)) uniforms[camel] = uniforms[name];
     });
+    window.uniforms = uniforms;
 }
 document.getElementById('copyErrorsBtn').addEventListener('click', function() {
     const btn = this;
@@ -408,6 +409,7 @@ function render() {
         gl.uniform3f(uniforms.uColor.loc, 1.0, 1.0, 1.0);
     }
     audioReactive.update();
+    if (window._uniformProviders) for (const fn of window._uniformProviders) fn(gl, uniforms);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     animationId = requestAnimationFrame(render);
 }

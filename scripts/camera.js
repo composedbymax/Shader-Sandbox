@@ -417,6 +417,15 @@ void main() {
             }
         }
     }
+    function loadHandsSystem() {
+        const role = window.userRole;
+        if (role !== 'admin' && role !== 'premium') return;
+        if (document.querySelector('script[src="scripts/utils/hands.js"]')) return;
+        const script = document.createElement('script');
+        script.src = 'scripts/utils/hands.js';
+        script.onerror = () => console.warn('[CameraSystem] Failed to load hands.js');
+        document.head.appendChild(script);
+    }
     function initCamera() {
         if (!document.getElementById('glcanvas')) {
             setTimeout(initCamera, 100);
@@ -424,6 +433,7 @@ void main() {
         }
         window.cameraSystem = new CameraSystem();
         window.cameraSystem.initGL();
+        loadHandsSystem();
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initCamera);
@@ -435,6 +445,9 @@ void main() {
             if (window.cameraSystem.stream) {
                 window.cameraSystem.stream.getTracks().forEach(track => track.stop());
             }
+        }
+        if (window.handsSystem) {
+            window.handsSystem.destroy();
         }
     });
     document.addEventListener('visibilitychange', () => {
