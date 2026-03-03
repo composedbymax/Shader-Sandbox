@@ -78,3 +78,23 @@
 .connect-sync-info-desc{color: var(--5);}
 .connect-connection-controls{display: none;margin-bottom: 12px;}
 .connect-log{margin-top: 10px;max-height: 140px;overflow-y: auto;background: var(--0);padding: 10px;border-radius: 6px;font-size: 13px;color: var(--6);white-space: pre-wrap;}
+
+/* hands.js */
+.hands-section{border-top: 1px solid var(--4);margin-top: 12px;padding-top: 12px;}
+.hands-enable-row{display: flex;align-items: center;}
+.hands-body{margin-top: 12px;overflow: hidden;}
+.hands-body.collapsed{display: none;}
+.hands-sub-row{margin-bottom: 10px;}
+.hands-gesture-list{display: flex;flex-direction: column;gap: 6px;margin-bottom: 12px;}
+.gesture-row{display: flex;align-items: center;gap: 8px;font-size: 11px;}
+.gesture-info{flex: 1;display: flex;flex-wrap: wrap;gap: 4px;align-items: center;}
+.gesture-name{font-weight: 600;color: var(--7);min-width: 80px;}
+.gesture-uniform{background: var(--3);border-radius: 3px;padding: 1px 5px;font-size: 10px;color: var(--a);}
+.gesture-desc{color: var(--5);font-size: 10px;flex: 1 1 100%;}
+.gesture-meter{width: 60px;height: 6px;background: var(--3);border-radius: 3px;overflow: hidden;}
+.gesture-bar{height: 100%;width: 0%;background: linear-gradient(90deg, var(--a), var(--ah));border-radius: 3px;transition: width 80ms linear;}
+.hands-custom{margin-top: 12px;}
+.hands-custom h5{margin: 0 0 6px;font-size: 12px;color: var(--6);}
+.hands-custom-row{display: flex;gap: 8px;}
+.hands-custom-status{font-size: 11px;color: var(--m);margin-top: 4px;}
+#handsMainOverlay {position: absolute;top: 0;left: 0;pointer-events: none;z-index: 10;}

@@ -43,13 +43,28 @@
         {
             name: 'hand_pos',
             uniform: 'u_hand_pos',
-            description: 'Wrist XY in normalised screen space',
+            description: 'Wrist XY in normalised screen space (hand 1)',
+            getValue: (lm) => [lm[LM.WRIST].x, lm[LM.WRIST].y],
+        },
+        {
+            name: 'hand_pos2',
+            uniform: 'u_hand_pos2',
+            description: 'Wrist XY in normalised screen space (hand 2)',
             getValue: (lm) => [lm[LM.WRIST].x, lm[LM.WRIST].y],
         },
         {
             name: 'hand_rot',
             uniform: 'u_hand_rot',
-            description: 'Hand roll angle (radians)',
+            description: 'Hand roll angle in radians (hand 1)',
+            getValue: (lm) => Math.atan2(
+                lm[LM.MIDDLE_MCP].y - lm[LM.WRIST].y,
+                lm[LM.MIDDLE_MCP].x - lm[LM.WRIST].x
+            ),
+        },
+        {
+            name: 'hand_rot2',
+            uniform: 'u_hand_rot2',
+            description: 'Hand roll angle in radians (hand 2)',
             getValue: (lm) => Math.atan2(
                 lm[LM.MIDDLE_MCP].y - lm[LM.WRIST].y,
                 lm[LM.MIDDLE_MCP].x - lm[LM.WRIST].x
@@ -73,6 +88,9 @@
             getValue: (lm) => Math.min(dist(lm[LM.WRIST], lm[LM.MIDDLE_MCP]) / 0.3, 1.0),
         },
     ];
+    const PER_HAND_GESTURES = ['pinch','fist','open_hand','point','victory','hand_rot','hand_rot2','spread','hand_depth'];
+    const HAND2_ONLY = new Set(['hand_pos2','hand_rot2']);
+    const HAND1_ONLY = new Set(['hand_pos','hand_rot']);
     function dist(a, b) {
         const dx = a.x - b.x, dy = a.y - b.y, dz = (a.z || 0) - (b.z || 0);
         return Math.sqrt(dx * dx + dy * dy + dz * dz);
@@ -94,6 +112,15 @@
     function fingersExtended(lm) {
         return ['INDEX','MIDDLE','RING','PINKY'].filter(f => isFingerExtended(lm, f)).length;
     }
+    function avgScalar(vals) {
+        return vals.reduce((a, b) => a + b, 0) / vals.length;
+    }
+    function avgVec(vals) {
+        const len = vals[0].length;
+        const out = new Array(len).fill(0);
+        for (const v of vals) v.forEach((x, i) => { out[i] += x; });
+        return out.map(x => x / vals.length);
+    }
     class EMAFilter {
         constructor(alpha = 0.35) { this.alpha = alpha; this.value = null; }
         update(v) {
@@ -107,19 +134,17 @@
     }
     class HandsSystem {
         constructor(cameraSystem) {
-            this.camera      = cameraSystem;
-            this.hands       = null;
-            this.mpCamera    = null;
-            this.landmarks   = null;
-            this.isActive    = false;
-            this.debugMode   = false;
-            this.overlayCanvas = null;
-            this.overlayCtx    = null;
+            this.camera         = cameraSystem;
+            this.hands          = null;
+            this.mpCamera       = null;
+            this.landmarks      = [];
+            this.isActive       = false;
+            this.debugMode      = false;
             this.gestures       = [...BUILT_IN_GESTURES];
             this.customGestures = [];
             this.filters        = {};
             this.gestures.forEach(g => { this.filters[g.name] = new EMAFilter(); });
-            this.uniformValues = {};
+            this.uniformValues  = {};
             this._registerProvider();
             this._loadMediaPipe().then(() => this._init());
         }
@@ -146,7 +171,8 @@
             return new Promise((resolve, reject) => {
                 if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
                 const s = document.createElement('script');
-                s.src = src; s.onload = resolve;
+                s.src = src;
+                s.onload = resolve;
                 s.onerror = () => reject(new Error(`Failed to load ${src}`));
                 document.head.appendChild(s);
             });
@@ -168,73 +194,36 @@
             }
             this.hands = new Hands({ locateFile: (f) => `${MEDIAPIPE_BASE}${f}` });
             this.hands.setOptions({
-                maxNumHands: 1,
+                maxNumHands: 2,
                 modelComplexity: 1,
                 minDetectionConfidence: 0.7,
                 minTrackingConfidence: 0.6,
             });
             this.hands.onResults((r) => this._onResults(r));
-            this._createOverlay();
             this._buildUI();
             console.log('[HandsSystem] Ready.');
-        }
-        _createOverlay() {
-            if (this.overlayCanvas) return;
-            const preview = document.getElementById('cameraPreview');
-            if (!preview) return;
-            this.overlayCanvas = document.createElement('canvas');
-            this.overlayCanvas.id = 'handsOverlay';
-            this.overlayCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10;';
-            let wrapper = preview.parentElement;
-            if (!wrapper.classList.contains('camera-preview-wrapper')) {
-                wrapper = document.createElement('div');
-                wrapper.className = 'camera-preview-wrapper';
-                wrapper.style.cssText = 'position:relative;display:inline-block;width:100%;';
-                preview.parentNode.insertBefore(wrapper, preview);
-                wrapper.appendChild(preview);
-            }
-            wrapper.appendChild(this.overlayCanvas);
-            this.overlayCtx = this.overlayCanvas.getContext('2d');
         }
         _buildUI() {
             const cameraContent = document.querySelector('.camera-content');
             if (!cameraContent || document.getElementById('handsPanel')) return;
-            const style = document.createElement('style');
-            style.textContent = `
-                .hands-section{border-top:1px solid rgba(255,255,255,0.1);margin-top:12px;padding-top:12px;}
-                .hands-header h4{margin:0 0 8px;font-size:13px;}
-                .hands-controls-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;}
-                .hands-gesture-list{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;}
-                .gesture-row{display:flex;align-items:center;gap:8px;font-size:11px;}
-                .gesture-info{flex:1;display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
-                .gesture-name{font-weight:600;color:#e0e0e0;min-width:80px;}
-                .gesture-uniform{background:rgba(255,255,255,0.08);border-radius:3px;padding:1px 5px;font-size:10px;color:#7dd3fc;}
-                .gesture-desc{color:#888;font-size:10px;flex:1 1 100%;}
-                .gesture-meter{width:60px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;}
-                .gesture-bar{height:100%;width:0%;background:linear-gradient(90deg,#3b82f6,#8b5cf6);border-radius:3px;transition:width 80ms linear;}
-                .hands-custom{margin-top:12px;}
-                .hands-custom h5{margin:0 0 6px;font-size:12px;color:#ccc;}
-                .hands-custom-row{display:flex;gap:8px;}
-            `;
-            document.head.appendChild(style);
             const panel = document.createElement('div');
             panel.id = 'handsPanel';
+            panel.className = 'hands-section';
             panel.innerHTML = `
-                <div class="hands-section">
-                    <div class="hands-header">
-                        <h4>Hand Gesture Controls</h4>
-                        <div class="hands-controls-row">
-                            <label class="checkbox-container">
-                                <input type="checkbox" id="handsEnableToggle">
-                                <span class="custom-checkbox"></span>
-                                <span class="checkbox-label">Enable hand tracking</span>
-                            </label>
-                            <label class="checkbox-container">
-                                <input type="checkbox" id="handsDebugToggle">
-                                <span class="custom-checkbox"></span>
-                                <span class="checkbox-label">Show landmarks</span>
-                            </label>
-                        </div>
+                <div class="hands-enable-row">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="handsEnableToggle">
+                        <span class="custom-checkbox"></span>
+                        <span class="checkbox-label">Hand Gesture Controls</span>
+                    </label>
+                </div>
+                <div id="handsBody" class="hands-body collapsed">
+                    <div class="hands-sub-row">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="handsDebugToggle">
+                            <span class="custom-checkbox"></span>
+                            <span class="checkbox-label">Show landmarks</span>
+                        </label>
                     </div>
                     <div id="handsGestureList" class="hands-gesture-list">
                         ${this.gestures.map(g => `
@@ -253,43 +242,70 @@
                     <div class="hands-custom">
                         <h5>Custom Gesture</h5>
                         <div class="hands-custom-row">
-                            <input type="text" id="customGestureName" placeholder="e.g. u_wave" class="camera-device-select" style="flex:1">
-                            <button id="recordGestureBtn" class="camera-control-btn" style="white-space:nowrap">Record Pose</button>
+                            <input type="text" id="customGestureName" placeholder="e.g. u_wave" class="camera-device-select">
+                            <button id="recordGestureBtn" class="camera-control-btn">Record Pose</button>
                         </div>
-                        <div id="customGestureStatus" style="font-size:11px;color:#aaa;margin-top:4px;"></div>
+                        <div id="customGestureStatus" class="hands-custom-status"></div>
                     </div>
                 </div>
             `;
             cameraContent.appendChild(panel);
             document.getElementById('handsEnableToggle').addEventListener('change', (e) => {
-                e.target.checked ? this.start() : this.stop();
+                const body = document.getElementById('handsBody');
+                if (e.target.checked) {
+                    body.classList.remove('collapsed');
+                    this.start();
+                } else {
+                    body.classList.add('collapsed');
+                    this.stop();
+                }
             });
             document.getElementById('handsDebugToggle').addEventListener('change', (e) => {
                 this.debugMode = e.target.checked;
+                if (!this.debugMode) this._clearMainCanvasOverlay();
             });
             document.getElementById('recordGestureBtn').addEventListener('click', () => this._recordCustomGesture());
         }
         _onResults(results) {
-            if (this.overlayCanvas && this.overlayCtx) {
-                this.overlayCanvas.width  = this.overlayCanvas.offsetWidth;
-                this.overlayCanvas.height = this.overlayCanvas.offsetHeight;
-                this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
-            }
             if (!results.multiHandLandmarks || !results.multiHandLandmarks.length) {
-                this.landmarks = null;
+                this.landmarks = [];
                 this._resetValues();
+                if (this.debugMode) this._clearMainCanvasOverlay();
                 return;
             }
-            this.landmarks = results.multiHandLandmarks[0];
-            if (this.debugMode) this._drawLandmarks(this.landmarks);
+            this.landmarks = results.multiHandLandmarks;
+            if (this.debugMode) {
+                const overlay = this._getOverlay2D();
+                if (overlay) {
+                    const ctx = overlay.getContext('2d');
+                    ctx.clearRect(0, 0, overlay.width, overlay.height);
+                    this.landmarks.forEach(lm => this._drawLandmarksOnMainCanvas(lm, ctx, overlay.width, overlay.height));
+                }
+            }
             this._updateValues(this.landmarks);
         }
-        _updateValues(lm) {
+        _updateValues(hands) {
             const all = [...this.gestures, ...this.customGestures];
+            const hand0 = hands[0] || null;
+            const hand1 = hands[1] || null;
             for (const g of all) {
                 let raw;
-                try { raw = g.getValue(lm); }
-                catch { raw = Array.isArray(this.uniformValues[g.name]) ? [0, 0] : 0; }
+                try {
+                    if (HAND2_ONLY.has(g.name)) {
+                        raw = hand1 ? g.getValue(hand1) : (Array.isArray(this.uniformValues[g.name]) ? [0, 0] : 0);
+                    } else if (HAND1_ONLY.has(g.name)) {
+                        raw = hand0 ? g.getValue(hand0) : (Array.isArray(this.uniformValues[g.name]) ? [0, 0] : 0);
+                    } else {
+                        const perHand = hands.map(lm => g.getValue(lm));
+                        if (perHand.length === 1) {
+                            raw = perHand[0];
+                        } else {
+                            raw = Array.isArray(perHand[0]) ? avgVec(perHand) : avgScalar(perHand);
+                        }
+                    }
+                } catch {
+                    raw = Array.isArray(this.uniformValues[g.name]) ? [0, 0] : 0;
+                }
                 const filter = this.filters[g.name] || (this.filters[g.name] = new EMAFilter());
                 this.uniformValues[g.name] = filter.update(raw);
                 const bar = document.getElementById(`bar_${g.name}`);
@@ -310,16 +326,36 @@
                 if (bar) bar.style.width = '0%';
             }
         }
-        _drawLandmarks(lm) {
-            if (!this.overlayCtx || !this.overlayCanvas) return;
-            const ctx = this.overlayCtx;
-            const W = this.overlayCanvas.width, H = this.overlayCanvas.height;
+        _getOverlay2D() {
+            let overlay = document.getElementById('handsMainOverlay');
+            if (!overlay) {
+                const main = document.getElementById('glcanvas');
+                if (!main) return null;
+                overlay = document.createElement('canvas');
+                overlay.id = 'handsMainOverlay';
+                overlay.className = 'hands-main-overlay';
+                main.parentNode.insertBefore(overlay, main.nextSibling);
+            }
+            const main = document.getElementById('glcanvas');
+            if (main) {
+                const w = main.clientWidth, h = main.clientHeight;
+                if (overlay.width !== w)  overlay.width  = w;
+                if (overlay.height !== h) overlay.height = h;
+            }
+            return overlay;
+        }
+        _clearMainCanvasOverlay() {
+            const overlay = document.getElementById('handsMainOverlay');
+            if (!overlay) return;
+            overlay.getContext('2d').clearRect(0, 0, overlay.width, overlay.height);
+        }
+        _drawLandmarksOnMainCanvas(lm, ctx, W, H) {
             const CONNECTIONS = [
                 [0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],
                 [0,9],[9,10],[10,11],[11,12],[0,13],[13,14],[14,15],[15,16],
                 [0,17],[17,18],[18,19],[19,20],[5,9],[9,13],[13,17],
             ];
-            ctx.strokeStyle = 'rgba(99,179,237,0.8)';
+            ctx.strokeStyle = 'rgba(16, 185, 129, 0.8)';
             ctx.lineWidth = 1.5;
             for (const [a, b] of CONNECTIONS) {
                 ctx.beginPath();
@@ -330,19 +366,19 @@
             lm.forEach((p, i) => {
                 ctx.beginPath();
                 ctx.arc((1 - p.x) * W, p.y * H, i === 0 ? 5 : 3, 0, Math.PI * 2);
-                ctx.fillStyle = i === 0 ? '#f59e0b' : '#60a5fa';
+                ctx.fillStyle = i === 0 ? 'rgba(36, 214, 154, 0.848)' : 'rgba(16, 185, 129, 0.9)';
                 ctx.fill();
             });
         }
         _recordCustomGesture() {
             const uniformName = (document.getElementById('customGestureName')?.value || '').trim();
             const statusEl    = document.getElementById('customGestureStatus');
-            if (!uniformName)      { if (statusEl) statusEl.textContent = 'Enter a uniform name first.'; return; }
-            if (!this.landmarks)   { if (statusEl) statusEl.textContent = 'No hand detected — make your pose.'; return; }
-            const lm  = this.landmarks;
-            const rP  = dist(lm[LM.THUMB_TIP], lm[LM.INDEX_TIP]);
-            const rS  = dist(lm[LM.INDEX_TIP],  lm[LM.PINKY_TIP]);
-            const rC  = fingersCurled(lm);
+            if (!uniformName)         { if (statusEl) statusEl.textContent = 'Enter a uniform name first.'; return; }
+            if (!this.landmarks.length) { if (statusEl) statusEl.textContent = 'No hand detected — make your pose.'; return; }
+            const lm = this.landmarks[0];
+            const rP = dist(lm[LM.THUMB_TIP], lm[LM.INDEX_TIP]);
+            const rS = dist(lm[LM.INDEX_TIP],  lm[LM.PINKY_TIP]);
+            const rC = fingersCurled(lm);
             const name = uniformName.replace(/^u_/, '');
             const newGesture = {
                 name,
@@ -383,9 +419,11 @@
             if (!this.hands) { console.warn('[HandsSystem] Not ready.'); return; }
             const videoEl = this.camera?.preview || document.getElementById('cameraPreview');
             if (!videoEl || !this.camera?.isActive) {
-                console.warn('[HandsSystem] Camera must be active first.');
+                window.showToast('Camera must be active before enabling Hands.', 'error');
                 const tog = document.getElementById('handsEnableToggle');
                 if (tog) tog.checked = false;
+                const body = document.getElementById('handsBody');
+                if (body) body.classList.add('collapsed');
                 return;
             }
             this.isActive = true;
@@ -409,18 +447,17 @@
             this.isActive = false;
             if (this.mpCamera) { this.mpCamera.stop(); this.mpCamera = null; }
             if (this._loopId)  { cancelAnimationFrame(this._loopId); this._loopId = null; }
-            if (this.overlayCtx && this.overlayCanvas) {
-                this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
-            }
+            this._clearMainCanvasOverlay();
             this._resetValues();
         }
         destroy() {
             this.stop();
+            const overlay = document.getElementById('handsMainOverlay');
+            if (overlay) overlay.remove();
             if (window._uniformProviders) {
                 window._uniformProviders = window._uniformProviders.filter(fn => fn._handsOwner !== this);
             }
             if (this.hands) { this.hands.close(); this.hands = null; }
-            if (this.overlayCanvas) { this.overlayCanvas.remove(); }
             const panel = document.getElementById('handsPanel');
             if (panel) panel.remove();
         }
