@@ -37,7 +37,7 @@ class ShaderSearch {
                id="${ctx.inputId}"
                placeholder="${ctx.placeholder}"
                class="search-input">
-        <button id="${ctx.clearBtnId}" class="clear-btn" style="display:none;">×</button>
+        <button id="${ctx.clearBtnId}" class="clear-btn" class="none">×</button>
       `;
       header.insertAdjacentElement('afterend', searchDiv);
     });

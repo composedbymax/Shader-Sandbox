@@ -44,6 +44,7 @@
     async function r() {
         createLoader();
         const baseScripts = [
+            "scripts/navigator.js",
             "scripts/drop.js",
             "scripts/switch.js",
             "scripts/save.js",
