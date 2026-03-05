@@ -530,10 +530,11 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             toggleBtn.className = 'lbtn webgpu-toggle ' + className;
         };
         const cleanupAnimation = () => {
-            [webglAnimationId, window.animationId, webgpuAnimationId].forEach(id => {
+            window.stopWebGLRender?.();
+            [webgpuAnimationId].forEach(id => {
                 if (id) cancelAnimationFrame(id);
             });
-            webglAnimationId = window.animationId = webgpuAnimationId = null;
+            webgpuAnimationId = null;
         };
         const destroyBuffer = (bufferVar) => {
             if (bufferVar) bufferVar.destroy();
@@ -602,12 +603,8 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
             if (restoreWebGL()) {
                 restoreWebGLEventListeners();
                 setTimeout(() => {
-                    if (window.rebuildProgram) {
-                        window.rebuildProgram();
-                    }
-                    if (window.render) {
-                        window.render();
-                    }
+                    if (window.rebuildProgram) window.rebuildProgram();
+                    window.startWebGLRender?.();
                 }, 150);
                 console.log('WebGL');
             } else {

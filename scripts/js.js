@@ -195,6 +195,7 @@ if (mouse.x > 0 && mouse.y > 0) {
             vertHeader.textContent = 'JavaScript Animation';
             vertTA.value = sessionStorage.getItem('jsCode') ?? defaultJSAnimation;
             glCanvas.style.display = 'none';
+            window.stopWebGLRender?.();
             createJSCanvas();
             setupJSMouseEvents();
             setupResizeObserver();
@@ -217,11 +218,12 @@ if (mouse.x > 0 && mouse.y > 0) {
             fragTA.value = savedShaderCode.fragment;
             glCanvas.style.display = 'block';
             removeJSCanvas();
-            if (window.rebuildProgram) {
-                window.rebuildProgram();
-            }
+            if (window.rebuildProgram) window.rebuildProgram();
+            setTimeout(() => {
+                window.startWebGLRender?.();
+            }, 150);
             console.log('WebGL');
-        }
+            }
     }
     function createJSCanvas() {
         const previewPanel = $('preview-panel');

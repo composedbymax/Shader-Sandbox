@@ -380,6 +380,10 @@ document.getElementById('closeLintBtn').addEventListener('click', function() {
 });
 function render() {
     if (!program || isAnimationPaused) return;
+    if (window.webgpuState?.isWebGPUMode()) {
+        animationId = null;
+        return;
+    }
     resizeCanvas();
     gl.useProgram(program);
     const time = (performance.now() - startTime) * 0.001;
@@ -493,4 +497,18 @@ window.initApp = init;
 window.pauseOnBlurEnabled = pauseOnBlurEnabled;
 window.setPauseOnBlur = (enabled) => {pauseOnBlurEnabled = enabled;};
 window.getPauseOnBlur = () => pauseOnBlurEnabled;
+window.stopWebGLRender = () => {
+    if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+    }
+    isAnimationPaused = true;
+};
+window.startWebGLRender = () => {
+    isAnimationPaused = false;
+    if (!animationId) render();
+};
+window.isWebGLRenderPaused = () => {
+    return isAnimationPaused;
+};
 })();
