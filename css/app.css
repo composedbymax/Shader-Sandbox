@@ -470,7 +470,7 @@ input, select{padding: 1rem;border-radius: 5px;border: 0px;width: 100%;backgroun
 .checkbox-container:hover .custom-checkbox{border-color: var(--a);}
 .record-button{border:0px;border-radius:6px;background:var(--m);display:none;text-decoration:none; color:var(--1);}
 .rec-stats{margin-top: 8px; display: none;}
-.checkbox-label{display: flex; align-items: center;}
+.checkbox-label{display: flex; align-items: center;padding: 0px 8px;}
 #videoPreview{display: none;margin-top: 10px;padding: 10px;background: var(--1);border-radius: 5px;}
 #videoPreview video{width: 100%;max-height: 200px;border-radius: 5px;background: var(--1);}
 #videoPreview .controls{margin-top: 10px;display: flex;gap: 5px;flex-wrap: wrap;}

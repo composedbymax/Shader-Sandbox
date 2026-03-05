@@ -146,7 +146,7 @@
             this.gestures.forEach(g => { this.filters[g.name] = new EMAFilter(); });
             this.uniformValues  = {};
             this._registerProvider();
-            this._loadMediaPipe().then(() => this._init());
+            this._buildUI();
         }
         _registerProvider() {
             window._uniformProviders = window._uniformProviders || [];
@@ -185,9 +185,11 @@
                 console.log('[HandsSystem] MediaPipe loaded.');
             } catch (e) {
                 console.error('[HandsSystem] MediaPipe load failed:', e);
+                throw e;
             }
         }
         _init() {
+            if (this.hands) return;
             if (typeof Hands === 'undefined') {
                 console.warn('[HandsSystem] Hands class not found — check MEDIAPIPE_BASE path.');
                 return;
@@ -200,8 +202,6 @@
                 minTrackingConfidence: 0.6,
             });
             this.hands.onResults((r) => this._onResults(r));
-            this._buildUI();
-            console.log('[HandsSystem] Ready.');
         }
         _buildUI() {
             const cameraContent = document.querySelector('.camera-content');
@@ -250,11 +250,22 @@
                 </div>
             `;
             cameraContent.appendChild(panel);
-            document.getElementById('handsEnableToggle').addEventListener('change', (e) => {
+            document.getElementById('handsEnableToggle').addEventListener('change', async (e) => {
                 const body = document.getElementById('handsBody');
                 if (e.target.checked) {
                     body.classList.remove('collapsed');
-                    this.start();
+                    try {
+                        if (!this.hands) {
+                            await this._loadMediaPipe();
+                            this._init();
+                        }
+                        await this.start();
+                    } catch (err) {
+                        console.error('[HandsSystem] Failed to enable hands:', err);
+                        if (e.target) e.target.checked = false;
+                        if (body) body.classList.add('collapsed');
+                        window.showToast && window.showToast('Failed to enable Hand Gesture Controls.', 'error');
+                    }
                 } else {
                     body.classList.add('collapsed');
                     this.stop();
@@ -441,7 +452,6 @@
                 };
                 this._loopId = requestAnimationFrame(sendFrame);
             }
-            console.log('[HandsSystem] Started.');
         }
         stop() {
             this.isActive = false;

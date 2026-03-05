@@ -201,7 +201,7 @@ vec4 fx_pixelate(vec2 uv, float sz) {
       params: { size: 8.0, density: 1.0, randomness: 0.4 },
       controls: [
         { name: 'size',       label: 'Dot Size',   type: 'range', min: 2, max: 32, step: 0.5 },
-        { name: 'density',    label: 'Density',    type: 'range', min: 0.1, max: 2.0, step: 0.05 },
+        { name: 'density',    label: 'Density',    type: 'range', min: 0.1, max: 4.0, step: 0.05 },
         { name: 'randomness', label: 'Randomness', type: 'range', min: 0, max: 1, step: 0.05 }
       ],
       shader: `
@@ -583,10 +583,12 @@ void main() {
       item.className = 'effects-queue-item';
       const controls = def.controls.map(ctrl => {
         const val = ae.params[ctrl.name] !== undefined ? ae.params[ctrl.name] : def.params[ctrl.name];
+        const inputId = `fx-ctrl-${idx}-${ctrl.name}`;
         return `
           <div class="effects-ctrl-row">
-            <label class="effects-ctrl-label">${ctrl.label}</label>
+            <label class="effects-ctrl-label" for="${inputId}">${ctrl.label}</label>
             <input type="range" class="effects-ctrl-range"
+              id="${inputId}"
               data-idx="${idx}" data-name="${ctrl.name}"
               min="${ctrl.min}" max="${ctrl.max}" step="${ctrl.step}"
               value="${val}">
