@@ -35,32 +35,32 @@ function handleModels() {
         $age = time() - filemtime($cacheFile);
         if ($age < $cacheTtl) $useCache = true;
     }
-    $rawJson = null;
     if ($useCache) {
-        $rawJson = file_get_contents($cacheFile);
-    } else {
-        $ch = curl_init($apiUrl);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_CONNECTTIMEOUT => 10,
-            CURLOPT_TIMEOUT => 20,
-            CURLOPT_SSL_VERIFYPEER => true,
-        ]);
-        $resp = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        if ($resp !== false && $httpCode === 200) {
-            $rawJson = $resp;
-            @file_put_contents($cacheFile, $rawJson, LOCK_EX);
-        } elseif (file_exists($cacheFile)) {
-            $rawJson = file_get_contents($cacheFile);
+        $cached = json_decode(file_get_contents($cacheFile), true);
+        echo json_encode(['models' => $cached, 'cache' => true]);
+        return;
+    }
+    $ch = curl_init($apiUrl);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_CONNECTTIMEOUT => 10,
+        CURLOPT_TIMEOUT => 20,
+        CURLOPT_SSL_VERIFYPEER => true,
+    ]);
+    $resp = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    if ($resp === false || $httpCode !== 200) {
+        if (file_exists($cacheFile)) {
+            $cached = json_decode(file_get_contents($cacheFile), true);
+            echo json_encode(['models' => $cached, 'cache' => true]);
         } else {
             echo json_encode(['error' => 'Failed to fetch models', 'models' => []]);
-            return;
         }
+        return;
     }
-    $decoded = json_decode($rawJson, true);
+    $decoded = json_decode($resp, true);
     $models = [];
     if (isset($decoded['data']['models']) && is_array($decoded['data']['models'])) {
         foreach ($decoded['data']['models'] as $m) {
@@ -77,7 +77,8 @@ function handleModels() {
             }
         }
     }
-    echo json_encode(['models' => $models,'cache' => $useCache]);
+    @file_put_contents($cacheFile, json_encode($models), LOCK_EX);
+    echo json_encode(['models' => $models, 'cache' => false]);
 }
 function handleChat($apiKey) {
     $input = json_decode(file_get_contents('php://input'), true);
