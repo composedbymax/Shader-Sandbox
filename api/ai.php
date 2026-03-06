@@ -67,6 +67,8 @@ function handleModels() {
             if (!modelIsFree($m)) continue;
             $modelName = getModelDisplayName($m);
             $modelId = getModelId($m);
+            if ($modelId && stripos($modelId, 'embed') !== false) continue;
+            if ($modelName && stripos($modelName, 'embed') !== false) continue;
             if ($modelId) {
                 $models[] = [
                     'name' => $modelName,
@@ -75,7 +77,7 @@ function handleModels() {
             }
         }
     }
-    echo json_encode(['models' => $models]);
+    echo json_encode(['models' => $models,'cache' => $useCache]);
 }
 function handleChat($apiKey) {
     $input = json_decode(file_get_contents('php://input'), true);
