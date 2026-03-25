@@ -207,7 +207,7 @@
       text = el.value;
       cursorPos = el.selectionStart;
     } else if (el.isContentEditable) {
-      text = el.textContent;
+      text = el.innerText.replace(/\r\n/g, '\n');
       const sel = window.getSelection();
       if (sel.rangeCount) {
         const range = sel.getRangeAt(0).cloneRange();
@@ -261,11 +261,22 @@
     menu.innerHTML = '';
     if (isEditable) {
       let cursorPos;
+      let lineInfoEl = targetEl;
       if (['INPUT','TEXTAREA'].includes(targetEl.tagName)) {
         const clickPos = getClickPositionInTextArea(e, targetEl);
         cursorPos = clickPos != null ? clickPos : targetEl.selectionStart;
+      } else if (targetEl.isContentEditable) {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+          const editorRoot = targetEl.closest('[contenteditable]') || targetEl;
+          const range = sel.getRangeAt(0).cloneRange();
+          range.selectNodeContents(editorRoot);
+          range.setEnd(sel.getRangeAt(0).endContainer, sel.getRangeAt(0).endOffset);
+          cursorPos = range.toString().length;
+          lineInfoEl = editorRoot;
+        }
       }
-      const info = getLineInfo(targetEl, cursorPos);
+      const info = getLineInfo(lineInfoEl, cursorPos);
       if (info) {
         const li = create('div', { class: 'line-info' });
         li.textContent = `Line ${info.currentLine} of ${info.totalLines} (Col: ${info.column})`;
