@@ -6,170 +6,135 @@
   let hasSelection = false;
   let selectedText = '';
   const monitoredElements = new Set();
+  const isInput  = el => ['INPUT','TEXTAREA'].includes(el?.tagName);
+  const isCE     = el => el?.isContentEditable;
+  const getVal   = el => isInput(el) ? el.value : el.innerText.replace(/\r\n/g, '\n');
+  const setVal   = (el, v) => {
+    if (isInput(el)) el.value = v;
+    else el.textContent = v;
+  };
+  const getCharOffset = (root) => {
+    const sel = window.getSelection();
+    if (!sel?.rangeCount) return 0;
+    const range = sel.getRangeAt(0).cloneRange();
+    range.selectNodeContents(root);
+    range.setEnd(sel.getRangeAt(0).endContainer, sel.getRangeAt(0).endOffset);
+    return range.toString().length;
+  };
+  const setCaretAt = (root, offset) => {
+    let charIndex = 0;
+    const walk = (node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const len = node.textContent.length;
+        if (charIndex + len >= offset) {
+          const range = document.createRange();
+          range.setStart(node, offset - charIndex);
+          range.collapse(true);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          return true;
+        }
+        charIndex += len;
+      } else {
+        for (const child of node.childNodes) if (walk(child)) return true;
+      }
+      return false;
+    };
+    walk(root);
+  };
   const history = {
-    stack: [],
-    index: -1,
-    maxSize: 50,
+    stack: [], index: -1, maxSize: 50,
     push(state) {
       this.stack = this.stack.slice(0, this.index + 1);
       this.stack.push(state);
-      if (this.stack.length > this.maxSize) {
-        this.stack.shift();
-      } else {
-        this.index++;
-      }
+      this.stack.length > this.maxSize ? this.stack.shift() : this.index++;
     },
-    canUndo() {
-      return this.index >= 0;
-    },
-    canRedo() {
-      return this.index < this.stack.length - 1;
-    },
-    undo() {
-      if (!this.canUndo()) return null;
-      const state = this.stack[this.index];
-      this.index--;
-      return state;
-    },
-    redo() {
-      if (!this.canRedo()) return null;
-      this.index++;
-      const state = this.stack[this.index];
-      return state;
-    }
+    canUndo() { return this.index >= 0; },
+    canRedo()  { return this.index < this.stack.length - 1; },
+    undo()     { return this.canUndo() ? this.stack[this.index--] : null; },
+    redo()     { return this.canRedo() ? this.stack[++this.index]  : null; }
   };
-  const saveState = (element, operation = 'unknown') => {
-    if (element.tagName === 'INPUT' && element.type === 'file') return;
-    if (!element) return;
+  const saveState = (el, operation = 'unknown') => {
+    if (!el || (isInput(el) && el.type === 'file')) return;
     let value, selectionStart, selectionEnd;
-    if (['INPUT', 'TEXTAREA'].includes(element.tagName)) {
-      value = element.value;
-      selectionStart = element.selectionStart;
-      selectionEnd = element.selectionEnd;
-    } else if (element.isContentEditable) {
-      value = element.innerHTML;
+    if (isInput(el)) {
+      value = el.value;
+      selectionStart = el.selectionStart;
+      selectionEnd   = el.selectionEnd;
+    } else if (isCE(el)) {
+      value = el.innerHTML;
       const sel = window.getSelection();
-      if (sel.rangeCount > 0) {
-        const range = sel.getRangeAt(0);
-        selectionStart = range.startOffset;
-        selectionEnd = range.endOffset;
+      if (sel?.rangeCount) {
+        selectionStart = sel.getRangeAt(0).startOffset;
+        selectionEnd   = sel.getRangeAt(0).endOffset;
       }
-    } else {
-      return;
-    }
-    history.push({
-      element,
-      value,
-      selectionStart,
-      selectionEnd,
-      operation,
-      timestamp: Date.now()
-    });
+    } else return;
+    history.push({ element: el, value, selectionStart, selectionEnd, operation, timestamp: Date.now() });
   };
   const restoreState = (state) => {
-    if (!state || !state.element) return;
-    const { element, value, selectionStart, selectionEnd } = state;
-    if (element.tagName === 'INPUT' && element.type === 'file') {
-      element.focus();
-      return;
-    }
-    if (['INPUT', 'TEXTAREA'].includes(element.tagName)) {
-      element.value = value;
-      if (
-        typeof element.setSelectionRange === 'function' &&
-        Number.isInteger(selectionStart) &&
-        Number.isInteger(selectionEnd)
-      ) {
-        try {
-          element.setSelectionRange(selectionStart, selectionEnd);
-        } catch (e) {
-          console.warn('Restore Error', e);
-        }
-      }
-    } else if (element.isContentEditable) {
-      element.innerHTML = value;
-      if (
-        Number.isInteger(selectionStart) &&
-        Number.isInteger(selectionEnd)
-      ) {
-        try {
+    if (!state?.element) return;
+    const { element: el, value, selectionStart, selectionEnd } = state;
+    if (isInput(el) && el.type === 'file') { el.focus(); return; }
+    if (isInput(el)) {
+      el.value = value;
+      try { el.setSelectionRange(selectionStart, selectionEnd); } catch {}
+    } else if (isCE(el)) {
+      el.innerHTML = value;
+      try {
+        const textNode = el.firstChild;
+        if (textNode) {
+          const len = textNode.textContent.length;
           const range = document.createRange();
-          const textNode = element.firstChild;
-          if (textNode) {
-            const start = Math.min(selectionStart, textNode.textContent.length);
-            const end   = Math.min(selectionEnd,   textNode.textContent.length);
-            range.setStart(textNode, start);
-            range.setEnd(textNode, end);
-            const sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
-          }
-        } catch (e) {
-          element.focus();
+          range.setStart(textNode, Math.min(selectionStart, len));
+          range.setEnd(textNode,   Math.min(selectionEnd,   len));
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
         }
-      }
+      } catch { el.focus(); }
     }
-    element.focus();
+    el.focus();
     window.rebuildProgram?.();
     window.render?.();
   };
-  const addInputMonitoring = (element) => {
-    if (element.tagName === 'INPUT' && element.type === 'file') return;
-    if (monitoredElements.has(element)) return;
-    monitoredElements.add(element);
+  const addInputMonitoring = (el) => {
+    if ((isInput(el) && el.type === 'file') || monitoredElements.has(el)) return;
+    monitoredElements.add(el);
     let inputTimer = null;
-    let lastValue = element.value || element.textContent || '';
-    saveState(element, 'initial');
+    let lastValue = getVal(el);
+    saveState(el, 'initial');
     const handleInput = () => {
       clearTimeout(inputTimer);
       inputTimer = setTimeout(() => {
-        const currentValue = element.value || element.textContent || '';
-        if (currentValue !== lastValue) {
-          saveState(element, 'manual-edit');
-          lastValue = currentValue;
-        }
+        const current = getVal(el);
+        if (current !== lastValue) { saveState(el, 'manual-edit'); lastValue = current; }
       }, 2000);
     };
-    element.addEventListener('input', handleInput);
-    element.addEventListener('paste', () => {
-      setTimeout(() => handleInput(), 10);
-    });
-    element.addEventListener('keydown', (e) => {
+    el.addEventListener('input', handleInput);
+    el.addEventListener('paste', () => setTimeout(handleInput, 10));
+    el.addEventListener('keydown', (e) => {
       if (e.key === 'Backspace' || e.key === 'Delete') {
-        if (inputTimer) clearTimeout(inputTimer);
-        saveState(element, 'delete-operation');
-        lastValue = element.value || element.textContent || '';
+        clearTimeout(inputTimer);
+        saveState(el, 'delete-operation');
+        lastValue = getVal(el);
       }
     });
   };
   const monitorShaderAreas = () => {
-    const vertCode = document.querySelector('#vertCode');
-    const fragCode = document.querySelector('#fragCode');
-    if (vertCode) addInputMonitoring(vertCode);
-    if (fragCode) addInputMonitoring(fragCode);
-    document
-  .querySelectorAll('input:not([type=file]), textarea, [contenteditable]')
-  .forEach(el => addInputMonitoring(el));
-
+    document.querySelectorAll('#vertCode, #fragCode, input:not([type=file]), textarea, [contenteditable]')
+      .forEach(el => addInputMonitoring(el));
   };
   document.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key === 'z') {
       e.preventDefault();
-      const state = history.undo();
-      if (state) {
-        restoreState(state);
-      }
-    } else if (((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'z') || 
+      const state = history.undo(); if (state) restoreState(state);
+    } else if (((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'z') ||
                ((e.metaKey || e.ctrlKey) && e.key === 'y')) {
       e.preventDefault();
-      const state = history.redo();
-      if (state) {
-        restoreState(state);
-      }
+      const state = history.redo(); if (state) restoreState(state);
     }
   });
-  const qs = (selector, ctx = document) => ctx.querySelector(selector);
-  const qsa = (selector, ctx = document) => Array.from(ctx.querySelectorAll(selector));
   const create = (tag, attrs = {}, html = '') => {
     const el = document.createElement(tag);
     Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
@@ -181,56 +146,38 @@
   const hide = el => el.style.display = 'none';
   const show = el => el.style.display = 'block';
   hide(menu);
-  const clearPress = () => clearTimeout(pressTimer);
   const addItem = (label, handler, disabled = false) => {
     const item = create('div', { class: `custom-context-menu-item${disabled ? ' disabled' : ''}` });
     item.textContent = label;
-    if (!disabled) {
-      item.addEventListener('click', e => {
-        e.stopPropagation();
-        hide(menu);
-        handler();
-      });
-    }
+    if (!disabled) item.addEventListener('click', e => { e.stopPropagation(); hide(menu); handler(); });
     menu.append(item);
   };
-  const addInlineControl = (content) => {
+  const addInlineControl = (html) => {
     const control = create('div', { class: 'inline-control' });
-    control.innerHTML = content;
+    control.innerHTML = html;
     menu.append(control);
     return control;
   };
+  const addSep = () => menu.append(create('div', { class: 'custom-context-menu-separator' }));
   const getLineInfo = (el, position) => {
     if (!el) return null;
     let text, cursorPos;
-    if (['INPUT','TEXTAREA'].includes(el.tagName)) {
+    if (isInput(el)) {
       text = el.value;
       cursorPos = el.selectionStart;
-    } else if (el.isContentEditable) {
+    } else if (isCE(el)) {
       text = el.innerText.replace(/\r\n/g, '\n');
-      const sel = window.getSelection();
-      if (sel.rangeCount) {
-        const range = sel.getRangeAt(0).cloneRange();
-        range.selectNodeContents(el);
-        range.setEnd(sel.getRangeAt(0).endContainer, sel.getRangeAt(0).endOffset);
-        cursorPos = range.toString().length;
-      } else cursorPos = 0;
+      cursorPos = getCharOffset(el);
     } else return null;
     if (position !== undefined) cursorPos = position;
     if (cursorPos === undefined) return null;
     const before = text.slice(0, cursorPos).split('\n');
-    const all = text.split('\n').length;
-    return {
-      currentLine: before.length,
-      totalLines: all,
-      column: before[before.length-1].length + 1,
-      cursorPos
-    };
+    return { currentLine: before.length, totalLines: text.split('\n').length, column: before[before.length-1].length + 1, cursorPos };
   };
   const replaceAll = (findText, replaceText) => {
     if (!isEditable || !targetEl) return;
     saveState(targetEl, 'replace-all');
-    if (['INPUT','TEXTAREA'].includes(targetEl.tagName)) {
+    if (isInput(targetEl)) {
       targetEl.value = targetEl.value.split(findText).join(replaceText);
     } else {
       const root = targetEl.closest('[contenteditable]');
@@ -242,38 +189,26 @@
   document.addEventListener('touchstart', e => {
     pressTimer = setTimeout(() => {
       const t = e.touches[0];
-      const ctxEvt = new MouseEvent('contextmenu', {
-        bubbles: true, cancelable: true,
-        clientX: t.clientX, clientY: t.clientY
-      });
-      e.target.dispatchEvent(ctxEvt);
+      e.target.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: t.clientX, clientY: t.clientY }));
     }, LONG_PRESS_DELAY);
   }, { passive: true });
-  ['touchend','touchmove'].forEach(evt =>
-    document.addEventListener(evt, clearPress, { passive: true })
-  );
+  ['touchend','touchmove'].forEach(evt => document.addEventListener(evt, () => clearTimeout(pressTimer), { passive: true }));
   document.addEventListener('contextmenu', e => {
     e.preventDefault();
-    targetEl = e.target;
-    isEditable = ['INPUT','TEXTAREA'].includes(targetEl.tagName) || targetEl.isContentEditable;
-    selectedText = window.getSelection().toString();
-    hasSelection = !!selectedText;
+    targetEl      = e.target;
+    isEditable    = isInput(targetEl) || isCE(targetEl);
+    selectedText  = window.getSelection().toString();
+    hasSelection  = !!selectedText;
     menu.innerHTML = '';
     if (isEditable) {
-      let cursorPos;
-      let lineInfoEl = targetEl;
-      if (['INPUT','TEXTAREA'].includes(targetEl.tagName)) {
-        const clickPos = getClickPositionInTextArea(e, targetEl);
-        cursorPos = clickPos != null ? clickPos : targetEl.selectionStart;
-      } else if (targetEl.isContentEditable) {
+      let cursorPos, lineInfoEl = targetEl;
+      if (isInput(targetEl)) {
+        cursorPos = getClickPositionInTextArea(e, targetEl) ?? targetEl.selectionStart;
+      } else if (isCE(targetEl)) {
         const sel = window.getSelection();
-        if (sel && sel.rangeCount > 0) {
-          const editorRoot = targetEl.closest('[contenteditable]') || targetEl;
-          const range = sel.getRangeAt(0).cloneRange();
-          range.selectNodeContents(editorRoot);
-          range.setEnd(sel.getRangeAt(0).endContainer, sel.getRangeAt(0).endOffset);
-          cursorPos = range.toString().length;
-          lineInfoEl = editorRoot;
+        if (sel?.rangeCount) {
+          lineInfoEl = targetEl.closest('[contenteditable]') || targetEl;
+          cursorPos  = getCharOffset(lineInfoEl);
         }
       }
       const info = getLineInfo(lineInfoEl, cursorPos);
@@ -283,260 +218,172 @@
         menu.append(li);
       }
     }
-    const numberRe = /^-?\d+(\.\d+)?$/;
-    if (hasSelection && numberRe.test(selectedText)) {
-      const sliderId = `slider-${Date.now()}`;
-      const labelId = `slider-label-${Date.now()}`;
+    if (hasSelection && /^-?\d+(\.\d+)?$/.test(selectedText)) {
+      const sId = `slider-${Date.now()}`, lId = `lbl-${Date.now()}`;
       const control = addInlineControl(`
-        <label id="${labelId}" for="${sliderId}">Adjust Value:</label>
-        <input type="range" id="${sliderId}" name="value-slider" class="slider-input" aria-labelledby="${labelId}">
+        <label id="${lId}" for="${sId}">Adjust Value:</label>
+        <input type="range" id="${sId}" name="value-slider" class="slider-input" aria-labelledby="${lId}">
         <div class="slider-value"></div>
         <div class="inline-buttons">
           <button class="btn-cancel slider-cancel">Cancel</button>
           <button class="btn-confirm slider-confirm">Done</button>
         </div>
       `);
-      const num = parseFloat(selectedText);
-      const slider = control.querySelector('.slider-input');
+      const num     = parseFloat(selectedText);
+      const slider  = control.querySelector('.slider-input');
       const display = control.querySelector('.slider-value');
-      const range = Math.abs(num) * 2 || 1;
-      slider.min  = (num - range).toString();
-      slider.max  = (num + range).toString();
-      slider.step = ((range * 2) / 100).toString();
-      slider.value = num;
+      const range   = Math.abs(num) * 2 || 1;
+      slider.min = num - range; slider.max = num + range;
+      slider.step = (range * 2) / 100; slider.value = num;
       display.textContent = num.toFixed(3);
-      let originalFull, start, end;
-      if (['INPUT','TEXTAREA'].includes(targetEl.tagName)) {
-        originalFull = targetEl.value;
-        start = targetEl.selectionStart;
-        end   = targetEl.selectionEnd;
+      let originalFull = getVal(targetEl);
+      let start, end;
+      if (isInput(targetEl)) {
+        start = targetEl.selectionStart; end = targetEl.selectionEnd;
       } else {
-        originalFull = targetEl.textContent;
         const info = getLineInfo(targetEl);
-        start = info.cursorPos - selectedText.length;
-        end   = info.cursorPos;
+        start = info.cursorPos - selectedText.length; end = info.cursorPos;
       }
       let stateSaved = false;
       const update = () => {
-        if (!stateSaved) {
-          saveState(targetEl, 'number-adjust');
-          stateSaved = true;
-        }
-        const raw = slider.value;
-        const v = parseFloat(raw).toFixed(3);
+        if (!stateSaved) { saveState(targetEl, 'number-adjust'); stateSaved = true; }
+        const v = parseFloat(slider.value).toFixed(3);
         display.textContent = v;
-        const before = originalFull.slice(0, start);
-        const after  = originalFull.slice(end);
-        if (['INPUT','TEXTAREA'].includes(targetEl.tagName)) {
-          targetEl.value = before + v + after;
+        const newVal = originalFull.slice(0, start) + v + originalFull.slice(end);
+        if (isInput(targetEl)) {
+          targetEl.value = newVal;
           targetEl.setSelectionRange(start, start + v.length);
         } else {
-          targetEl.textContent = before + v + after;
-          const range = document.createRange();
-          const textNode = targetEl.firstChild;
-          range.setStart(textNode, start + v.length);
-          range.collapse(true);
-          const sel = window.getSelection();
-          sel.removeAllRanges();
-          sel.addRange(range);
+          targetEl.textContent = newVal;
+          setCaretAt(targetEl, start + v.length);
         }
-        window.rebuildProgram?.();
-        window.render?.();
+        window.rebuildProgram?.(); window.render?.();
       };
       slider.addEventListener('input', update);
       control.querySelector('.slider-confirm').onclick = (evt) => {
-        evt.stopPropagation();
-        slider.removeEventListener('input', update);
-        hide(menu);
-        targetEl.focus();
-        window.rebuildProgram?.();
-        window.render?.();
+        evt.stopPropagation(); slider.removeEventListener('input', update);
+        hide(menu); targetEl.focus();
+        window.rebuildProgram?.(); window.render?.();
       };
       control.querySelector('.slider-cancel').onclick = (evt) => {
-        evt.stopPropagation();
-        slider.removeEventListener('input', update);
+        evt.stopPropagation(); slider.removeEventListener('input', update);
         hide(menu);
-        if (['INPUT','TEXTAREA'].includes(targetEl.tagName)) {
-          targetEl.value = originalFull;
-          targetEl.setSelectionRange(start, end);
-        } else {
-          targetEl.textContent = originalFull;
-          const range = document.createRange();
-          const textNode = targetEl.firstChild;
-          range.setStart(textNode, end);
-          range.collapse(true);
-          const sel = window.getSelection();
-          sel.removeAllRanges();
-          sel.addRange(range);
-        }
+        setVal(targetEl, originalFull);
+        if (isInput(targetEl)) targetEl.setSelectionRange(start, end);
+        else setCaretAt(targetEl, end);
         targetEl.focus();
       };
-      menu.append(create('div', { class: 'custom-context-menu-separator' }));
+      addSep();
     }
-    if (hasSelection) {
-      if (isEditable) {
-        const findInputId = `find-input-${Date.now()}`;
-        const replaceInputId = `replace-input-${Date.now()}`;
-        const findLabelId = `find-label-${Date.now()}`;
-        const replaceLabelId = `replace-label-${Date.now()}`;
-        const control = addInlineControl(`
-          <label id="${findLabelId}" for="${findInputId}">Find Text:</label>
-          <input type="text" id="${findInputId}" name="find-text" class="find-input" readonly value="${selectedText.replace(/"/g, '&quot;')}" aria-labelledby="${findLabelId}">
-          <label id="${replaceLabelId}" for="${replaceInputId}">Replace All:</label>
-          <input type="text" id="${replaceInputId}" name="replace-text" class="replace-input" placeholder="Replace with..." aria-labelledby="${replaceLabelId}">
-          <div class="inline-buttons">
-            <button class="btn-cancel replace-cancel">Cancel</button>
-            <button class="btn-confirm replace-confirm">Replace</button>
-          </div>
-        `);
-        addItem('Cut', () => {
-          saveState(targetEl, 'cut');
-          document.execCommand('cut');
-        });
-        addItem('Copy', () => document.execCommand('copy'));
-        const replaceInput = control.querySelector('.replace-input');
-        replaceInput.focus();
-        control.querySelector('.replace-confirm').onclick = (evt) => {
-          evt.stopPropagation();
-          replaceAll(selectedText, replaceInput.value);
-          hide(menu);
-        };
-        control.querySelector('.replace-cancel').onclick = (evt) => {
-          evt.stopPropagation();
-          hide(menu);
-        };
-        menu.append(create('div', { class: 'custom-context-menu-separator' }));
-      }
+    if (hasSelection && isEditable) {
+      const fId = `find-${Date.now()}`, rId = `rep-${Date.now()}`;
+      const control = addInlineControl(`
+        <label for="${fId}">Find Text:</label>
+        <input type="text" id="${fId}" name="find-text" class="find-input" readonly value="${selectedText.replace(/"/g, '&quot;')}">
+        <label for="${rId}">Replace All:</label>
+        <input type="text" id="${rId}" name="replace-text" class="replace-input" placeholder="Replace with...">
+        <div class="inline-buttons">
+          <button class="btn-cancel replace-cancel">Cancel</button>
+          <button class="btn-confirm replace-confirm">Replace</button>
+        </div>
+      `);
+      addItem('Cut',  () => { saveState(targetEl, 'cut');  document.execCommand('cut'); });
+      addItem('Copy', () => document.execCommand('copy'));
+      const replaceInput = control.querySelector('.replace-input');
+      replaceInput.focus();
+      control.querySelector('.replace-confirm').onclick = (evt) => { evt.stopPropagation(); replaceAll(selectedText, replaceInput.value); hide(menu); };
+      control.querySelector('.replace-cancel').onclick  = (evt) => { evt.stopPropagation(); hide(menu); };
+      addSep();
     }
     if (isEditable) {
       addItem('Paste', async () => {
         saveState(targetEl, 'paste');
         let text = '';
         try { text = await navigator.clipboard.readText(); } catch {}
-        if (['INPUT','TEXTAREA'].includes(targetEl.tagName)) {
-          const { selectionStart: s, selectionEnd: ePos, value } = targetEl;
-          targetEl.value = value.slice(0, s) + text + value.slice(ePos);
+        if (isInput(targetEl)) {
+          const { selectionStart: s, selectionEnd: e, value } = targetEl;
+          targetEl.value = value.slice(0, s) + text + value.slice(e);
           const pos = s + text.length;
           targetEl.setSelectionRange(pos, pos);
-          targetEl.focus();
         } else {
           if (!document.execCommand('insertText', false, text)) {
             const sel = window.getSelection();
-            if (sel.rangeCount) {
-              const range = sel.getRangeAt(0);
-              range.deleteContents();
-              range.insertNode(document.createTextNode(text));
-              range.collapse(false);
-              sel.removeAllRanges();
-              sel.addRange(range);
+            if (sel?.rangeCount) {
+              const r = sel.getRangeAt(0);
+              r.deleteContents(); r.insertNode(document.createTextNode(text));
+              r.collapse(false); sel.removeAllRanges(); sel.addRange(r);
             }
           }
-          targetEl.focus();
         }
-        window.rebuildProgram?.();
-        window.render?.();
+        targetEl.focus(); window.rebuildProgram?.(); window.render?.();
       });
       addItem('Copy Text Field', () => {
         targetEl.focus();
-        if (['INPUT','TEXTAREA'].includes(targetEl.tagName)) targetEl.select();
-        else document.execCommand('selectAll');
+        isInput(targetEl) ? targetEl.select() : document.execCommand('selectAll');
         document.execCommand('copy');
       });
       addItem('Delete All (Text Field)', () => {
         saveState(targetEl, 'delete-all');
-        targetEl.focus();
-        if (['INPUT','TEXTAREA'].includes(targetEl.tagName)) targetEl.value = '';
-        else targetEl.textContent = '';
-        window.rebuildProgram?.();
-        window.render?.();
+        targetEl.focus(); setVal(targetEl, '');
+        window.rebuildProgram?.(); window.render?.();
       });
     }
     addItem('Copy All', () => {
       const range = document.createRange();
       range.selectNodeContents(document.body);
       const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
-      document.execCommand('copy');
-      sel.removeAllRanges();
+      sel.removeAllRanges(); sel.addRange(range);
+      document.execCommand('copy'); sel.removeAllRanges();
     });
-    menu.append(create('div', { class: 'custom-context-menu-separator' }));
-    addItem('Undo', () => {
-      const state = history.undo();
-      if (state) restoreState(state);
-    }, !history.canUndo());
-    addItem('Redo', () => {
-      const state = history.redo();
-      if (state) restoreState(state);
-    }, !history.canRedo());
-    menu.append(create('div', { class: 'custom-context-menu-separator' }));
-    addItem('Back', () => history.back());
+    addSep();
+    addItem('Undo', () => { const s = history.undo(); if (s) restoreState(s); }, !history.canUndo());
+    addItem('Redo', () => { const s = history.redo(); if (s) restoreState(s); }, !history.canRedo());
+    addSep();
+    addItem('Back',   () => history.back());
     addItem('Reload', () => location.reload());
-    menu.style.visibility = 'hidden';
-    menu.style.display = 'block';
+    menu.style.visibility = 'hidden'; menu.style.display = 'block';
     const { width, height } = menu.getBoundingClientRect();
-    menu.style.display = 'none';
-    menu.style.visibility = '';
+    menu.style.display = 'none'; menu.style.visibility = '';
     let x = e.clientX, y = e.clientY;
-    if (x + width > window.innerWidth) x = window.innerWidth - width - 5;
-    if (y + height > window.innerHeight) {
-      y = e.clientY - height;
-      if (y < 5) y = 5;
-    }
-    menu.style.left = `${x}px`;
-    menu.style.top  = `${y}px`;
+    if (x + width  > window.innerWidth)  x = window.innerWidth  - width  - 5;
+    if (y + height > window.innerHeight) { y = e.clientY - height; if (y < 5) y = 5; }
+    menu.style.left = `${x}px`; menu.style.top = `${y}px`;
     show(menu);
   });
   function getClickPositionInTextArea(mouseEvent, textArea) {
-    if (!['INPUT','TEXTAREA'].includes(textArea.tagName)) return null;
+    if (!isInput(textArea)) return null;
     try {
       if (textArea.tagName === 'TEXTAREA') {
         textArea.focus();
         if (document.caretPositionFromPoint) {
           const r = document.caretPositionFromPoint(mouseEvent.clientX, mouseEvent.clientY);
-          if (r && r.offsetNode === textArea.firstChild) return r.offset;
+          if (r?.offsetNode === textArea.firstChild) return r.offset;
         }
         if (document.caretRangeFromPoint) {
           const r = document.caretRangeFromPoint(mouseEvent.clientX, mouseEvent.clientY);
-          if (r && r.startContainer === textArea.firstChild) return r.startOffset;
+          if (r?.startContainer === textArea.firstChild) return r.startOffset;
         }
       }
       return textArea.selectionStart;
-    } catch {
-      return textArea.selectionStart;
-    }
+    } catch { return textArea.selectionStart; }
   }
-  document.addEventListener('click', e => {
-    if (!menu.contains(e.target)) {
-      hide(menu);
-    }
-  });
-  window.addEventListener('scroll', () => hide(menu));
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-      hide(menu);
-    }
-  });
+  document.addEventListener('click',  e => { if (!menu.contains(e.target)) hide(menu); });
+  window.addEventListener('scroll',   () => hide(menu));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') hide(menu); });
   setTimeout(() => {
     monitorShaderAreas();
-    qsa('#vertCode, #fragCode').forEach(el => {
+    document.querySelectorAll('#vertCode, #fragCode').forEach(el => {
       el.addEventListener('mousedown', e => e.button === 2 && el.focus());
       addInputMonitoring(el);
     });
   }, 1000);
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      mutation.addedNodes.forEach((node) => {
-        if (node.nodeType === 1) {
-          if (node.matches && node.matches('input, textarea, [contenteditable]')) {
-            addInputMonitoring(node);
-          }
-          node.querySelectorAll && node.querySelectorAll('input, textarea, [contenteditable]').forEach(el => {
-            addInputMonitoring(el);
-          });
-        }
+  new MutationObserver(mutations => {
+    mutations.forEach(({ addedNodes }) => {
+      addedNodes.forEach(node => {
+        if (node.nodeType !== 1) return;
+        if (node.matches?.('input, textarea, [contenteditable]')) addInputMonitoring(node);
+        node.querySelectorAll?.('input, textarea, [contenteditable]').forEach(addInputMonitoring);
       });
     });
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
+  }).observe(document.body, { childList: true, subtree: true });
 })();
