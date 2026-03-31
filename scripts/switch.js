@@ -4,6 +4,14 @@ window.getCurrentAnimationType = function() {
   if (window.webgpuState?.isWebGPUMode()) return 'webgpu';
   return 'webgl';
 };
+window.getActiveCanvas = function() {
+  switch (window.getCurrentAnimationType()) {
+    case 'webgpu': return document.getElementById('webgpu-canvas');
+    case 'js': return document.getElementById('jsCanvas');
+    case '3d': return document.getElementById('canvas3D');
+    default: return document.getElementById('glcanvas');
+  }
+};
 window.switchToAnimationType = function(type) {
   const currentType = window.getCurrentAnimationType();
   if (currentType === type) return;
